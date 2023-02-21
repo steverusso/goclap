@@ -5,6 +5,66 @@ functionality from doc comments in Go. The idea is inspired by the [`clap` Rust
 crate](https://github.com/clap-rs/clap), specifically its use of documentation and
 proc macros.
 
+## Getting Started
+
+Consider the following snippet from [`examples/strrev/main.go`](./examples/strrev/main.go):
+
+```go
+//go:generate goclap mycli
+
+...
+
+// reverse a string and maybe make it uppercase
+type mycli struct {
+	// make the input string all uppercase
+	//
+	// clap:opt upper,u
+	toUpper bool
+	// the string to reverse
+	//
+	// clap:arg_required
+	input string
+}
+
+func main() {
+	c := mycli{}
+	c.parse(os.Args)
+
+	b := []byte(c.input)
+	if c.toUpper {
+		b = bytes.ToUpper(b)
+	}
+
+	n := len(b)
+	for i := 0; i < n/2; i++ {
+		b[i], b[n-1-i] = b[n-1-i], b[i]
+	}
+	fmt.Println(string(b))
+}
+```
+
+By running `go generate`, `goclap` will parse the comments on this struct and its fields,
+apply any configurations via the `clap:*` comments, generate the code for
+parsing CLI args into this struct, and put that code in a file named
+[`clap.go`](./examples/strrev/clap.go). The program can then be built with `go build`.
+
+Running `./strrev -u hello` will outout "OLLEH", and running `./strrev -h` will
+output the following help message:
+
+```
+./strrev - reverse a string and maybe make it uppercase
+
+usage:
+   ./strrev [options] <input>
+
+options:
+   --upper, -u   make the input string all uppercase
+   --help, -h    show this help message
+
+arguments:
+   <input>   the string to reverse
+```
+
 ## Building
 
 To just build the project as is, run `go build`. If you have
