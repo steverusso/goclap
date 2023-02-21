@@ -1,9 +1,13 @@
 # goclap
 
-A pre-build tool to generate **c**ommand **l**ine **a**rgument **p**arsing
-functionality from doc comments in Go. The idea is inspired by the [`clap` Rust
-crate](https://github.com/clap-rs/clap), specifically its use of documentation and
-proc macros.
+```
+go install github.com/steverusso/goclap@latest
+```
+
+A pre-build tool to generate **c**ommand **l**ine **a**rgument **p**arsing code
+from Go comments. The idea is inspired by the [`clap` Rust
+crate](https://github.com/clap-rs/clap), specifically its use of documentation
+and proc macros.
 
 ## Getting Started
 
