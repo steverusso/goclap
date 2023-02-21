@@ -49,7 +49,7 @@ command line arguments into a `mycli`. That code will be placed in a file named
 `clap.go` (see [the `strrev` example one](./examples/strrev/clap.go)). The
 program can then be built with `go build`.
 
-Running `./strrev -u hello` will outout "OLLEH", and running `./strrev -h` will
+Running `./strrev -u hello` will output "OLLEH", and running `./strrev -h` will
 output the following help message:
 
 ```
