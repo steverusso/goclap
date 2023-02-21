@@ -43,10 +43,11 @@ func main() {
 }
 ```
 
-By running `go generate`, `goclap` will parse the comments on this struct and its fields,
-apply any configurations via the `clap:*` comments, generate the code for
-parsing CLI args into this struct, and put that code in a file named
-[`clap.go`](./examples/strrev/clap.go). The program can then be built with `go build`.
+By running `go generate` (assuming `goclap` is installed), the `mycli` struct,
+its fields, and their comments will be used to generate code for parsing
+command line arguments into a `mycli`. That code will be placed in a file named
+`clap.go` (see [the `strrev` example one](./examples/strrev/clap.go)). The
+program can then be built with `go build`.
 
 Running `./strrev -u hello` will outout "OLLEH", and running `./strrev -h` will
 output the following help message:
