@@ -5,13 +5,67 @@ import (
 	"go/parser"
 	"go/token"
 	"os"
+	"runtime/debug"
 	"strings"
+	"time"
 )
 
 const (
 	typBool = iota
 	typString
 )
+
+type buildVersionInfo struct {
+	modVersion      string
+	commitHash      string
+	commitDate      string
+	hasLocalChanges bool
+}
+
+func (v buildVersionInfo) String() string {
+	hash := v.commitHash
+	if len(hash) > 12 {
+		hash = v.commitHash[:12]
+	}
+	s := v.modVersion + "-" + v.commitDate + "-" + hash
+	if v.hasLocalChanges {
+		s += "-(with unstaged changes)"
+	}
+	return s
+}
+
+func getBuildVersionInfo() buildVersionInfo {
+	bi, ok := debug.ReadBuildInfo()
+	if !ok {
+		warn("unable to read build info")
+		return buildVersionInfo{}
+	}
+	v := buildVersionInfo{
+		modVersion: bi.Main.Version,
+	}
+	for _, s := range bi.Settings {
+		switch s.Key {
+		case "vcs.revision":
+			v.commitHash = s.Value
+		case "vcs.time":
+			t, err := time.Parse(time.RFC3339, s.Value)
+			if err != nil {
+				warn("unable to parse vcs.time '%s': %v", s.Value, err)
+			} else {
+				v.commitDate = t.Format("20060102")
+			}
+		case "vcs.modified":
+			v.hasLocalChanges = (s.Value == "true")
+		}
+	}
+	if v.commitHash == "" {
+		warn("no vcs.revision in build info")
+	}
+	if v.commitDate == "" {
+		warn("no vcs.time in build info")
+	}
+	return v
+}
 
 type clapData struct {
 	blurb    string
