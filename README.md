@@ -9,9 +9,9 @@ from Go comments. The idea is inspired by the [`clap` Rust
 crate](https://github.com/clap-rs/clap), specifically its use of documentation
 and proc macros.
 
-## Getting Started
+## Example
 
-Consider the following snippet from [`examples/strrev/main.go`](./examples/strrev/main.go):
+The following is taken from [`examples/strrev/main.go`](./examples/strrev/main.go).
 
 ```go
 //go:generate goclap mycli
