@@ -27,7 +27,13 @@ func (v buildVersionInfo) String() string {
 	if len(hash) > 12 {
 		hash = v.commitHash[:12]
 	}
-	s := v.modVersion + "-" + v.commitDate + "-" + hash
+	s := v.modVersion
+	if v.commitDate != "" {
+		s += "-" + v.commitDate
+	}
+	if hash != "" {
+		s += "-" + hash
+	}
 	if v.hasLocalChanges {
 		s += "-(with unstaged changes)"
 	}
