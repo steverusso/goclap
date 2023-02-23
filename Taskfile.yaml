@@ -8,6 +8,11 @@ tasks:
     - go build -ldflags="-s -w"
     - task: lint
 
+  install:
+    - task: fmt
+    - go install -ldflags="-s -w"
+    - task: lint
+
   fmt:
     - goimports -w -l .
     - gofumpt -w -l .
