@@ -43,7 +43,7 @@ func (v buildVersionInfo) String() string {
 func getBuildVersionInfo() buildVersionInfo {
 	bi, ok := debug.ReadBuildInfo()
 	if !ok {
-		warn("unable to read build info")
+		warn("unable to read build info\n")
 		return buildVersionInfo{}
 	}
 	v := buildVersionInfo{
@@ -63,12 +63,6 @@ func getBuildVersionInfo() buildVersionInfo {
 		case "vcs.modified":
 			v.hasLocalChanges = (s.Value == "true")
 		}
-	}
-	if v.commitHash == "" {
-		warn("no vcs.revision in build info")
-	}
-	if v.commitDate == "" {
-		warn("no vcs.time in build info")
 	}
 	return v
 }
