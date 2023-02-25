@@ -38,26 +38,29 @@ func (g *generator) writeHeader(hasSubcmds bool) error {
 	return nil
 }
 
-func (g *generator) generate(c *command, isRoot bool) {
+func (g *generator) generate(c *command) error {
 	for i := range c.Subcmds {
-		g.generate(&c.Subcmds[i], false)
+		if err := g.generate(&c.Subcmds[i]); err != nil {
+			return err
+		}
 	}
-	g.writePrintUsageFunc(c)
-	g.writeCmdParseFunc(c, isRoot)
+	if err := g.writePrintUsageFunc(c); err != nil {
+		return fmt.Errorf("usage func for '%s': %w", c.TypeName, err)
+	}
+	g.writeCmdParseFunc(c)
+	return nil
 }
 
-func (g *generator) writePrintUsageFunc(c *command) {
+func (g *generator) writePrintUsageFunc(c *command) error {
 	t, err := template.New("usagefunc").Parse(usageFuncTmpl)
 	if err != nil {
-		panic(err)
-		// return fmt.Errorf("parsing usagefunc template: %w", err)
+		return fmt.Errorf("parsing template: %w", err)
 	}
 	err = t.Execute(g.out, c)
 	if err != nil {
-		panic(err)
-		// return fmt.Errorf("executing usagefunc template: %w", err)
+		return fmt.Errorf("executing template: %w", err)
 	}
-	// return nil
+	return nil
 }
 
 func (c *command) IsRoot() bool { return c.fieldName == "%[1]s" }
@@ -130,10 +133,10 @@ func (c *command) SubcmdNamesColWidth() int {
 	return w
 }
 
-func (g *generator) writeCmdParseFunc(c *command, isRoot bool) {
+func (g *generator) writeCmdParseFunc(c *command) {
 	g.printf("func (c *%s) parse(args []string) {\n", c.TypeName)
 
-	if isRoot {
+	if c.IsRoot() {
 		// Drop the program name from args if it's there.
 		g.printf("\tif len(args) > 0 && len(args) == len(os.Args) {\n")
 		g.printf("\t\targs = args[1:]\n")
