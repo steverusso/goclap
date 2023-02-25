@@ -125,11 +125,9 @@ func (c *command) docName() string {
 	return strings.ToLower(c.fieldName)
 }
 
-func run() error {
-	rootCmdTypeName := os.Args[1]
-
+func run(rootCmdTypeName, srcDir string) error {
 	fset := token.NewFileSet() // positions are relative to fset
-	parsedDir, err := parser.ParseDir(fset, ".", nil, parser.ParseComments)
+	parsedDir, err := parser.ParseDir(fset, srcDir, nil, parser.ParseComments)
 	if err != nil {
 		return err
 	}
@@ -181,7 +179,9 @@ func main() {
 		fmt.Fprintln(os.Stderr, "usage: goclap <type>")
 		os.Exit(1)
 	}
-	if err := run(); err != nil {
+	typeName := os.Args[1]
+	srcDir := "."
+	if err := run(typeName, srcDir); err != nil {
 		fmt.Fprintf(os.Stderr, "error: %v", err)
 		os.Exit(1)
 	}
