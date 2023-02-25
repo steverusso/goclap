@@ -14,11 +14,11 @@ func (g *generator) generate(c *command, isRoot bool) {
 	for i := range c.subcmds {
 		g.generate(&c.subcmds[i], false)
 	}
-	g.writePrintUsageFunc(c)
+	g.writePrintUsageFunc(c, isRoot)
 	g.writeCmdParseFunc(c, isRoot)
 }
 
-func (g *generator) writePrintUsageFunc(c *command) {
+func (g *generator) writePrintUsageFunc(c *command, isRoot bool) {
 	g.printf("\nfunc (*%s) printUsage(to *os.File) {\n", c.typeName)
 	g.printf("\tfmt.Fprintf(to, `")
 	g.writeOverview(c)
@@ -26,6 +26,13 @@ func (g *generator) writePrintUsageFunc(c *command) {
 	g.writeOpts(c)
 	g.writeArgs(c)
 	g.writeSubcmds(c)
+	if isRoot && c.hasSubcmds() {
+		parents := strings.Join(c.parentNames, " ")
+		if parents != "" {
+			parents += " "
+		}
+		g.printf("\nrun '%%[1]s <subcommand> -h' for more information on specific commands.\n")
+	}
 	g.printf("`, os.Args[0])\n")
 	g.printf("}\n\n")
 }
