@@ -8,116 +8,130 @@ import (
 	"text/template"
 )
 
+//go:embed tmpls/header.go.tmpl
+var outFileHeader string
+
+//go:embed tmpls/usagefunc.go.tmpl
+var usageFuncTmpl string
+
 type generator struct {
 	out *os.File
 }
 
-func (g *generator) generate(c *command, isRoot bool) {
-	for i := range c.subcmds {
-		g.generate(&c.subcmds[i], false)
+func (g *generator) writeHeader(hasSubcmds bool) error {
+	type headerData struct {
+		Version    string
+		HasSubcmds bool
 	}
-	g.writePrintUsageFunc(c, isRoot)
+
+	t, err := template.New("header").Parse(outFileHeader)
+	if err != nil {
+		return fmt.Errorf("parsing header template: %w", err)
+	}
+	err = t.Execute(g.out, headerData{
+		HasSubcmds: hasSubcmds,
+		Version:    getBuildVersionInfo().String(),
+	})
+	if err != nil {
+		return fmt.Errorf("executing header template: %w", err)
+	}
+	return nil
+}
+
+func (g *generator) generate(c *command, isRoot bool) {
+	for i := range c.Subcmds {
+		g.generate(&c.Subcmds[i], false)
+	}
+	g.writePrintUsageFunc(c)
 	g.writeCmdParseFunc(c, isRoot)
 }
 
-func (g *generator) writePrintUsageFunc(c *command, isRoot bool) {
-	g.printf("\nfunc (*%s) printUsage(to *os.File) {\n", c.typeName)
-	g.printf("\tfmt.Fprintf(to, `")
-	g.writeOverview(c)
-	g.writeUsageLines(c)
-	g.writeOpts(c)
-	g.writeArgs(c)
-	g.writeSubcmds(c)
-	if isRoot && c.hasSubcmds() {
-		parents := strings.Join(c.parentNames, " ")
-		if parents != "" {
-			parents += " "
-		}
-		g.printf("\nrun '%%[1]s <subcommand> -h' for more information on specific commands.\n")
+func (g *generator) writePrintUsageFunc(c *command) {
+	t, err := template.New("usagefunc").Parse(usageFuncTmpl)
+	if err != nil {
+		panic(err)
+		// return fmt.Errorf("parsing usagefunc template: %w", err)
 	}
-	g.printf("`, os.Args[0])\n")
-	g.printf("}\n\n")
+	err = t.Execute(g.out, c)
+	if err != nil {
+		panic(err)
+		// return fmt.Errorf("executing usagefunc template: %w", err)
+	}
+	// return nil
 }
 
-func (g *generator) writeOverview(c *command) {
-	parents := strings.Join(c.parentNames, " ")
-	if parents != "" {
-		parents += " "
+func (c *command) IsRoot() bool { return c.fieldName == "%[1]s" }
+
+func (c *command) Parents() string {
+	s := strings.Join(c.parentNames, " ")
+	if s != "" {
+		s += " "
 	}
-	g.printf("%s%s - %s\n\n", parents, c.docName(), c.data.blurb)
+	return s
 }
 
-func (g *generator) writeUsageLines(c *command) {
-	g.printf("usage:\n   ")
-	if uargs, ok := c.data.getConfig("cmd_usage"); ok {
-		g.printf("%s %s\n", c.docName(), uargs)
-	} else {
-		optionsSlot := " [options]" // Every command has at least the help options for now.
-		commandSlot := ""
-		if c.hasSubcmds() {
-			commandSlot = " <command>"
+func (c *command) UsageLines() []string {
+	us := make([]string, 0, 2)
+	for _, cfg := range c.data.configs {
+		if cfg.key == "cmd_usage" {
+			us = append(us, c.DocName()+" "+cfg.val)
 		}
-		argsSlot := ""
-		if c.hasArgs() {
-			for _, arg := range c.args {
-				argsSlot += " " + arg.docString()
-			}
+	}
+	if len(us) > 0 {
+		return us
+	}
+	optionsSlot := " [options]" // Every command has at least the help options for now.
+	commandSlot := ""
+	if c.HasSubcmds() {
+		commandSlot = " <command>"
+	}
+	argsSlot := ""
+	if c.HasArgs() {
+		for _, arg := range c.Args {
+			argsSlot += " " + arg.DocString()
 		}
-		g.printf("%s%s%s%s\n", c.docName(), optionsSlot, commandSlot, argsSlot)
+	}
+	return []string{
+		fmt.Sprintf("%s%s%s%s", c.DocName(), optionsSlot, commandSlot, argsSlot),
 	}
 }
 
-func (g *generator) writeSubcmds(c *command) {
-	if !c.hasSubcmds() {
-		return
-	}
+func (c *command) Blurb() string { return c.data.blurb }
+func (o *optInfo) Blurb() string { return o.data.blurb }
+func (a *argInfo) Blurb() string { return a.data.blurb }
+
+func (c *command) OptNamesColWidth() int {
 	w := 0
-	for _, sc := range c.subcmds {
-		name := sc.docName()
-		if l := len(name); l > w {
+	for _, o := range c.Opts {
+		if l := len(o.DocNames()); l > w {
 			w = l
 		}
 	}
-	g.printf("\ncommands:\n")
-	for _, sc := range c.subcmds {
-		g.printf("   %-*s   %s\n", w, sc.docName(), sc.data.blurb)
-	}
+	return w
 }
 
-func (g *generator) writeArgs(c *command) {
-	if !c.hasArgs() {
-		return
-	}
+func (c *command) ArgNamesColWidth() int {
 	w := 0
-	for _, arg := range c.args {
-		if l := len(arg.docString()); l > w {
+	for _, a := range c.Args {
+		if l := len(a.DocString()); l > w {
 			w = l
 		}
 	}
-	g.printf("\narguments:\n")
-	for _, arg := range c.args {
-		g.printf("   %-*s   %s\n", w, arg.docString(), arg.data.blurb)
-	}
+	return w
 }
 
-func (g *generator) writeOpts(c *command) {
-	if !c.hasOptions() {
-		return
-	}
+func (c *command) SubcmdNamesColWidth() int {
 	w := 0
-	for _, o := range c.opts {
-		if l := len(o.docNames()); l > w {
+	for _, sc := range c.Subcmds {
+		if l := len(sc.DocName()); l > w {
 			w = l
 		}
 	}
-	g.printf("\noptions:\n")
-	for _, o := range c.opts {
-		g.printf("   %-*s   %s\n", w, o.docNames(), o.data.blurb)
-	}
+	return w
 }
 
 func (g *generator) writeCmdParseFunc(c *command, isRoot bool) {
-	g.printf("func (c *%s) parse(args []string) {\n", c.typeName)
+	g.printf("func (c *%s) parse(args []string) {\n", c.TypeName)
 
 	if isRoot {
 		// Drop the program name from args if it's there.
@@ -143,7 +157,7 @@ func (g *generator) writeCmdParseFunc(c *command, isRoot bool) {
 		g.printf("\t\tk, _, _ := optParts(args[i][1:])\n")
 	}
 	g.printf("\t\tswitch k {\n")
-	for _, opt := range c.opts {
+	for _, opt := range c.Opts {
 		g.printf("\t\tcase %s:\n", opt.quotedPlainNames())
 		// Hard code the 'help' case.
 		if opt.long == "help" {
@@ -160,16 +174,16 @@ func (g *generator) writeCmdParseFunc(c *command, isRoot bool) {
 	g.printf("\t}\n")   // end loop
 
 	// Arguments.
-	if c.hasArgs() {
+	if c.HasArgs() {
 		g.printf("\targs = args[i:]\n")
 		// Add error handling for missing arguments that are required.
 		reqArgs := c.requiredArgs()
 		for i := range reqArgs {
 			g.printf("\tif len(args) < %d {\n", i+1)
-			g.printf("\t\texitMissingArg(c, %q)\n", reqArgs[i].docString())
+			g.printf("\t\texitMissingArg(c, %q)\n", reqArgs[i].DocString())
 			g.printf("\t}\n")
 		}
-		for i, arg := range c.args {
+		for i, arg := range c.Args {
 			if !arg.isRequired() {
 				g.printf("\tif len(args) < %d {\n", i+1)
 				g.printf("\t\treturn\n")
@@ -186,7 +200,7 @@ func (g *generator) writeCmdParseFunc(c *command, isRoot bool) {
 	}
 
 	// Subcommands.
-	if c.hasSubcmds() {
+	if c.HasSubcmds() {
 		g.printf("\tif i >= len(args) {\n")
 		g.printf("\t\tc.printUsage(os.Stderr)\n")
 		g.printf("\t\tos.Exit(1)\n")
@@ -194,9 +208,9 @@ func (g *generator) writeCmdParseFunc(c *command, isRoot bool) {
 
 		g.printf("\tswitch args[i] {\n")
 
-		for _, sc := range c.subcmds {
-			g.printf("\tcase %q:\n", sc.docName())
-			g.printf("\t\tc.%s = new(%s)\n", sc.fieldName, sc.typeName)
+		for _, sc := range c.Subcmds {
+			g.printf("\tcase %q:\n", sc.DocName())
+			g.printf("\t\tc.%s = new(%s)\n", sc.fieldName, sc.TypeName)
 			g.printf("\t\tc.%s.parse(args[i+1:])\n", sc.fieldName)
 		}
 
@@ -210,8 +224,8 @@ func (g *generator) writeCmdParseFunc(c *command, isRoot bool) {
 }
 
 func (c *command) requiredArgs() []argInfo {
-	reqs := make([]argInfo, 0, len(c.args))
-	for _, arg := range c.args {
+	reqs := make([]argInfo, 0, len(c.Args))
+	for _, arg := range c.Args {
 		if arg.isRequired() {
 			reqs = append(reqs, arg)
 		}
@@ -220,7 +234,7 @@ func (c *command) requiredArgs() []argInfo {
 }
 
 func (c *command) hasOptField() bool {
-	for _, o := range c.opts {
+	for _, o := range c.Opts {
 		if o.long != "help" {
 			return true
 		}
@@ -228,11 +242,11 @@ func (c *command) hasOptField() bool {
 	return false
 }
 
-func (c *command) hasSubcmds() bool { return len(c.subcmds) > 0 }
-func (c *command) hasOptions() bool { return len(c.opts) > 0 }
-func (c *command) hasArgs() bool    { return len(c.args) > 0 }
+func (c *command) HasSubcmds() bool { return len(c.Subcmds) > 0 }
+func (c *command) HasOptions() bool { return len(c.Opts) > 0 }
+func (c *command) HasArgs() bool    { return len(c.Args) > 0 }
 
-func (arg *argInfo) docString() string {
+func (arg *argInfo) DocString() string {
 	if arg.isRequired() {
 		return "<" + arg.name + ">"
 	}
@@ -244,7 +258,7 @@ func (arg *argInfo) isRequired() bool {
 	return ok
 }
 
-func (o *optInfo) docNames() string {
+func (o *optInfo) DocNames() string {
 	long := o.long
 	if long != "" {
 		long = "--" + long
@@ -279,26 +293,3 @@ func (o *optInfo) quotedPlainNames() string {
 func (g *generator) printf(format string, a ...any) {
 	fmt.Fprintf(g.out, format, a...)
 }
-
-func (g *generator) writeHeader(hasSubcmds bool) error {
-	type headerData struct {
-		Version    string
-		HasSubcmds bool
-	}
-
-	t, err := template.New("header").Parse(outFileHeader)
-	if err != nil {
-		return fmt.Errorf("parsing header template: %w", err)
-	}
-	err = t.Execute(g.out, headerData{
-		HasSubcmds: hasSubcmds,
-		Version:    getBuildVersionInfo().String(),
-	})
-	if err != nil {
-		return fmt.Errorf("executing header template: %w", err)
-	}
-	return nil
-}
-
-//go:embed tmpls/header.go.tmpl
-var outFileHeader string

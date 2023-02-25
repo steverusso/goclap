@@ -1,0 +1,33 @@
+
+func (*{{ .TypeName }}) printUsage(to *os.File) {
+	fmt.Fprintf(to, `{{ .Parents }}{{ .DocName }} - {{ .Blurb }}
+
+usage:{{ range .UsageLines }}
+   {{ . }}{{ end }}
+{{- if .HasOptions }}
+{{- $w := .OptNamesColWidth }}
+
+options:
+{{- range .Opts }}
+   {{ printf "%-*s   %s" $w .DocNames .Blurb -}}
+{{ end -}}{{ end -}}
+{{- if .HasArgs }}
+{{- $w := .ArgNamesColWidth }}
+
+arguments:
+{{- range .Args }}
+   {{ printf "%-*s   %s" $w .DocString .Blurb -}}
+{{ end -}}{{ end -}}
+{{ if .HasSubcmds }}
+{{- $w := .SubcmdNamesColWidth }}
+
+subcommands:
+{{- range .Subcmds }}
+   {{ printf "%-*s   %s" $w .DocName .Blurb -}}
+{{ end -}}{{ end }}
+{{- if and .IsRoot .HasSubcmds }}
+
+run '%[1]s <subcommand> -h' for more information on specific commands.{{ end }}
+`, os.Args[0])
+}
+

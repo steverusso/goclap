@@ -25,7 +25,7 @@ func (b *builder) addChildren(c *command, strct *ast.StructType) error {
 			continue
 		}
 		fieldName := field.Names[0].Name
-		typeAndField := fmt.Sprintf("'%s.%s'", c.typeName, fieldName)
+		typeAndField := fmt.Sprintf("'%s.%s'", c.TypeName, fieldName)
 		if _, ok := field.Type.(*ast.StructType); ok {
 			warn("skipping %s (commands must be struct pointers)\n", typeAndField)
 			continue
@@ -45,8 +45,8 @@ func (b *builder) addChildren(c *command, strct *ast.StructType) error {
 			}
 			// The field is firmly considered a subcommand at this point.
 			subcmd := command{
-				parentNames: append(c.parentNames, c.docName()),
-				typeName:    idnt.Name,
+				parentNames: append(c.parentNames, c.DocName()),
+				TypeName:    idnt.Name,
 				fieldName:   fieldName,
 				data:        b.getCmdClapData(idnt.Name),
 			}
@@ -55,7 +55,7 @@ func (b *builder) addChildren(c *command, strct *ast.StructType) error {
 			if err != nil {
 				return err
 			}
-			c.subcmds = append(c.subcmds, subcmd)
+			c.Subcmds = append(c.Subcmds, subcmd)
 			continue
 		}
 		// From now on, it's either an option or an argument which can only be basic types
@@ -96,14 +96,14 @@ func (b *builder) addChildren(c *command, strct *ast.StructType) error {
 		if fieldType == typBool {
 			return fmt.Errorf("%s: arguments cannot be type bool", typeAndField)
 		}
-		c.args = append(c.args, argInfo{
+		c.Args = append(c.Args, argInfo{
 			data:      fieldDocs,
 			fieldType: fieldType,
 			fieldName: fieldName,
 			name:      strings.ToLower(fieldName),
 		})
 	}
-	c.opts = append(c.opts, helpOption)
+	c.Opts = append(c.Opts, helpOption)
 	return nil
 }
 
@@ -210,7 +210,7 @@ func (c *command) addOption(data clapData, fieldName string, typ int) error {
 	if err != nil {
 		return fmt.Errorf("parsing option names: %w", err)
 	}
-	c.opts = append(c.opts, optInfo{
+	c.Opts = append(c.Opts, optInfo{
 		fieldType: typ,
 		fieldName: fieldName,
 		long:      long,

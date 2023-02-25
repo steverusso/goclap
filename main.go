@@ -90,11 +90,11 @@ func (d *clapData) getConfig(k string) (string, bool) {
 type command struct {
 	parentNames []string
 	fieldName   string
-	typeName    string
+	TypeName    string
 	data        clapData
-	opts        []optInfo
-	args        []argInfo
-	subcmds     []command
+	Opts        []optInfo
+	Args        []argInfo
+	Subcmds     []command
 }
 
 type optInfo struct {
@@ -112,7 +112,7 @@ type argInfo struct {
 	data      clapData
 }
 
-func (c *command) docName() string {
+func (c *command) DocName() string {
 	if cfgName, ok := c.data.getConfig("cmd_name"); ok {
 		return cfgName
 	}
@@ -137,7 +137,7 @@ func run(rootCmdTypeName, srcDir string) error {
 		return fmt.Errorf("could not find a struct type named '%s'", rootCmdTypeName)
 	}
 	root := command{
-		typeName: rootCmdTypeName,
+		TypeName: rootCmdTypeName,
 		// This is a bit of a hack due to the following: the "name" of the root command is
 		// actually the name of the program, which is the first argument in `os.Args`.
 		// That gets passed as a fmt arg within the generated code when printing a
@@ -159,7 +159,7 @@ func run(rootCmdTypeName, srcDir string) error {
 
 	g := generator{out: f}
 
-	err = g.writeHeader(root.hasSubcmds())
+	err = g.writeHeader(root.HasSubcmds())
 	if err != nil {
 		return err
 	}
