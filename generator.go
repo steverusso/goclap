@@ -9,13 +9,25 @@ import (
 )
 
 //go:embed tmpls/header.go.tmpl
-var outFileHeader string
+var headerTmplText string
 
 //go:embed tmpls/usagefunc.go.tmpl
-var usageFuncTmpl string
+var usgFnTmplText string
 
 type generator struct {
-	out *os.File
+	out       *os.File
+	usgFnTmpl *template.Template
+}
+
+func newGenerator(out *os.File) (generator, error) {
+	usgFnTmpl, err := template.New("usagefunc").Parse(usgFnTmplText)
+	if err != nil {
+		return generator{}, fmt.Errorf("parsing usage func template: %w", err)
+	}
+	return generator{
+		out:       out,
+		usgFnTmpl: usgFnTmpl,
+	}, nil
 }
 
 func (g *generator) writeHeader(hasSubcmds bool) error {
@@ -24,7 +36,7 @@ func (g *generator) writeHeader(hasSubcmds bool) error {
 		HasSubcmds bool
 	}
 
-	t, err := template.New("header").Parse(outFileHeader)
+	t, err := template.New("header").Parse(headerTmplText)
 	if err != nil {
 		return fmt.Errorf("parsing header template: %w", err)
 	}
@@ -44,19 +56,15 @@ func (g *generator) generate(c *command) error {
 			return err
 		}
 	}
-	if err := g.writePrintUsageFunc(c); err != nil {
+	if err := g.genCmdUsageFunc(c); err != nil {
 		return fmt.Errorf("usage func for '%s': %w", c.TypeName, err)
 	}
 	g.writeCmdParseFunc(c)
 	return nil
 }
 
-func (g *generator) writePrintUsageFunc(c *command) error {
-	t, err := template.New("usagefunc").Parse(usageFuncTmpl)
-	if err != nil {
-		return fmt.Errorf("parsing template: %w", err)
-	}
-	err = t.Execute(g.out, c)
+func (g *generator) genCmdUsageFunc(c *command) error {
+	err := g.usgFnTmpl.Execute(g.out, c)
 	if err != nil {
 		return fmt.Errorf("executing template: %w", err)
 	}

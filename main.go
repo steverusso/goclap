@@ -157,7 +157,10 @@ func run(rootCmdTypeName, srcDir string) error {
 	}
 	defer f.Close()
 
-	g := generator{out: f}
+	g, err := newGenerator(f)
+	if err != nil {
+		return fmt.Errorf("initializing generator: %w", err)
+	}
 	err = g.writeHeader(root.HasSubcmds())
 	if err != nil {
 		return err
