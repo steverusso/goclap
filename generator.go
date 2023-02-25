@@ -136,9 +136,9 @@ func (g *generator) writeCmdParseFunc(c *command, isRoot bool) {
 		}
 `)
 	if c.hasOptField() {
-		g.printf("\t\tk, eqv := optParts(args[i][1:])\n")
+		g.printf("\t\tk, eqv, _ := optParts(args[i][1:])\n")
 	} else {
-		g.printf("\t\tk, _ := optParts(args[i][1:])\n")
+		g.printf("\t\tk, _, _ := optParts(args[i][1:])\n")
 	}
 	g.printf("\t\tswitch k {\n")
 	for _, opt := range c.opts {
@@ -150,7 +150,7 @@ func (g *generator) writeCmdParseFunc(c *command, isRoot bool) {
 		}
 		switch opt.fieldType {
 		case typBool:
-			g.printf("\t\t\tc.%s = (eqv == \"\" || eqv == \"true\")\n", opt.fieldName)
+			g.printf("\t\t\tc.%s = parseBool(eqv)\n", opt.fieldName)
 		case typString:
 		}
 	}
@@ -327,7 +327,18 @@ func exitUsgGood(u clapUsagePrinter) {
 	os.Exit(0)
 }
 
-func optParts(arg string) (string, string) {
+func parseBool(s string) bool {
+	if s == "" || s == "true" {
+		return true
+	}
+	if s != "false" {
+		claperr("invalid boolean value '%%s'\n", s)
+		os.Exit(1)
+	}
+	return false
+}
+
+func optParts(arg string) (string, string, bool) {
 	if arg == "-" {
 		exitEmptyOpt()
 	}
@@ -337,12 +348,14 @@ func optParts(arg string) (string, string) {
 	if arg[0] == '-' {
 		arg = arg[1:]
 	}
-	name := arg
-	eqVal := ""
-	if eqIdx := strings.IndexByte(name, '='); eqIdx != -1 {
-		name = arg[:eqIdx]
-		eqVal = arg[eqIdx+1:]
+	if eqIdx := strings.IndexByte(arg, '='); eqIdx != -1 {
+		name := arg[:eqIdx]
+		eqVal := ""
+		if eqIdx < len(arg) {
+			eqVal = arg[eqIdx+1:]
+		}
+		return name, eqVal, true
 	}
-	return name, eqVal
+	return arg, "", false
 }
 `
