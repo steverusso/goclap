@@ -158,7 +158,12 @@ func run(rootCmdTypeName, srcDir string) error {
 	defer f.Close()
 
 	g := generator{out: f}
-	g.writeHeader(root.hasSubcmds())
+
+	err = g.writeHeader(root.hasSubcmds())
+	if err != nil {
+		return err
+	}
+
 	g.generate(&root, true)
 	return nil
 }
