@@ -107,7 +107,7 @@ func (c *command) UsageLines() []string {
 	us := make([]string, 0, 2)
 	for _, cfg := range c.Data.configs {
 		if cfg.key == "cmd_usage" {
-			us = append(us, c.DocName()+" "+cfg.val)
+			us = append(us, c.UsgName()+" "+cfg.val)
 		}
 	}
 	if len(us) > 0 {
@@ -121,18 +121,18 @@ func (c *command) UsageLines() []string {
 	argsSlot := ""
 	if c.HasArgs() {
 		for _, arg := range c.Args {
-			argsSlot += " " + arg.DocName()
+			argsSlot += " " + arg.UsgName()
 		}
 	}
 	return []string{
-		fmt.Sprintf("%s%s%s%s", c.DocName(), optionsSlot, commandSlot, argsSlot),
+		fmt.Sprintf("%s%s%s%s", c.UsgName(), optionsSlot, commandSlot, argsSlot),
 	}
 }
 
 func (c *command) OptNamesColWidth() int {
 	w := 0
 	for _, o := range c.Opts {
-		if l := len(o.DocNames()); l > w {
+		if l := len(o.UsgNames()); l > w {
 			w = l
 		}
 	}
@@ -142,7 +142,7 @@ func (c *command) OptNamesColWidth() int {
 func (c *command) ArgNamesColWidth() int {
 	w := 0
 	for _, a := range c.Args {
-		if l := len(a.DocName()); l > w {
+		if l := len(a.UsgName()); l > w {
 			w = l
 		}
 	}
@@ -152,7 +152,7 @@ func (c *command) ArgNamesColWidth() int {
 func (c *command) SubcmdNamesColWidth() int {
 	w := 0
 	for _, sc := range c.Subcmds {
-		if l := len(sc.DocName()); l > w {
+		if l := len(sc.UsgName()); l > w {
 			w = l
 		}
 	}
@@ -178,7 +178,7 @@ func (c *command) HasOptField() bool {
 	return false
 }
 
-func (arg *argInfo) DocName() string {
+func (arg *argInfo) UsgName() string {
 	if arg.IsRequired() {
 		return "<" + arg.name + ">"
 	}
@@ -190,7 +190,7 @@ func (arg *argInfo) IsRequired() bool {
 	return ok
 }
 
-func (o *optInfo) DocNames() string {
+func (o *optInfo) UsgNames() string {
 	long := o.Long
 	if long != "" {
 		long = "--" + long

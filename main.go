@@ -117,7 +117,7 @@ type argInfo struct {
 	Data      clapData
 }
 
-func (c *command) DocName() string {
+func (c *command) UsgName() string {
 	if cfgName, ok := c.Data.getConfig("cmd_name"); ok {
 		return cfgName
 	}

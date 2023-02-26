@@ -47,7 +47,7 @@ func (c *{{ .TypeName }}) parse(args []string) {
 		{{- /* Add error handling for missing arguments that are required. */ -}}
 		{{- range $i, $arg := .RequiredArgs }}
 	if len(args) < {{ add $i 1 }} {
-		exitMissingArg(c, "{{ $arg.DocName }}")
+		exitMissingArg(c, "{{ $arg.UsgName }}")
 	}
 		{{- end -}}
 
@@ -75,7 +75,7 @@ func (c *{{ .TypeName }}) parse(args []string) {
 	}
 	switch args[i] {
 	{{- range .Subcmds }}
-	case "{{ .DocName }}":
+	case "{{ .UsgName }}":
 		c.{{ .FieldName }} = new({{ .TypeName }})
 		c.{{ .FieldName }}.parse(args[i+1:])
 	{{- end }}

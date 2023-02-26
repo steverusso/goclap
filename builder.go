@@ -45,7 +45,7 @@ func (b *builder) addChildren(c *command, strct *ast.StructType) error {
 			}
 			// The field is firmly considered a subcommand at this point.
 			subcmd := command{
-				parentNames: append(c.parentNames, c.DocName()),
+				parentNames: append(c.parentNames, c.UsgName()),
 				TypeName:    idnt.Name,
 				FieldName:   fieldName,
 				Data:        b.getCmdClapData(idnt.Name),
