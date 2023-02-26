@@ -32,11 +32,11 @@ type generator struct {
 func newGenerator(out *os.File) (generator, error) {
 	usgFnTmpl, err := template.New("usagefunc").Parse(usgFnTmplText)
 	if err != nil {
-		return generator{}, fmt.Errorf("parsing usage func template: %w", err)
+		return generator{}, fmt.Errorf("parsing template: %w", err)
 	}
 	parseFnTmpl, err := template.New("parsefunc").Funcs(parseFuncs).Parse(parseFnTmplText)
 	if err != nil {
-		return generator{}, fmt.Errorf("parsing parse func template: %w", err)
+		return generator{}, fmt.Errorf("parsing template: %w", err)
 	}
 	return generator{
 		out:         out,
@@ -72,10 +72,10 @@ func (g *generator) generate(c *command) error {
 		}
 	}
 	if err := g.genCmdUsageFunc(c); err != nil {
-		return fmt.Errorf("usage func for '%s': %w", c.TypeName, err)
+		return fmt.Errorf("'%s': %w", c.TypeName, err)
 	}
 	if err := g.genCmdParseFunc(c); err != nil {
-		return fmt.Errorf("parse func for '%s': %w", c.TypeName, err)
+		return fmt.Errorf("'%s': %w", c.TypeName, err)
 	}
 	return nil
 }
@@ -231,8 +231,4 @@ func (o *optInfo) QuotedPlainNames() string {
 		comma = ", "
 	}
 	return fmt.Sprintf("%s%s%s", long, comma, short)
-}
-
-func (g *generator) printf(format string, a ...any) {
-	fmt.Fprintf(g.out, format, a...)
 }
