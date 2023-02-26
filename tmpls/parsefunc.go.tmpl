@@ -1,0 +1,86 @@
+
+func (c *{{ .TypeName }}) parse(args []string) {
+	{{- /* Drop the program name from args if it's there. */ -}}
+	{{ if .IsRoot }}
+	if len(args) > 0 && len(args) == len(os.Args) {
+		args = args[1:]
+	}
+	{{- end -}}
+
+	{{- /* Parse options. */}}
+	var i int
+	for ; i < len(args); i++ {
+		if args[i][0] != '-' {
+			break
+		}
+		if args[i] == "--" {
+			i++
+			break
+		}
+
+		{{- if .HasOptField }}
+		k, eqv, _ := optParts(args[i][1:])
+		{{ else }}
+		k, _, _ := optParts(args[i][1:])
+		{{ end -}}
+
+		switch k {
+	{{- range .Opts }}
+		case {{ .QuotedPlainNames }}:
+		{{- /* Hard code the 'help' case. */ -}}
+		{{- if eq .Long "help" }}
+			exitUsgGood(c)
+			{{- continue }}
+		{{ end -}}
+
+		{{- if .IsBool }}
+			c.{{ .FieldName }} = parseBool(eqv)
+		{{- end -}}
+	{{ end }}
+		}
+	}
+
+	{{- /* Arguments. */ -}}
+	{{- if .HasArgs }}
+	args = args[i:]
+
+		{{- /* Add error handling for missing arguments that are required. */ -}}
+		{{- range $i, $arg := .RequiredArgs }}
+	if len(args) < {{ add $i 1 }} {
+		exitMissingArg(c, "{{ $arg.DocString }}")
+	}
+		{{- end -}}
+
+		{{- range $i, $arg := .Args }}
+
+			{{- if not $arg.IsRequired }}
+	if len(args) < {{ add $i 1 }} {
+		return
+	}
+			{{- end -}}
+
+			{{- /* Parse positional args based on their type. */ -}}
+			{{- if $arg.IsString }}
+	c.{{ $arg.FieldName }} = args[{{ $i }}]
+			{{- end -}}
+
+		{{ end -}}{{- /* range all args */ -}}
+	{{- end }}{{- /* if args */ -}}
+
+	{{- /* Subcommands. */ -}}
+	{{- if .HasSubcmds }}
+	if i >= len(args) {
+		c.printUsage(os.Stderr)
+		os.Exit(1)
+	}
+	switch args[i] {
+	{{- range .Subcmds }}
+	case "{{ .DocName }}":
+		c.{{ .FieldName }} = new({{ .TypeName }})
+		c.{{ .FieldName }}.parse(args[i+1:])
+	{{- end }}
+	default:
+		exitUnknownCmd(c, args[i])
+	}
+	{{- end }}
+}

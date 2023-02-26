@@ -89,7 +89,7 @@ func (d *clapData) getConfig(k string) (string, bool) {
 
 type command struct {
 	parentNames []string
-	fieldName   string
+	FieldName   string
 	TypeName    string
 	data        clapData
 	Opts        []optInfo
@@ -99,15 +99,15 @@ type command struct {
 
 type optInfo struct {
 	fieldType int
-	fieldName string
-	long      string
-	short     string
+	FieldName string
+	Long      string
+	Short     string
 	data      clapData
 }
 
 type argInfo struct {
 	fieldType int
-	fieldName string
+	FieldName string
 	name      string
 	data      clapData
 }
@@ -116,7 +116,7 @@ func (c *command) DocName() string {
 	if cfgName, ok := c.data.getConfig("cmd_name"); ok {
 		return cfgName
 	}
-	return strings.ToLower(c.fieldName)
+	return strings.ToLower(c.FieldName)
 }
 
 func run(rootCmdTypeName, srcDir string) error {
@@ -143,7 +143,7 @@ func run(rootCmdTypeName, srcDir string) error {
 		// That gets passed as a fmt arg within the generated code when printing a
 		// command's usage. Therefore, we need a `%s` to show up wherever the root command
 		// name will appear in a usage message.
-		fieldName: "%[1]s",
+		FieldName: "%[1]s",
 		data:      data,
 	}
 	if err := b.addChildren(&root, rootStrct); err != nil {

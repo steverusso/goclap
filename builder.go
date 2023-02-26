@@ -8,8 +8,8 @@ import (
 )
 
 var helpOption = optInfo{
-	short: "h",
-	long:  "help",
+	Short: "h",
+	Long:  "help",
 	data:  clapData{blurb: "show this help message"},
 }
 
@@ -47,7 +47,7 @@ func (b *builder) addChildren(c *command, strct *ast.StructType) error {
 			subcmd := command{
 				parentNames: append(c.parentNames, c.DocName()),
 				TypeName:    idnt.Name,
-				fieldName:   fieldName,
+				FieldName:   fieldName,
 				data:        b.getCmdClapData(idnt.Name),
 			}
 			// Recursively build this subcommand from it's own struct type definition.
@@ -99,7 +99,7 @@ func (b *builder) addChildren(c *command, strct *ast.StructType) error {
 		c.Args = append(c.Args, argInfo{
 			data:      fieldDocs,
 			fieldType: fieldType,
-			fieldName: fieldName,
+			FieldName: fieldName,
 			name:      strings.ToLower(fieldName),
 		})
 	}
@@ -212,9 +212,9 @@ func (c *command) addOption(data clapData, fieldName string, typ int) error {
 	}
 	c.Opts = append(c.Opts, optInfo{
 		fieldType: typ,
-		fieldName: fieldName,
-		long:      long,
-		short:     short,
+		FieldName: fieldName,
+		Long:      long,
+		Short:     short,
 		data:      data,
 	})
 	return nil
