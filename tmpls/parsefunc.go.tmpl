@@ -47,7 +47,7 @@ func (c *{{ .TypeName }}) parse(args []string) {
 		{{- /* Add error handling for missing arguments that are required. */ -}}
 		{{- range $i, $arg := .RequiredArgs }}
 	if len(args) < {{ add $i 1 }} {
-		exitMissingArg(c, "{{ $arg.DocString }}")
+		exitMissingArg(c, "{{ $arg.DocName }}")
 	}
 		{{- end -}}
 

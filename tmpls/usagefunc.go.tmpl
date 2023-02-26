@@ -16,7 +16,7 @@ options:
 
 arguments:
 {{- range .Args }}
-   {{ printf "%-*s   %s" $w .DocString .Data.Blurb -}}
+   {{ printf "%-*s   %s" $w .DocName .Data.Blurb -}}
 {{ end -}}{{ end -}}
 {{ if .HasSubcmds }}
 {{- $w := .SubcmdNamesColWidth }}

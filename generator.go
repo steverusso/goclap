@@ -82,7 +82,7 @@ func (g *generator) generate(c *command) error {
 func (g *generator) genCmdUsageFunc(c *command) error {
 	err := g.usgFnTmpl.Execute(g.out, c)
 	if err != nil {
-		return fmt.Errorf("executing template: %w", err)
+		return err
 	}
 	return nil
 }
@@ -90,7 +90,7 @@ func (g *generator) genCmdUsageFunc(c *command) error {
 func (g *generator) genCmdParseFunc(c *command) error {
 	err := g.parseFnTmpl.Execute(g.out, c)
 	if err != nil {
-		return fmt.Errorf("executing template: %w", err)
+		return err
 	}
 	return nil
 }
@@ -121,7 +121,7 @@ func (c *command) UsageLines() []string {
 	argsSlot := ""
 	if c.HasArgs() {
 		for _, arg := range c.Args {
-			argsSlot += " " + arg.DocString()
+			argsSlot += " " + arg.DocName()
 		}
 	}
 	return []string{
@@ -142,7 +142,7 @@ func (c *command) OptNamesColWidth() int {
 func (c *command) ArgNamesColWidth() int {
 	w := 0
 	for _, a := range c.Args {
-		if l := len(a.DocString()); l > w {
+		if l := len(a.DocName()); l > w {
 			w = l
 		}
 	}
@@ -178,7 +178,7 @@ func (c *command) HasOptField() bool {
 	return false
 }
 
-func (arg *argInfo) DocString() string {
+func (arg *argInfo) DocName() string {
 	if arg.IsRequired() {
 		return "<" + arg.name + ">"
 	}
