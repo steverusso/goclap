@@ -178,11 +178,6 @@ func (c *command) HasOptField() bool {
 	return false
 }
 
-func (c *command) IsRoot() bool     { return c.FieldName == "%[1]s" }
-func (c *command) HasSubcmds() bool { return len(c.Subcmds) > 0 }
-func (c *command) HasOptions() bool { return len(c.Opts) > 0 }
-func (c *command) HasArgs() bool    { return len(c.Args) > 0 }
-
 func (arg *argInfo) DocString() string {
 	if arg.IsRequired() {
 		return "<" + arg.name + ">"
@@ -226,3 +221,8 @@ func (o *optInfo) QuotedPlainNames() string {
 	}
 	return fmt.Sprintf("%s%s%s", long, comma, short)
 }
+
+func (c *command) IsRoot() bool     { return c.FieldName == "%[1]s" }
+func (c *command) HasSubcmds() bool { return len(c.Subcmds) > 0 }
+func (c *command) HasOptions() bool { return len(c.Opts) > 0 }
+func (c *command) HasArgs() bool    { return len(c.Args) > 0 }
