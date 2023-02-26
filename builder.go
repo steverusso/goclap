@@ -8,9 +8,9 @@ import (
 )
 
 var helpOption = optInfo{
-	short: "h",
-	long:  "help",
-	data:  clapData{blurb: "show this help message"},
+	Short: "h",
+	Long:  "help",
+	Data:  clapData{Blurb: "show this help message"},
 }
 
 type builder struct {
@@ -25,7 +25,7 @@ func (b *builder) addChildren(c *command, strct *ast.StructType) error {
 			continue
 		}
 		fieldName := field.Names[0].Name
-		typeAndField := fmt.Sprintf("'%s.%s'", c.typeName, fieldName)
+		typeAndField := fmt.Sprintf("'%s.%s'", c.TypeName, fieldName)
 		if _, ok := field.Type.(*ast.StructType); ok {
 			warn("skipping %s (commands must be struct pointers)\n", typeAndField)
 			continue
@@ -45,17 +45,17 @@ func (b *builder) addChildren(c *command, strct *ast.StructType) error {
 			}
 			// The field is firmly considered a subcommand at this point.
 			subcmd := command{
-				parentNames: append(c.parentNames, c.docName()),
-				typeName:    idnt.Name,
-				fieldName:   fieldName,
-				data:        b.getCmdClapData(idnt.Name),
+				parentNames: append(c.parentNames, c.UsgName()),
+				TypeName:    idnt.Name,
+				FieldName:   fieldName,
+				Data:        b.getCmdClapData(idnt.Name),
 			}
 			// Recursively build this subcommand from it's own struct type definition.
 			err := b.addChildren(&subcmd, subStrct)
 			if err != nil {
 				return err
 			}
-			c.subcmds = append(c.subcmds, subcmd)
+			c.Subcmds = append(c.Subcmds, subcmd)
 			continue
 		}
 		// From now on, it's either an option or an argument which can only be basic types
@@ -65,7 +65,7 @@ func (b *builder) addChildren(c *command, strct *ast.StructType) error {
 			warn("skipping %s (looking for ident, unsure how to handle %T)\n", typeAndField, field.Type)
 			continue
 		}
-		fieldType := basicTypeByName(idnt.Name)
+		fieldType := basicTypeFromName(idnt.Name)
 		if fieldType == -1 {
 			warn("skipping %s: unsupported option or argument type '%s'\n", typeAndField, idnt.Name)
 			continue
@@ -96,18 +96,18 @@ func (b *builder) addChildren(c *command, strct *ast.StructType) error {
 		if fieldType == typBool {
 			return fmt.Errorf("%s: arguments cannot be type bool", typeAndField)
 		}
-		c.args = append(c.args, argInfo{
-			data:      fieldDocs,
-			fieldType: fieldType,
-			fieldName: fieldName,
+		c.Args = append(c.Args, argInfo{
+			Data:      fieldDocs,
+			FieldType: fieldType,
+			FieldName: fieldName,
 			name:      strings.ToLower(fieldName),
 		})
 	}
-	c.opts = append(c.opts, helpOption)
+	c.Opts = append(c.Opts, helpOption)
 	return nil
 }
 
-func basicTypeByName(name string) int {
+func basicTypeFromName(name string) basicType {
 	switch name {
 	case "bool":
 		return typBool
@@ -201,7 +201,7 @@ func parseOptNames(str string) (string, string, error) {
 	return long, short, nil
 }
 
-func (c *command) addOption(data clapData, fieldName string, typ int) error {
+func (c *command) addOption(data clapData, fieldName string, typ basicType) error {
 	names, ok := data.getConfig("opt")
 	if !ok {
 		return errors.New("adding option without a 'clap:opt' directive")
@@ -210,12 +210,12 @@ func (c *command) addOption(data clapData, fieldName string, typ int) error {
 	if err != nil {
 		return fmt.Errorf("parsing option names: %w", err)
 	}
-	c.opts = append(c.opts, optInfo{
-		fieldType: typ,
-		fieldName: fieldName,
-		long:      long,
-		short:     short,
-		data:      data,
+	c.Opts = append(c.Opts, optInfo{
+		FieldType: typ,
+		FieldName: fieldName,
+		Long:      long,
+		Short:     short,
+		Data:      data,
 	})
 	return nil
 }
@@ -252,7 +252,7 @@ func parseComments(cg *ast.CommentGroup) clapData {
 	}
 	for i := range lines {
 		if lines[i] == "" {
-			cd.blurb = strings.Join(lines[:i], " ")
+			cd.Blurb = strings.Join(lines[:i], " ")
 			break
 		}
 	}

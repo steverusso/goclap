@@ -10,10 +10,15 @@ import (
 	"time"
 )
 
+type basicType int
+
 const (
-	typBool = iota
+	typBool basicType = iota
 	typString
 )
+
+func (t basicType) IsBool() bool   { return t == typBool }
+func (t basicType) IsString() bool { return t == typString }
 
 type buildVersionInfo struct {
 	modVersion      string
@@ -68,7 +73,7 @@ func getBuildVersionInfo() buildVersionInfo {
 }
 
 type clapData struct {
-	blurb    string
+	Blurb    string
 	longDesc string
 	configs  []clapConfig
 }
@@ -89,34 +94,34 @@ func (d *clapData) getConfig(k string) (string, bool) {
 
 type command struct {
 	parentNames []string
-	fieldName   string
-	typeName    string
-	data        clapData
-	opts        []optInfo
-	args        []argInfo
-	subcmds     []command
+	FieldName   string
+	TypeName    string
+	Data        clapData
+	Opts        []optInfo
+	Args        []argInfo
+	Subcmds     []command
 }
 
 type optInfo struct {
-	fieldType int
-	fieldName string
-	long      string
-	short     string
-	data      clapData
+	FieldType basicType
+	FieldName string
+	Long      string
+	Short     string
+	Data      clapData
 }
 
 type argInfo struct {
-	fieldType int
-	fieldName string
+	FieldType basicType
+	FieldName string
 	name      string
-	data      clapData
+	Data      clapData
 }
 
-func (c *command) docName() string {
-	if cfgName, ok := c.data.getConfig("cmd_name"); ok {
+func (c *command) UsgName() string {
+	if cfgName, ok := c.Data.getConfig("cmd_name"); ok {
 		return cfgName
 	}
-	return strings.ToLower(c.fieldName)
+	return strings.ToLower(c.FieldName)
 }
 
 func run(rootCmdTypeName, srcDir string) error {
@@ -129,7 +134,7 @@ func run(rootCmdTypeName, srcDir string) error {
 	b := builder{pkg: parsedDir["main"]}
 
 	data := b.getCmdClapData(rootCmdTypeName)
-	if data.blurb == "" {
+	if data.Blurb == "" {
 		warn("no root command description provided\n")
 	}
 	rootStrct := b.findStruct(rootCmdTypeName)
@@ -137,14 +142,14 @@ func run(rootCmdTypeName, srcDir string) error {
 		return fmt.Errorf("could not find a struct type named '%s'", rootCmdTypeName)
 	}
 	root := command{
-		typeName: rootCmdTypeName,
+		TypeName: rootCmdTypeName,
 		// This is a bit of a hack due to the following: the "name" of the root command is
 		// actually the name of the program, which is the first argument in `os.Args`.
 		// That gets passed as a fmt arg within the generated code when printing a
 		// command's usage. Therefore, we need a `%s` to show up wherever the root command
 		// name will appear in a usage message.
-		fieldName: "%[1]s",
-		data:      data,
+		FieldName: "%[1]s",
+		Data:      data,
 	}
 	if err := b.addChildren(&root, rootStrct); err != nil {
 		return err
@@ -157,9 +162,17 @@ func run(rootCmdTypeName, srcDir string) error {
 	}
 	defer f.Close()
 
-	g := generator{out: f}
-	g.writeHeader(root.hasSubcmds())
-	g.generate(&root, true)
+	g, err := newGenerator(f)
+	if err != nil {
+		return fmt.Errorf("initializing generator: %w", err)
+	}
+	err = g.writeHeader(root.HasSubcmds())
+	if err != nil {
+		return err
+	}
+	if err := g.generate(&root); err != nil {
+		return fmt.Errorf("generating: %w", err)
+	}
 	return nil
 }
 
