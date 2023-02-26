@@ -68,7 +68,7 @@ func getBuildVersionInfo() buildVersionInfo {
 }
 
 type clapData struct {
-	blurb    string
+	Blurb    string
 	longDesc string
 	configs  []clapConfig
 }
@@ -91,7 +91,7 @@ type command struct {
 	parentNames []string
 	FieldName   string
 	TypeName    string
-	data        clapData
+	Data        clapData
 	Opts        []optInfo
 	Args        []argInfo
 	Subcmds     []command
@@ -102,18 +102,18 @@ type optInfo struct {
 	FieldName string
 	Long      string
 	Short     string
-	data      clapData
+	Data      clapData
 }
 
 type argInfo struct {
 	fieldType int
 	FieldName string
 	name      string
-	data      clapData
+	Data      clapData
 }
 
 func (c *command) DocName() string {
-	if cfgName, ok := c.data.getConfig("cmd_name"); ok {
+	if cfgName, ok := c.Data.getConfig("cmd_name"); ok {
 		return cfgName
 	}
 	return strings.ToLower(c.FieldName)
@@ -129,7 +129,7 @@ func run(rootCmdTypeName, srcDir string) error {
 	b := builder{pkg: parsedDir["main"]}
 
 	data := b.getCmdClapData(rootCmdTypeName)
-	if data.blurb == "" {
+	if data.Blurb == "" {
 		warn("no root command description provided\n")
 	}
 	rootStrct := b.findStruct(rootCmdTypeName)
@@ -144,7 +144,7 @@ func run(rootCmdTypeName, srcDir string) error {
 		// command's usage. Therefore, we need a `%s` to show up wherever the root command
 		// name will appear in a usage message.
 		FieldName: "%[1]s",
-		data:      data,
+		Data:      data,
 	}
 	if err := b.addChildren(&root, rootStrct); err != nil {
 		return err

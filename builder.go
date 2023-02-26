@@ -10,7 +10,7 @@ import (
 var helpOption = optInfo{
 	Short: "h",
 	Long:  "help",
-	data:  clapData{blurb: "show this help message"},
+	Data:  clapData{Blurb: "show this help message"},
 }
 
 type builder struct {
@@ -48,7 +48,7 @@ func (b *builder) addChildren(c *command, strct *ast.StructType) error {
 				parentNames: append(c.parentNames, c.DocName()),
 				TypeName:    idnt.Name,
 				FieldName:   fieldName,
-				data:        b.getCmdClapData(idnt.Name),
+				Data:        b.getCmdClapData(idnt.Name),
 			}
 			// Recursively build this subcommand from it's own struct type definition.
 			err := b.addChildren(&subcmd, subStrct)
@@ -97,7 +97,7 @@ func (b *builder) addChildren(c *command, strct *ast.StructType) error {
 			return fmt.Errorf("%s: arguments cannot be type bool", typeAndField)
 		}
 		c.Args = append(c.Args, argInfo{
-			data:      fieldDocs,
+			Data:      fieldDocs,
 			fieldType: fieldType,
 			FieldName: fieldName,
 			name:      strings.ToLower(fieldName),
@@ -215,7 +215,7 @@ func (c *command) addOption(data clapData, fieldName string, typ int) error {
 		FieldName: fieldName,
 		Long:      long,
 		Short:     short,
-		data:      data,
+		Data:      data,
 	})
 	return nil
 }
@@ -252,7 +252,7 @@ func parseComments(cg *ast.CommentGroup) clapData {
 	}
 	for i := range lines {
 		if lines[i] == "" {
-			cd.blurb = strings.Join(lines[:i], " ")
+			cd.Blurb = strings.Join(lines[:i], " ")
 			break
 		}
 	}

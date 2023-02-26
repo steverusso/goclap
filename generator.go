@@ -112,7 +112,7 @@ func (c *command) Parents() string {
 
 func (c *command) UsageLines() []string {
 	us := make([]string, 0, 2)
-	for _, cfg := range c.data.configs {
+	for _, cfg := range c.Data.configs {
 		if cfg.key == "cmd_usage" {
 			us = append(us, c.DocName()+" "+cfg.val)
 		}
@@ -135,10 +135,6 @@ func (c *command) UsageLines() []string {
 		fmt.Sprintf("%s%s%s%s", c.DocName(), optionsSlot, commandSlot, argsSlot),
 	}
 }
-
-func (c *command) Blurb() string { return c.data.blurb }
-func (o *optInfo) Blurb() string { return o.data.blurb }
-func (a *argInfo) Blurb() string { return a.data.blurb }
 
 func (c *command) OptNamesColWidth() int {
 	w := 0
@@ -201,7 +197,7 @@ func (arg *argInfo) DocString() string {
 }
 
 func (arg *argInfo) IsRequired() bool {
-	_, ok := arg.data.getConfig("arg_required")
+	_, ok := arg.Data.getConfig("arg_required")
 	return ok
 }
 

@@ -1,6 +1,6 @@
 
 func (*{{ .TypeName }}) printUsage(to *os.File) {
-	fmt.Fprintf(to, `{{ .Parents }}{{ .DocName }} - {{ .Blurb }}
+	fmt.Fprintf(to, `{{ .Parents }}{{ .DocName }} - {{ .Data.Blurb }}
 
 usage:{{ range .UsageLines }}
    {{ . }}{{ end }}
@@ -9,21 +9,21 @@ usage:{{ range .UsageLines }}
 
 options:
 {{- range .Opts }}
-   {{ printf "%-*s   %s" $w .DocNames .Blurb -}}
+   {{ printf "%-*s   %s" $w .DocNames .Data.Blurb -}}
 {{ end -}}{{ end -}}
 {{- if .HasArgs }}
 {{- $w := .ArgNamesColWidth }}
 
 arguments:
 {{- range .Args }}
-   {{ printf "%-*s   %s" $w .DocString .Blurb -}}
+   {{ printf "%-*s   %s" $w .DocString .Data.Blurb -}}
 {{ end -}}{{ end -}}
 {{ if .HasSubcmds }}
 {{- $w := .SubcmdNamesColWidth }}
 
 subcommands:
 {{- range .Subcmds }}
-   {{ printf "%-*s   %s" $w .DocName .Blurb -}}
+   {{ printf "%-*s   %s" $w .DocName .Data.Blurb -}}
 {{ end -}}{{ end }}
 {{- if and .IsRoot .HasSubcmds }}
 
