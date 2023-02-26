@@ -34,7 +34,7 @@ func (c *{{ .TypeName }}) parse(args []string) {
 		{{ end -}}
 
 		{{- if .IsBool }}
-			c.{{ .FieldName }} = parseBool(eqv)
+			c.{{ .FieldName }} = clapParseBool(eqv)
 		{{- end -}}
 	{{ end }}
 		}

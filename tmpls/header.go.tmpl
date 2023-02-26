@@ -38,7 +38,7 @@ func exitUsgGood(u clapUsagePrinter) {
 	os.Exit(0)
 }
 
-func parseBool(s string) bool {
+func clapParseBool(s string) bool {
 	if s == "" || s == "true" {
 		return true
 	}
