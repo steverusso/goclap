@@ -22,7 +22,8 @@ func exitMissingArg(u clapUsagePrinter, name string) {
 	os.Exit(1)
 }
 
-{{ if .HasSubcmds -}}
+{{- if .HasSubcmds }}
+
 func exitUnknownCmd(u clapUsagePrinter, name string) {
 	claperr("unknown command '%%s'\n", name)
 	u.printUsage(os.Stderr)
