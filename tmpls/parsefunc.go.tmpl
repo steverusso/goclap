@@ -49,6 +49,9 @@ func (c *{{ .TypeName }}) parse(args []string) {
 			}
 		{{- end -}}
 	{{ end }}
+		default:
+			claperr("unknown option '%s'\n", k)
+			os.Exit(1)
 		}
 	}
 
