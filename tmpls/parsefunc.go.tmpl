@@ -33,7 +33,7 @@ func (c *{{ .TypeName }}) parse(args []string) {
 			{{- continue }}
 		{{ end -}}
 
-		{{- if .IsBool }}
+		{{- if .FieldType.IsBool }}
 			c.{{ .FieldName }} = clapParseBool(eqv)
 		{{- end -}}
 	{{ end }}
@@ -60,7 +60,7 @@ func (c *{{ .TypeName }}) parse(args []string) {
 			{{- end -}}
 
 			{{- /* Parse positional args based on their type. */ -}}
-			{{- if $arg.IsString }}
+			{{- if $arg.FieldType.IsString }}
 	c.{{ $arg.FieldName }} = args[{{ $i }}]
 			{{- end -}}
 

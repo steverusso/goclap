@@ -10,10 +10,15 @@ import (
 	"time"
 )
 
+type basicType int
+
 const (
-	typBool = iota
+	typBool basicType = iota
 	typString
 )
+
+func (t basicType) IsBool() bool   { return t == typBool }
+func (t basicType) IsString() bool { return t == typString }
 
 type buildVersionInfo struct {
 	modVersion      string
@@ -98,7 +103,7 @@ type command struct {
 }
 
 type optInfo struct {
-	fieldType int
+	FieldType basicType
 	FieldName string
 	Long      string
 	Short     string
@@ -106,7 +111,7 @@ type optInfo struct {
 }
 
 type argInfo struct {
-	fieldType int
+	FieldType basicType
 	FieldName string
 	name      string
 	Data      clapData

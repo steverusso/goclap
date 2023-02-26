@@ -98,7 +98,7 @@ func (b *builder) addChildren(c *command, strct *ast.StructType) error {
 		}
 		c.Args = append(c.Args, argInfo{
 			Data:      fieldDocs,
-			fieldType: fieldType,
+			FieldType: fieldType,
 			FieldName: fieldName,
 			name:      strings.ToLower(fieldName),
 		})
@@ -107,7 +107,7 @@ func (b *builder) addChildren(c *command, strct *ast.StructType) error {
 	return nil
 }
 
-func basicTypeByName(name string) int {
+func basicTypeByName(name string) basicType {
 	switch name {
 	case "bool":
 		return typBool
@@ -201,7 +201,7 @@ func parseOptNames(str string) (string, string, error) {
 	return long, short, nil
 }
 
-func (c *command) addOption(data clapData, fieldName string, typ int) error {
+func (c *command) addOption(data clapData, fieldName string, typ basicType) error {
 	names, ok := data.getConfig("opt")
 	if !ok {
 		return errors.New("adding option without a 'clap:opt' directive")
@@ -211,7 +211,7 @@ func (c *command) addOption(data clapData, fieldName string, typ int) error {
 		return fmt.Errorf("parsing option names: %w", err)
 	}
 	c.Opts = append(c.Opts, optInfo{
-		fieldType: typ,
+		FieldType: typ,
 		FieldName: fieldName,
 		Long:      long,
 		Short:     short,

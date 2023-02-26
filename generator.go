@@ -95,12 +95,6 @@ func (g *generator) genCmdParseFunc(c *command) error {
 	return nil
 }
 
-func (o *optInfo) IsBool() bool { return o.fieldType == typBool }
-
-func (a *argInfo) IsString() bool { return a.fieldType == typString }
-
-func (c *command) IsRoot() bool { return c.FieldName == "%[1]s" }
-
 func (c *command) Parents() string {
 	s := ""
 	for i := range c.parentNames {
@@ -184,6 +178,7 @@ func (c *command) HasOptField() bool {
 	return false
 }
 
+func (c *command) IsRoot() bool     { return c.FieldName == "%[1]s" }
 func (c *command) HasSubcmds() bool { return len(c.Subcmds) > 0 }
 func (c *command) HasOptions() bool { return len(c.Opts) > 0 }
 func (c *command) HasArgs() bool    { return len(c.Args) > 0 }
