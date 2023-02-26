@@ -169,9 +169,18 @@ func (c *command) RequiredArgs() []argInfo {
 	return reqs
 }
 
-func (c *command) HasOptField() bool {
+func (c *command) NeedsVarEqv() bool {
 	for _, o := range c.Opts {
 		if o.Long != "help" {
+			return true
+		}
+	}
+	return false
+}
+
+func (c *command) NeedsVarHasEq() bool {
+	for _, o := range c.Opts {
+		if o.FieldType.IsString() {
 			return true
 		}
 	}

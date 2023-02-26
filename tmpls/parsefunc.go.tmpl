@@ -18,11 +18,13 @@ func (c *{{ .TypeName }}) parse(args []string) {
 			break
 		}
 
-		{{- if .HasOptField }}
+		{{- if .NeedsVarHasEq }}
+		k, eqv, hasEq := optParts(args[i][1:])
+		{{- else if .NeedsVarEqv }}
 		k, eqv, _ := optParts(args[i][1:])
-		{{ else }}
+		{{- else }}
 		k, _, _ := optParts(args[i][1:])
-		{{ end -}}
+		{{- end }}
 
 		switch k {
 	{{- range .Opts }}
@@ -35,6 +37,16 @@ func (c *{{ .TypeName }}) parse(args []string) {
 
 		{{- if .FieldType.IsBool }}
 			c.{{ .FieldName }} = clapParseBool(eqv)
+		{{- else if .FieldType.IsString }}
+			if hasEq {
+				c.{{ .FieldName }} = eqv
+			} else if i == len(args)-1 {
+				claperr("string option '%s' needs a value\n", k)
+				os.Exit(1)
+			} else {
+				i++
+				c.{{ .FieldName }} = args[i]
+			}
 		{{- end -}}
 	{{ end }}
 		}
