@@ -4,7 +4,6 @@ import (
 	_ "embed"
 	"fmt"
 	"os"
-	"strings"
 	"text/template"
 )
 
@@ -103,9 +102,9 @@ func (a *argInfo) IsString() bool { return a.fieldType == typString }
 func (c *command) IsRoot() bool { return c.FieldName == "%[1]s" }
 
 func (c *command) Parents() string {
-	s := strings.Join(c.parentNames, " ")
-	if s != "" {
-		s += " "
+	s := ""
+	for i := range c.parentNames {
+		s += c.parentNames[i] + " "
 	}
 	return s
 }
