@@ -65,7 +65,7 @@ func (b *builder) addChildren(c *command, strct *ast.StructType) error {
 			warn("skipping %s (looking for ident, unsure how to handle %T)\n", typeAndField, field.Type)
 			continue
 		}
-		fieldType := basicTypeByName(idnt.Name)
+		fieldType := basicTypeFromName(idnt.Name)
 		if fieldType == -1 {
 			warn("skipping %s: unsupported option or argument type '%s'\n", typeAndField, idnt.Name)
 			continue
@@ -107,7 +107,7 @@ func (b *builder) addChildren(c *command, strct *ast.StructType) error {
 	return nil
 }
 
-func basicTypeByName(name string) basicType {
+func basicTypeFromName(name string) basicType {
 	switch name {
 	case "bool":
 		return typBool
