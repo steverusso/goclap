@@ -97,12 +97,12 @@ type command struct {
 	FieldName   string
 	TypeName    string
 	Data        clapData
-	Opts        []optInfo
-	Args        []argInfo
+	Opts        []option
+	Args        []argument
 	Subcmds     []command
 }
 
-type optInfo struct {
+type option struct {
 	FieldType basicType
 	FieldName string
 	Long      string
@@ -110,7 +110,7 @@ type optInfo struct {
 	Data      clapData
 }
 
-type argInfo struct {
+type argument struct {
 	FieldType basicType
 	FieldName string
 	name      string
@@ -189,7 +189,7 @@ func main() {
 	typeName := os.Args[1]
 	srcDir := "."
 	if err := run(typeName, srcDir); err != nil {
-		fmt.Fprintf(os.Stderr, "error: %v", err)
+		fmt.Fprintf(os.Stderr, "error: %v\n", err)
 		os.Exit(1)
 	}
 }

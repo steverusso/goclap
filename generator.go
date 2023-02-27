@@ -159,8 +159,8 @@ func (c *command) SubcmdNamesColWidth() int {
 	return w
 }
 
-func (c *command) RequiredArgs() []argInfo {
-	reqs := make([]argInfo, 0, len(c.Args))
+func (c *command) RequiredArgs() []argument {
+	reqs := make([]argument, 0, len(c.Args))
 	for _, arg := range c.Args {
 		if arg.IsRequired() {
 			reqs = append(reqs, arg)
@@ -187,19 +187,19 @@ func (c *command) NeedsVarHasEq() bool {
 	return false
 }
 
-func (arg *argInfo) UsgName() string {
+func (arg *argument) UsgName() string {
 	if arg.IsRequired() {
 		return "<" + arg.name + ">"
 	}
 	return "[" + arg.name + "]"
 }
 
-func (arg *argInfo) IsRequired() bool {
+func (arg *argument) IsRequired() bool {
 	_, ok := arg.Data.getConfig("arg_required")
 	return ok
 }
 
-func (o *optInfo) UsgNames() string {
+func (o *option) UsgNames() string {
 	long := o.Long
 	if long != "" {
 		long = "--" + long
@@ -215,7 +215,7 @@ func (o *optInfo) UsgNames() string {
 	return fmt.Sprintf("%s%s%s", long, comma, short)
 }
 
-func (o *optInfo) QuotedPlainNames() string {
+func (o *option) QuotedPlainNames() string {
 	long := o.Long
 	if long != "" {
 		long = "\"" + long + "\""
