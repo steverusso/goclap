@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-var helpOption = optInfo{
+var helpOption = option{
 	Short: "h",
 	Long:  "help",
 	Data:  clapData{Blurb: "show this help message"},
@@ -96,7 +96,7 @@ func (b *builder) addChildren(c *command, strct *ast.StructType) error {
 		if fieldType == typBool {
 			return fmt.Errorf("%s: arguments cannot be type bool", typeAndField)
 		}
-		c.Args = append(c.Args, argInfo{
+		c.Args = append(c.Args, argument{
 			Data:      fieldDocs,
 			FieldType: fieldType,
 			FieldName: fieldName,
@@ -210,7 +210,7 @@ func (c *command) addOption(data clapData, fieldName string, typ basicType) erro
 	if err != nil {
 		return fmt.Errorf("parsing option names: %w", err)
 	}
-	c.Opts = append(c.Opts, optInfo{
+	c.Opts = append(c.Opts, option{
 		FieldType: typ,
 		FieldName: fieldName,
 		Long:      long,
