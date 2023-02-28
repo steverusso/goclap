@@ -10,6 +10,24 @@ import (
 	"time"
 )
 
+//go:generate goclap goclap
+
+// pre-build tool to generate command line argument parsing code from Go comments.
+type goclap struct {
+	// print version info and exit
+	//
+	// clap:opt version,v
+	version bool
+	// the root command struct name
+	//
+	// clap:opt type
+	rootCmdType string
+	// directory of source files to parse (default ".")
+	//
+	// clap:opt srcdir
+	srcDir string
+}
+
 type basicType int
 
 const (
@@ -25,24 +43,6 @@ type buildVersionInfo struct {
 	commitHash      string
 	commitDate      string
 	hasLocalChanges bool
-}
-
-func (v buildVersionInfo) String() string {
-	hash := v.commitHash
-	if len(hash) > 12 {
-		hash = v.commitHash[:12]
-	}
-	s := v.modVersion
-	if v.commitDate != "" {
-		s += "-" + v.commitDate
-	}
-	if hash != "" {
-		s += "-" + hash
-	}
-	if v.hasLocalChanges {
-		s += "-(with unstaged changes)"
-	}
-	return s
 }
 
 func getBuildVersionInfo() buildVersionInfo {
@@ -70,6 +70,24 @@ func getBuildVersionInfo() buildVersionInfo {
 		}
 	}
 	return v
+}
+
+func (v buildVersionInfo) String() string {
+	hash := v.commitHash
+	if len(hash) > 12 {
+		hash = v.commitHash[:12]
+	}
+	s := v.modVersion
+	if v.commitDate != "" {
+		s += "-" + v.commitDate
+	}
+	if hash != "" {
+		s += "-" + hash
+	}
+	if v.hasLocalChanges {
+		s += "-(with unstaged changes)"
+	}
+	return s
 }
 
 type clapData struct {
@@ -133,13 +151,13 @@ func run(rootCmdTypeName, srcDir string) error {
 
 	b := builder{pkg: parsedDir["main"]}
 
-	data := b.getCmdClapData(rootCmdTypeName)
-	if data.Blurb == "" {
-		warn("no root command description provided\n")
-	}
 	rootStrct := b.findStruct(rootCmdTypeName)
 	if rootStrct == nil {
 		return fmt.Errorf("could not find a struct type named '%s'", rootCmdTypeName)
+	}
+	data := b.getCmdClapData(rootCmdTypeName)
+	if data.Blurb == "" {
+		warn("no root command description provided\n")
 	}
 	root := command{
 		TypeName: rootCmdTypeName,
@@ -181,15 +199,28 @@ func warn(format string, a ...any) {
 }
 
 func main() {
-	if len(os.Args) <= 1 {
-		fmt.Fprintln(os.Stderr, "error: no root command type provided")
-		fmt.Fprintln(os.Stderr, "usage: goclap <type>")
+	c := goclap{}
+	c.parse(os.Args)
+
+	if c.version {
+		fmt.Println(getBuildVersionInfo())
+		return
+	}
+
+	typeName := c.rootCmdType
+	if typeName == "" {
+		claperr("no root command type provided\n")
+		c.printUsage(os.Stderr)
 		os.Exit(1)
 	}
-	typeName := os.Args[1]
+
 	srcDir := "."
+	if c.srcDir != "" {
+		srcDir = c.srcDir
+	}
+
 	if err := run(typeName, srcDir); err != nil {
-		fmt.Fprintf(os.Stderr, "error: %v\n", err)
+		claperr("%v\n", err)
 		os.Exit(1)
 	}
 }
