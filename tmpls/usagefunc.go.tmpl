@@ -4,13 +4,21 @@ func (*{{ .TypeName }}) printUsage(to *os.File) {
 
 usage:{{ range .UsageLines }}
    {{ . }}{{ end }}
+
 {{- if .HasOptions }}
-{{- $w := .OptNamesColWidth }}
+	{{- $nameWidth := .OptNameColWidth }}
+	{{- $argNameWidth := .OptArgNameColWidth }}
 
 options:
-{{- range .Opts }}
-   {{ printf "%-*s   %s" $w .UsgNames .Data.Blurb -}}
-{{ end -}}{{ end -}}
+	{{- range .Opts }}
+		{{- if eq $argNameWidth 0 -}}
+			{{- printf "\n   %-*s   %s" $nameWidth .UsgNames .Data.Blurb -}}
+		{{- else -}}
+			{{- printf "\n   %-*s %-*s   %s" $nameWidth .UsgNames $argNameWidth .UsgArgName .Data.Blurb -}}
+		{{- end -}}
+	{{ end -}}
+{{ end -}}
+
 {{- if .HasArgs }}
 {{- $w := .ArgNamesColWidth }}
 
