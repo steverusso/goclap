@@ -125,7 +125,7 @@ type option struct {
 	FieldName string
 	Long      string
 	Short     string
-	Data      clapData
+	data      clapData
 }
 
 type argument struct {

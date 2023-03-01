@@ -10,7 +10,7 @@ import (
 var helpOption = option{
 	Short: "h",
 	Long:  "help",
-	Data:  clapData{Blurb: "show this help message"},
+	data:  clapData{Blurb: "show this help message"},
 }
 
 type builder struct {
@@ -215,7 +215,7 @@ func (c *command) addOption(data clapData, fieldName string, typ basicType) erro
 		FieldName: fieldName,
 		Long:      long,
 		Short:     short,
-		Data:      data,
+		data:      data,
 	})
 	return nil
 }

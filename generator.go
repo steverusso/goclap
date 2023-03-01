@@ -4,6 +4,7 @@ import (
 	_ "embed"
 	"fmt"
 	"os"
+	"strings"
 	"text/template"
 )
 
@@ -125,21 +126,36 @@ func (c *command) UsageLines() []string {
 		}
 	}
 	return []string{
-		fmt.Sprintf("%s%s%s%s", c.UsgName(), optionsSlot, commandSlot, argsSlot),
+		c.UsgName() + optionsSlot + commandSlot + argsSlot,
 	}
 }
 
-func (c *command) OptNamesColWidth() int {
+func (c *command) OptNameColWidth() int {
 	w := 0
 	for _, o := range c.Opts {
-		if l := len(o.UsgNames()); l > w {
+		if l := len(o.usgNames()); l > w {
 			w = l
 		}
 	}
 	return w
 }
 
-func (c *command) ArgNamesColWidth() int {
+// OptArgNameColWidth returns the length of the longest option argument name out of this
+// command's options. In a usage message, the argument name column is in between the
+// option's name(s) and description columns.
+func (c *command) OptArgNameColWidth() int {
+	w := 0
+	for _, o := range c.Opts {
+		if !o.FieldType.IsBool() {
+			if l := len(o.usgArgName()); l > w {
+				w = l
+			}
+		}
+	}
+	return w
+}
+
+func (c *command) ArgNameColWidth() int {
 	w := 0
 	for _, a := range c.Args {
 		if l := len(a.UsgName()); l > w {
@@ -149,7 +165,7 @@ func (c *command) ArgNamesColWidth() int {
 	return w
 }
 
-func (c *command) SubcmdNamesColWidth() int {
+func (c *command) SubcmdNameColWidth() int {
 	w := 0
 	for _, sc := range c.Subcmds {
 		if l := len(sc.UsgName()); l > w {
@@ -199,20 +215,45 @@ func (arg *argument) IsRequired() bool {
 	return ok
 }
 
-func (o *option) UsgNames() string {
+// Usg returns this option's usage message text given how wide the name and argument name
+// columns should be.
+func (o *option) Usg(nameWidth, argNameWidth int) string {
+	var s strings.Builder
+	fmt.Fprintf(&s, "%-*s", nameWidth, o.usgNames())
+	if argNameWidth != 0 {
+		fmt.Fprintf(&s, " %-*s", argNameWidth, o.usgArgName())
+	}
+	fmt.Fprint(&s, "   ", o.data.Blurb)
+	return s.String()
+}
+
+// usgArgName returns the usage text of an option argument for non-boolean options. For
+// example, if there's a string option named `file`, the usage might look something like
+// `--file <arg>` where "<arg>" is the usage argument name text.
+func (o *option) usgArgName() string {
+	if o.FieldType.IsBool() {
+		return ""
+	}
+	if name, ok := o.data.getConfig("opt_arg_name"); ok {
+		return "<" + name + ">"
+	}
+	return "<arg>"
+}
+
+func (o *option) usgNames() string {
 	long := o.Long
 	if long != "" {
 		long = "--" + long
 	}
-	short := o.Short
-	if short != "" {
-		short = "-" + short
+	short := "  "
+	if o.Short != "" {
+		short = "-" + o.Short
 	}
-	comma := ""
+	comma := "  "
 	if o.Long != "" && o.Short != "" {
 		comma = ", "
 	}
-	return fmt.Sprintf("%s%s%s", long, comma, short)
+	return short + comma + long
 }
 
 func (o *option) QuotedPlainNames() string {
@@ -228,7 +269,7 @@ func (o *option) QuotedPlainNames() string {
 	if o.Long != "" && o.Short != "" {
 		comma = ", "
 	}
-	return fmt.Sprintf("%s%s%s", long, comma, short)
+	return long + comma + short
 }
 
 func (c *command) IsRoot() bool     { return c.FieldName == "%[1]s" }
