@@ -9,8 +9,8 @@ usage:{{ range .UsageLines }}
 	{{- $nameWidth := .OptNameColWidth }}
 	{{- $argNameWidth := .OptArgNameColWidth }}
 
-options:
-	{{- range .Opts }}{{ .Usg $nameWidth $argNameWidth }}{{ end -}}
+options:{{ range .Opts }}
+   {{ .Usg $nameWidth $argNameWidth }}{{ end -}}
 {{ end -}}
 
 {{- if .HasArgs }}

@@ -4,6 +4,7 @@ import (
 	_ "embed"
 	"fmt"
 	"os"
+	"strings"
 	"text/template"
 )
 
@@ -217,10 +218,13 @@ func (arg *argument) IsRequired() bool {
 // Usg returns this option's usage message text given how wide the name and argument name
 // columns should be.
 func (o *option) Usg(nameWidth, argNameWidth int) string {
-	if argNameWidth == 0 {
-		return fmt.Sprintf("\n   %-*s   %s", nameWidth, o.usgNames(), o.data.Blurb)
+	var s strings.Builder
+	fmt.Fprintf(&s, "%-*s", nameWidth, o.usgNames())
+	if argNameWidth != 0 {
+		fmt.Fprintf(&s, " %-*s", argNameWidth, o.usgArgName())
 	}
-	return fmt.Sprintf("\n   %-*s %-*s   %s", nameWidth, o.usgNames(), argNameWidth, o.usgArgName(), o.data.Blurb)
+	fmt.Fprint(&s, "   ", o.data.Blurb)
+	return s.String()
 }
 
 // usgArgName returns the usage text of an option argument for non-boolean options. For
