@@ -147,7 +147,18 @@ func (c *command) UsgName() string {
 	return strings.ToLower(c.FieldName)
 }
 
-func run(rootCmdTypeName, srcDir string) error {
+func gen(c *goclap) error {
+	rootCmdTypeName := c.rootCmdType
+	if rootCmdTypeName == "" {
+		claperr("no root command type provided\n")
+		c.printUsage(os.Stderr)
+		os.Exit(1)
+	}
+
+	srcDir := "."
+	if c.srcDir != "" {
+		srcDir = c.srcDir
+	}
 	fset := token.NewFileSet() // positions are relative to fset
 	parsedDir, err := parser.ParseDir(fset, srcDir, nil, parser.ParseComments)
 	if err != nil {
@@ -191,6 +202,9 @@ func run(rootCmdTypeName, srcDir string) error {
 	}
 
 	outName := "./clap.go"
+	if c.outFilePath != "" {
+		outName = c.outFilePath
+	}
 	f, err := os.OpenFile(outName, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o644)
 	if err != nil {
 		return fmt.Errorf("opening '%s': %w", outName, err)
@@ -216,19 +230,7 @@ func main() {
 		return
 	}
 
-	typeName := c.rootCmdType
-	if typeName == "" {
-		claperr("no root command type provided\n")
-		c.printUsage(os.Stderr)
-		os.Exit(1)
-	}
-
-	srcDir := "."
-	if c.srcDir != "" {
-		srcDir = c.srcDir
-	}
-
-	if err := run(typeName, srcDir); err != nil {
+	if err := gen(&c); err != nil {
 		claperr("%v\n", err)
 		os.Exit(1)
 	}
