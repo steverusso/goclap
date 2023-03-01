@@ -218,9 +218,9 @@ func (arg *argument) IsRequired() bool {
 // columns should be.
 func (o *option) Usg(nameWidth, argNameWidth int) string {
 	if argNameWidth == 0 {
-		return fmt.Sprintf("\n   %-*s   %s", nameWidth, o.usgNames(), o.Data.Blurb)
+		return fmt.Sprintf("\n   %-*s   %s", nameWidth, o.usgNames(), o.data.Blurb)
 	}
-	return fmt.Sprintf("\n   %-*s %-*s   %s", nameWidth, o.usgNames(), argNameWidth, o.usgArgName(), o.Data.Blurb)
+	return fmt.Sprintf("\n   %-*s %-*s   %s", nameWidth, o.usgNames(), argNameWidth, o.usgArgName(), o.data.Blurb)
 }
 
 // usgArgName returns the usage text of an option argument for non-boolean options. For
@@ -230,7 +230,7 @@ func (o *option) usgArgName() string {
 	if o.FieldType.IsBool() {
 		return ""
 	}
-	if name, ok := o.Data.getConfig("opt_arg_name"); ok {
+	if name, ok := o.data.getConfig("opt_arg_name"); ok {
 		return "<" + name + ">"
 	}
 	return "<arg>"
