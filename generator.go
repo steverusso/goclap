@@ -139,13 +139,6 @@ func (c *command) OptNameColWidth() int {
 	return w
 }
 
-func (o *option) Usg(nameWidth, argNameWidth int) string {
-	if argNameWidth == 0 {
-		return fmt.Sprintf("\n   %-*s   %s", nameWidth, o.usgNames(), o.Data.Blurb)
-	}
-	return fmt.Sprintf("\n   %-*s %-*s   %s", nameWidth, o.usgNames(), argNameWidth, o.usgArgName(), o.Data.Blurb)
-}
-
 // OptArgNameColWidth returns the length of the longest option argument name out of this
 // command's options. In a usage message, the argument name column is in between the
 // option's name(s) and description columns.
@@ -219,6 +212,15 @@ func (arg *argument) UsgName() string {
 func (arg *argument) IsRequired() bool {
 	_, ok := arg.Data.getConfig("arg_required")
 	return ok
+}
+
+// Usg returns this option's usage message text given how wide the name and argument name
+// columns should be.
+func (o *option) Usg(nameWidth, argNameWidth int) string {
+	if argNameWidth == 0 {
+		return fmt.Sprintf("\n   %-*s   %s", nameWidth, o.usgNames(), o.Data.Blurb)
+	}
+	return fmt.Sprintf("\n   %-*s %-*s   %s", nameWidth, o.usgNames(), argNameWidth, o.usgArgName(), o.Data.Blurb)
 }
 
 // usgArgName returns the usage text of an option argument for non-boolean options. For
