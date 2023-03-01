@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-//go:generate goclap goclap
+//go:generate goclap -type goclap
 
 // pre-build tool to generate command line argument parsing code from Go comments.
 type goclap struct {
@@ -29,7 +29,7 @@ type goclap struct {
 	srcDir string
 	// output file path (default "./clap.go")
 	//
-	// clap:opt out
+	// clap:opt out,o
 	outFilePath string
 }
 
