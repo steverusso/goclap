@@ -10,24 +10,18 @@ usage:{{ range .UsageLines }}
 	{{- $argNameWidth := .OptArgNameColWidth }}
 
 options:
-	{{- range .Opts }}
-		{{- if eq $argNameWidth 0 -}}
-			{{- printf "\n   %-*s   %s" $nameWidth .UsgNames .Data.Blurb -}}
-		{{- else -}}
-			{{- printf "\n   %-*s %-*s   %s" $nameWidth .UsgNames $argNameWidth .UsgArgName .Data.Blurb -}}
-		{{- end -}}
-	{{ end -}}
+	{{- range .Opts }}{{ .Usg $nameWidth $argNameWidth }}{{ end -}}
 {{ end -}}
 
 {{- if .HasArgs }}
-{{- $w := .ArgNamesColWidth }}
+{{- $w := .ArgNameColWidth }}
 
 arguments:
 {{- range .Args }}
    {{ printf "%-*s   %s" $w .UsgName .Data.Blurb -}}
 {{ end -}}{{ end -}}
 {{ if .HasSubcmds }}
-{{- $w := .SubcmdNamesColWidth }}
+{{- $w := .SubcmdNameColWidth }}
 
 subcommands:
 {{- range .Subcmds }}

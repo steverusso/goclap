@@ -139,6 +139,13 @@ func (c *command) OptNameColWidth() int {
 	return w
 }
 
+func (o *option) Usg(nameWidth, argNameWidth int) string {
+	if argNameWidth == 0 {
+		return fmt.Sprintf("\n   %-*s   %s", nameWidth, o.UsgNames(), o.Data.Blurb)
+	}
+	return fmt.Sprintf("\n   %-*s %-*s   %s", nameWidth, o.UsgNames(), argNameWidth, o.UsgArgName(), o.Data.Blurb)
+}
+
 // OptArgNameColWidth returns the length of the longest option argument name out of this
 // command's options. In a usage message, the argument name column is in between the
 // option's name(s) and description columns.
@@ -154,7 +161,7 @@ func (c *command) OptArgNameColWidth() int {
 	return w
 }
 
-func (c *command) ArgNamesColWidth() int {
+func (c *command) ArgNameColWidth() int {
 	w := 0
 	for _, a := range c.Args {
 		if l := len(a.UsgName()); l > w {
@@ -164,7 +171,7 @@ func (c *command) ArgNamesColWidth() int {
 	return w
 }
 
-func (c *command) SubcmdNamesColWidth() int {
+func (c *command) SubcmdNameColWidth() int {
 	w := 0
 	for _, sc := range c.Subcmds {
 		if l := len(sc.UsgName()); l > w {
