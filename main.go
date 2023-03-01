@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"go/parser"
 	"go/token"
+	"io"
 	"os"
 	"runtime/debug"
 	"strings"
@@ -173,14 +174,7 @@ func run(rootCmdTypeName, srcDir string) error {
 		return err
 	}
 
-	outName := "./clap.go"
-	f, err := os.OpenFile(outName, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o644)
-	if err != nil {
-		return fmt.Errorf("opening '%s': %w", outName, err)
-	}
-	defer f.Close()
-
-	g, err := newGenerator(f)
+	g, err := newGenerator()
 	if err != nil {
 		return fmt.Errorf("initializing generator: %w", err)
 	}
@@ -190,6 +184,17 @@ func run(rootCmdTypeName, srcDir string) error {
 	}
 	if err := g.generate(&root); err != nil {
 		return fmt.Errorf("generating: %w", err)
+	}
+
+	outName := "./clap.go"
+	f, err := os.OpenFile(outName, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o644)
+	if err != nil {
+		return fmt.Errorf("opening '%s': %w", outName, err)
+	}
+	defer f.Close()
+
+	if _, err := io.Copy(f, &g.buf); err != nil {
+		return fmt.Errorf("copying buffer to output file: %w", err)
 	}
 	return nil
 }
