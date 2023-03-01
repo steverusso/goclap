@@ -132,7 +132,7 @@ func (c *command) UsageLines() []string {
 func (c *command) OptNameColWidth() int {
 	w := 0
 	for _, o := range c.Opts {
-		if l := len(o.UsgNames()); l > w {
+		if l := len(o.usgNames()); l > w {
 			w = l
 		}
 	}
@@ -141,9 +141,9 @@ func (c *command) OptNameColWidth() int {
 
 func (o *option) Usg(nameWidth, argNameWidth int) string {
 	if argNameWidth == 0 {
-		return fmt.Sprintf("\n   %-*s   %s", nameWidth, o.UsgNames(), o.Data.Blurb)
+		return fmt.Sprintf("\n   %-*s   %s", nameWidth, o.usgNames(), o.Data.Blurb)
 	}
-	return fmt.Sprintf("\n   %-*s %-*s   %s", nameWidth, o.UsgNames(), argNameWidth, o.UsgArgName(), o.Data.Blurb)
+	return fmt.Sprintf("\n   %-*s %-*s   %s", nameWidth, o.usgNames(), argNameWidth, o.usgArgName(), o.Data.Blurb)
 }
 
 // OptArgNameColWidth returns the length of the longest option argument name out of this
@@ -153,7 +153,7 @@ func (c *command) OptArgNameColWidth() int {
 	w := 0
 	for _, o := range c.Opts {
 		if !o.FieldType.IsBool() {
-			if l := len(o.UsgArgName()); l > w {
+			if l := len(o.usgArgName()); l > w {
 				w = l
 			}
 		}
@@ -221,10 +221,10 @@ func (arg *argument) IsRequired() bool {
 	return ok
 }
 
-// UsgArgName returns the usage text of an option argument for non-boolean options. For
+// usgArgName returns the usage text of an option argument for non-boolean options. For
 // example, if there's a string option named `file`, the usage might look something like
 // `--file <arg>` where "<arg>" is the usage argument name text.
-func (o *option) UsgArgName() string {
+func (o *option) usgArgName() string {
 	if o.FieldType.IsBool() {
 		return ""
 	}
@@ -234,7 +234,7 @@ func (o *option) UsgArgName() string {
 	return "<arg>"
 }
 
-func (o *option) UsgNames() string {
+func (o *option) usgNames() string {
 	long := o.Long
 	if long != "" {
 		long = "--" + long
