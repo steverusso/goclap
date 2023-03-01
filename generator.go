@@ -1,9 +1,9 @@
 package main
 
 import (
+	"bytes"
 	_ "embed"
 	"fmt"
-	"os"
 	"strings"
 	"text/template"
 )
@@ -24,12 +24,12 @@ var parseFuncs = template.FuncMap{
 }
 
 type generator struct {
-	out         *os.File
+	buf         bytes.Buffer
 	usgFnTmpl   *template.Template
 	parseFnTmpl *template.Template
 }
 
-func newGenerator(out *os.File) (generator, error) {
+func newGenerator() (generator, error) {
 	usgFnTmpl, err := template.New("usagefunc").Parse(usgFnTmplText)
 	if err != nil {
 		return generator{}, fmt.Errorf("parsing template: %w", err)
@@ -39,7 +39,6 @@ func newGenerator(out *os.File) (generator, error) {
 		return generator{}, fmt.Errorf("parsing template: %w", err)
 	}
 	return generator{
-		out:         out,
 		usgFnTmpl:   usgFnTmpl,
 		parseFnTmpl: parseFnTmpl,
 	}, nil
@@ -55,7 +54,7 @@ func (g *generator) writeHeader(hasSubcmds bool) error {
 	if err != nil {
 		return fmt.Errorf("parsing header template: %w", err)
 	}
-	err = t.Execute(g.out, headerData{
+	err = t.Execute(&g.buf, headerData{
 		HasSubcmds: hasSubcmds,
 		Version:    getBuildVersionInfo().String(),
 	})
@@ -81,7 +80,7 @@ func (g *generator) generate(c *command) error {
 }
 
 func (g *generator) genCmdUsageFunc(c *command) error {
-	err := g.usgFnTmpl.Execute(g.out, c)
+	err := g.usgFnTmpl.Execute(&g.buf, c)
 	if err != nil {
 		return err
 	}
@@ -89,7 +88,7 @@ func (g *generator) genCmdUsageFunc(c *command) error {
 }
 
 func (g *generator) genCmdParseFunc(c *command) error {
-	err := g.parseFnTmpl.Execute(g.out, c)
+	err := g.parseFnTmpl.Execute(&g.buf, c)
 	if err != nil {
 		return err
 	}
