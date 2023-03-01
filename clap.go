@@ -70,6 +70,7 @@ options:
    --version, -v   print version info and exit
    --type          the root command struct name
    --srcdir        directory of source files to parse (default ".")
+   --out           output file path (default "./clap.go")
    --help, -h      show this help message
 `, os.Args[0])
 }
@@ -111,6 +112,16 @@ func (c *goclap) parse(args []string) {
 			} else {
 				i++
 				c.srcDir = args[i]
+			}
+		case "out":
+			if hasEq {
+				c.outFilePath = eqv
+			} else if i == len(args)-1 {
+				claperr("string option '%s' needs a value\n", k)
+				os.Exit(1)
+			} else {
+				i++
+				c.outFilePath = args[i]
 			}
 		case "help", "h":
 			exitUsgGood(c)

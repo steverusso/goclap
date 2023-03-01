@@ -27,6 +27,10 @@ type goclap struct {
 	//
 	// clap:opt srcdir
 	srcDir string
+	// output file path (default "./clap.go")
+	//
+	// clap:opt out
+	outFilePath string
 }
 
 type basicType int
