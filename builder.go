@@ -21,19 +21,19 @@ func (b *builder) addChildren(c *command, strct *ast.StructType) error {
 	// Read in the struct fields.
 	for _, field := range strct.Fields.List {
 		if len(field.Names) > 1 {
-			warn("skipping multi named field %s\n", field.Names)
+			warn("skipping multi named field %s", field.Names)
 			continue
 		}
 		fieldName := field.Names[0].Name
 		typeAndField := fmt.Sprintf("'%s.%s'", c.TypeName, fieldName)
 		if _, ok := field.Type.(*ast.StructType); ok {
-			warn("skipping %s (commands must be struct pointers)\n", typeAndField)
+			warn("skipping %s (commands must be struct pointers)", typeAndField)
 			continue
 		}
 		if star, ok := field.Type.(*ast.StarExpr); ok {
 			idnt, ok := star.X.(*ast.Ident)
 			if !ok {
-				warn("skipping %s: non-struct pointers are unsupported\n", typeAndField)
+				warn("skipping %s: non-struct pointers are unsupported", typeAndField)
 				continue
 			}
 			// The field, which is of type `*IDENT,` will be a command if `IDENT`
@@ -62,12 +62,12 @@ func (b *builder) addChildren(c *command, strct *ast.StructType) error {
 		// (and those start out as identifiers).
 		idnt, ok := field.Type.(*ast.Ident)
 		if !ok {
-			warn("skipping %s (looking for ident, unsure how to handle %T)\n", typeAndField, field.Type)
+			warn("skipping %s (looking for ident, unsure how to handle %T)", typeAndField, field.Type)
 			continue
 		}
 		fieldType := basicTypeFromName(idnt.Name)
 		if fieldType == -1 {
-			warn("skipping %s: unsupported option or argument type '%s'\n", typeAndField, idnt.Name)
+			warn("skipping %s: unsupported option or argument type '%s'", typeAndField, idnt.Name)
 			continue
 		}
 		fieldDocs := parseComments(field.Doc)
