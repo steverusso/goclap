@@ -53,7 +53,7 @@ type buildVersionInfo struct {
 func getBuildVersionInfo() buildVersionInfo {
 	bi, ok := debug.ReadBuildInfo()
 	if !ok {
-		warn("unable to read build info\n")
+		warn("unable to read build info")
 		return buildVersionInfo{}
 	}
 	v := buildVersionInfo{
@@ -173,7 +173,7 @@ func gen(c *goclap) error {
 	}
 	data := b.getCmdClapData(rootCmdTypeName)
 	if data.Blurb == "" {
-		warn("no root command description provided\n")
+		warn("no root command description provided")
 	}
 	root := command{
 		TypeName: rootCmdTypeName,
@@ -218,7 +218,7 @@ func gen(c *goclap) error {
 }
 
 func warn(format string, a ...any) {
-	fmt.Fprintf(os.Stderr, "\033[1;33mwarning:\033[0m "+format, a...)
+	fmt.Fprintf(os.Stderr, "\033[1;33mwarning:\033[0m "+format+"\n", a...)
 }
 
 func main() {
