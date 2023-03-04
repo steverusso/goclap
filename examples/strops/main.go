@@ -1,4 +1,4 @@
-//go:generate goclap strops
+//go:generate goclap -type strops
 package main
 
 // Any changes to this file likely necessitate changes to the project's README.
@@ -15,9 +15,14 @@ type strops struct {
 	//
 	// clap:opt upper,u
 	toUpper bool
+	// reverse the final string
+	//
+	// clap:opt reverse,r
+	reverse bool
 	// add this prefix to the final string
 	//
-	// clap:opt prefix,p
+	// clap:opt prefix
+	// clap:opt_arg_name str
 	prefix string
 	// the string on which to operate
 	//
@@ -36,6 +41,13 @@ func main() {
 
 	if c.prefix != "" {
 		b = append([]byte(c.prefix), b...)
+	}
+
+	if c.reverse {
+		n := len(b)
+		for i := 0; i < n/2; i++ {
+			b[i], b[n-1-i] = b[n-1-i], b[i]
+		}
 	}
 
 	fmt.Println(string(b))

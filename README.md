@@ -11,20 +11,20 @@ and proc macros.
 
 ## Example
 
-The following is taken from [`examples/strrev/main.go`](./examples/strrev/main.go).
+The following is taken from [`examples/simple/main.go`](./examples/simple/main.go).
 
 ```go
-//go:generate goclap mycli
+//go:generate goclap -type mycli
 
 ...
 
-// reverse a string and maybe make it uppercase
+// print a string with the option to make it uppercase
 type mycli struct {
 	// make the input string all uppercase
 	//
 	// clap:opt upper,u
 	toUpper bool
-	// the string to reverse
+	// the input string
 	//
 	// clap:arg_required
 	input string
@@ -34,40 +34,36 @@ func main() {
 	c := mycli{}
 	c.parse(os.Args)
 
-	b := []byte(c.input)
+	s := c.input
 	if c.toUpper {
-		b = bytes.ToUpper(b)
+		s = strings.ToUpper(s)
 	}
 
-	n := len(b)
-	for i := 0; i < n/2; i++ {
-		b[i], b[n-1-i] = b[n-1-i], b[i]
-	}
-	fmt.Println(string(b))
+	fmt.Println(s)
 }
 ```
 
 By running `go generate` (assuming `goclap` is installed), the `mycli` struct,
 its fields, and their comments will be used to generate code for parsing
 command line arguments into a `mycli`. That code will be placed in a file named
-`clap.go` (see [the `strrev` example one](./examples/strrev/clap.go)). The
+`clap.go` (see [the `simple` example's one](./examples/simple/clap.go)). The
 program can then be built with `go build`.
 
-Running `./strrev -u hello` will output "OLLEH", and running `./strrev -h` will
+Running `./simple -u hello` will output "HELLO", and running `./simple -h` will
 output the following help message:
 
 ```
-./strrev - reverse a string and maybe make it uppercase
+./simple - print a string with the option to make it uppercase
 
 usage:
-   ./strrev [options] <input>
+   ./simple [options] <input>
 
 options:
-   --upper, -u   make the input string all uppercase
-   --help, -h    show this help message
+   -u, --upper   make the input string all uppercase
+   -h, --help    show this help message
 
 arguments:
-   <input>   the string to reverse
+   <input>   the input string
 ```
 
 ## Building
