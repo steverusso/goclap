@@ -226,9 +226,7 @@ func parseComments(cg *ast.CommentGroup) clapData {
 		return clapData{}
 	}
 
-	cd := clapData{
-		configs: make([]clapConfig, 3),
-	}
+	cd := clapData{}
 
 	lines := strings.Split(cg.Text(), "\n")
 	for i := len(lines) - 1; i >= 0; i-- {
@@ -247,10 +245,11 @@ func parseComments(cg *ast.CommentGroup) clapData {
 			if j < len(rest) {
 				cfg.val = rest[j+1:]
 			}
-			cd.configs = append(cd.configs, cfg)
+			cd.configs = append([]clapConfig{cfg}, cd.configs...)
 			lines = append(lines[:i], lines[i+1:]...)
 		}
 	}
+
 	for i := range lines {
 		if lines[i] == "" {
 			cd.Blurb = strings.TrimSpace(strings.Join(lines[:i], " "))
