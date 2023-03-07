@@ -146,23 +146,8 @@ func (c *command) Overview() string {
 func (c *command) OptNameColWidth() int {
 	w := 0
 	for _, o := range c.Opts {
-		if l := len(o.usgNames()); l > w {
+		if l := len(o.usgNamesAndArg()); l > w {
 			w = l
-		}
-	}
-	return w
-}
-
-// OptArgNameColWidth returns the length of the longest option argument name out of this
-// command's options. In a usage message, the argument name column is in between the
-// option's name(s) and description columns.
-func (c *command) OptArgNameColWidth() int {
-	w := 0
-	for _, o := range c.Opts {
-		if !o.FieldType.IsBool() {
-			if l := len(o.usgArgName()); l > w {
-				w = l
-			}
 		}
 	}
 	return w
@@ -228,16 +213,29 @@ func (arg *argument) IsRequired() bool {
 	return ok
 }
 
-// Usg returns this option's usage message text given how wide the name and argument name
-// columns should be.
-func (o *option) Usg(nameWidth, argNameWidth int) string {
-	var s strings.Builder
-	fmt.Fprintf(&s, "%-*s", nameWidth, o.usgNames())
-	if argNameWidth != 0 {
-		fmt.Fprintf(&s, " %-*s", argNameWidth, o.usgArgName())
+// Usg returns this option's usage message text given how wide the name column should be.
+func (o *option) Usg(nameWidth int) string {
+	return fmt.Sprintf("%-*s   %s", nameWidth, o.usgNamesAndArg(), o.data.Blurb)
+}
+
+func (o *option) usgNamesAndArg() string {
+	short := "  "
+	if o.Short != "" {
+		short = "-" + o.Short
 	}
-	fmt.Fprint(&s, "   ", o.data.Blurb)
-	return s.String()
+	comma := "  "
+	if o.Long != "" && o.Short != "" {
+		comma = ", "
+	}
+	long := o.Long
+	if long != "" {
+		long = "--" + long
+	}
+	s := short + comma + long
+	if argName := o.usgArgName(); argName != "" {
+		s += " " + argName
+	}
+	return s
 }
 
 // usgArgName returns the usage text of an option argument for non-boolean options. For
@@ -251,22 +249,6 @@ func (o *option) usgArgName() string {
 		return "<" + name + ">"
 	}
 	return "<arg>"
-}
-
-func (o *option) usgNames() string {
-	long := o.Long
-	if long != "" {
-		long = "--" + long
-	}
-	short := "  "
-	if o.Short != "" {
-		short = "-" + o.Short
-	}
-	comma := "  "
-	if o.Long != "" && o.Short != "" {
-		comma = ", "
-	}
-	return short + comma + long
 }
 
 func (o *option) QuotedPlainNames() string {
