@@ -1,6 +1,10 @@
 
 func (*{{ .TypeName }}) printUsage(to *os.File) {
 	fmt.Fprintf(to, `{{ .Parents }}{{ .UsgName }} - {{ .Data.Blurb }}
+{{- with .Overview }}
+
+overview:
+{{ . }}{{ end }}
 
 usage:{{ range .UsageLines }}
    {{ . }}{{ end }}

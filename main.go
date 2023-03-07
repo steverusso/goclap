@@ -97,7 +97,7 @@ func (v buildVersionInfo) String() string {
 
 type clapData struct {
 	Blurb    string
-	longDesc string
+	overview []string // paragraphs
 	configs  []clapConfig
 }
 
