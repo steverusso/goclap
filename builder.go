@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"go/ast"
 	"strings"
+	"unicode"
 )
 
 var helpOption = option{
@@ -252,10 +253,27 @@ func parseComments(cg *ast.CommentGroup) clapData {
 	}
 	for i := range lines {
 		if lines[i] == "" {
-			cd.Blurb = strings.Join(lines[:i], " ")
+			cd.Blurb = strings.TrimSpace(strings.Join(lines[:i], " "))
 			lines = lines[i+1:]
 			break
 		}
+	}
+	if n := len(cd.Blurb); n > 0 {
+		// Drop trailing '.' punctuation.
+		b := cd.Blurb
+		if b[n-1] == '.' {
+			b = b[:n-1]
+		}
+		// Make the first word lowercase as long as it's not all uppercase.
+		sp := strings.IndexFunc(b, unicode.IsSpace)
+		if sp == -1 {
+			sp = len(b)
+		}
+		word := b[:sp]
+		if !isStrAllUpper(word) {
+			b = strings.ToLower(word) + b[sp:]
+		}
+		cd.Blurb = b
 	}
 
 	// The remaining groups of non-empty lines (if any) are considered the paragraphs of
@@ -279,4 +297,13 @@ func parseComments(cg *ast.CommentGroup) clapData {
 	cd.overview = paras
 
 	return cd
+}
+
+func isStrAllUpper(s string) bool {
+	for _, c := range s {
+		if unicode.IsLower(c) {
+			return false
+		}
+	}
+	return true
 }
