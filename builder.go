@@ -253,11 +253,30 @@ func parseComments(cg *ast.CommentGroup) clapData {
 	for i := range lines {
 		if lines[i] == "" {
 			cd.Blurb = strings.Join(lines[:i], " ")
+			lines = lines[i+1:]
 			break
 		}
 	}
 
-	// todo(steve): read in the longer description if it's there
+	// The remaining groups of non-empty lines (if any) are considered the paragraphs of
+	// the item's "overview" (only ever used for commands, not for options or arguments).
+	paras := make([]string, 0, 2)
+	var p strings.Builder
+	for i := range lines {
+		if lines[i] != "" {
+			p.WriteString(lines[i])
+			p.WriteByte('\n')
+		} else {
+			if i > 0 && lines[i-1] != "" {
+				paras = append(paras, p.String())
+				p.Reset()
+			}
+		}
+	}
+	if p.Len() > 0 {
+		paras = append(paras, p.String())
+	}
+	cd.overview = paras
 
 	return cd
 }

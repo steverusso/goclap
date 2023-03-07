@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 	"text/template"
+	"unicode"
 )
 
 var (
@@ -127,6 +128,19 @@ func (c *command) UsageLines() []string {
 	return []string{
 		c.UsgName() + optionsSlot + commandSlot + argsSlot,
 	}
+}
+
+func (c *command) Overview() string {
+	ww := wordWrapper{}
+	paras := c.Data.overview
+	var s strings.Builder
+	for i := range paras {
+		s.WriteString(ww.wrap(paras[i], 3, 90))
+		if i != len(paras)-1 {
+			s.WriteByte('\n')
+		}
+	}
+	return s.String()
 }
 
 func (c *command) OptNameColWidth() int {
@@ -275,3 +289,61 @@ func (c *command) IsRoot() bool     { return c.FieldName == "%[1]s" }
 func (c *command) HasSubcmds() bool { return len(c.Subcmds) > 0 }
 func (c *command) HasOptions() bool { return len(c.Opts) > 0 }
 func (c *command) HasArgs() bool    { return len(c.Args) > 0 }
+
+type wordWrapper struct {
+	indent string
+	word   strings.Builder
+	line   strings.Builder
+	result strings.Builder
+}
+
+func (ww *wordWrapper) wrap(v string, indentWidth, width int) string {
+	ww.indent = strings.Repeat(" ", indentWidth)
+	ww.word.Grow(width)
+	ww.line.Grow(width)
+	ww.line.WriteString(ww.indent)
+	ww.result.Grow(len(v))
+
+	for _, c := range strings.TrimSpace(v) {
+		if !unicode.IsSpace(c) {
+			ww.word.WriteRune(c)
+			continue
+		}
+		if c == '\n' {
+			ww.takeWordAndReset()
+			ww.takeLineAndReset()
+			continue
+		}
+		if ww.line.Len()+ww.word.Len() > width {
+			ww.takeLineAndReset()
+		}
+		ww.takeWordAndReset()
+		ww.line.WriteRune(c)
+	}
+	if ww.word.Len() > 0 {
+		if ww.line.Len()+ww.word.Len() > width {
+			ww.takeLineAndReset()
+		}
+		ww.takeWordAndReset()
+	}
+	if ww.line.Len() > 0 {
+		ww.result.WriteString(ww.line.String())
+		ww.line.Reset()
+	}
+
+	res := ww.result.String()
+	ww.result.Reset()
+	return res
+}
+
+func (ww *wordWrapper) takeWordAndReset() {
+	ww.line.WriteString(ww.word.String())
+	ww.word.Reset()
+}
+
+func (ww *wordWrapper) takeLineAndReset() {
+	ww.result.WriteString(ww.line.String())
+	ww.result.WriteRune('\n')
+	ww.line.Reset()
+	ww.line.WriteString(ww.indent)
+}
