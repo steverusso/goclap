@@ -269,7 +269,7 @@ func parseComments(cg *ast.CommentGroup) clapData {
 			sp = len(b)
 		}
 		word := b[:sp]
-		if !isStrAllUpper(word) {
+		if word == "A" || !isStrAllUpper(word) {
 			b = strings.ToLower(word) + b[sp:]
 		}
 		cd.Blurb = b
