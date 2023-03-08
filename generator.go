@@ -219,23 +219,34 @@ func (o *option) Usg(nameWidth int) string {
 }
 
 func (o *option) usgNamesAndArg() string {
-	short := "  "
+	argName := o.usgArgName()
+
+	s := strings.Builder{}
+	s.Grow(len(o.Short) + len(o.Long) + len(argName) + 4)
+	// short
 	if o.Short != "" {
-		short = "-" + o.Short
+		s.WriteByte('-')
+		s.WriteString(o.Short)
+	} else {
+		s.WriteString("  ")
 	}
-	comma := "  "
+	// comma
 	if o.Long != "" && o.Short != "" {
-		comma = ", "
+		s.WriteString(", ")
+	} else {
+		s.WriteString("  ")
 	}
-	long := o.Long
-	if long != "" {
-		long = "--" + long
+	// long
+	if o.Long != "" {
+		s.WriteString("--")
+		s.WriteString(o.Long)
 	}
-	s := short + comma + long
-	if argName := o.usgArgName(); argName != "" {
-		s += " " + argName
+	// arg name
+	if argName != "" {
+		s.WriteString("  ")
+		s.WriteString(argName)
 	}
-	return s
+	return s.String()
 }
 
 // usgArgName returns the usage text of an option argument for non-boolean options. For
