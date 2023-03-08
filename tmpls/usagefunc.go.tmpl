@@ -11,10 +11,9 @@ usage:{{ range .UsageLines }}
 
 {{- if .HasOptions }}
 	{{- $nameWidth := .OptNameColWidth }}
-	{{- $argNameWidth := .OptArgNameColWidth }}
 
 options:{{ range .Opts }}
-   {{ .Usg $nameWidth $argNameWidth }}{{ end -}}
+   {{ .Usg $nameWidth }}{{ end -}}
 {{ end -}}
 
 {{- if .HasArgs }}
