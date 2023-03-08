@@ -19,6 +19,10 @@ type goclap struct {
 	//
 	// clap:opt version,v
 	version bool
+	// include the version info in the generated code
+	//
+	// clap:opt include-version
+	incVersion bool
 	// the root command struct name
 	//
 	// clap:opt type
@@ -189,7 +193,7 @@ func gen(c *goclap) error {
 		return err
 	}
 
-	g, err := newGenerator()
+	g, err := newGenerator(c.incVersion)
 	if err != nil {
 		return fmt.Errorf("initializing generator: %w", err)
 	}

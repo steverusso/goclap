@@ -25,12 +25,13 @@ var parseFuncs = template.FuncMap{
 }
 
 type generator struct {
+	incVersion  bool
 	buf         bytes.Buffer
 	usgFnTmpl   *template.Template
 	parseFnTmpl *template.Template
 }
 
-func newGenerator() (generator, error) {
+func newGenerator(incVersion bool) (generator, error) {
 	usgFnTmpl, err := template.New("usagefunc").Parse(usgFnTmplText)
 	if err != nil {
 		return generator{}, fmt.Errorf("parsing template: %w", err)
@@ -40,6 +41,7 @@ func newGenerator() (generator, error) {
 		return generator{}, fmt.Errorf("parsing template: %w", err)
 	}
 	return generator{
+		incVersion:  incVersion,
 		usgFnTmpl:   usgFnTmpl,
 		parseFnTmpl: parseFnTmpl,
 	}, nil
@@ -47,6 +49,7 @@ func newGenerator() (generator, error) {
 
 func (g *generator) writeHeader(hasSubcmds bool) error {
 	type headerData struct {
+		IncVersion bool
 		Version    string
 		HasSubcmds bool
 	}
@@ -56,6 +59,7 @@ func (g *generator) writeHeader(hasSubcmds bool) error {
 		return fmt.Errorf("parsing header template: %w", err)
 	}
 	err = t.Execute(&g.buf, headerData{
+		IncVersion: g.incVersion,
 		HasSubcmds: hasSubcmds,
 		Version:    getBuildVersionInfo().String(),
 	})
