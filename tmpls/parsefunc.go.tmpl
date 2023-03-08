@@ -41,7 +41,7 @@ func (c *{{ .TypeName }}) parse(args []string) {
 			if hasEq {
 				c.{{ .FieldName }} = eqv
 			} else if i == len(args)-1 {
-				claperr("string option '%s' needs a value\n", k)
+				claperr("string option '%s' needs an argument\n", k)
 				os.Exit(1)
 			} else {
 				i++
