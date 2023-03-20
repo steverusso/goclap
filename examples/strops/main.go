@@ -9,22 +9,22 @@ import (
 	"os"
 )
 
-// perform different string operations
+// Perform different string operations.
 type strops struct {
-	// make the input string all uppercase
+	// Make the input string all uppercase.
 	//
 	// clap:opt upper,u
 	toUpper bool
-	// reverse the final string
+	// Reverse the final string.
 	//
 	// clap:opt reverse,r
 	reverse bool
-	// add this prefix to the final string
+	// Add this prefix to the final string.
 	//
 	// clap:opt prefix
 	// clap:opt_arg_name str
 	prefix string
-	// the string on which to operate
+	// The string on which to operate.
 	//
 	// clap:arg_required
 	input string

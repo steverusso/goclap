@@ -9,13 +9,13 @@ import (
 	"strings"
 )
 
-// print a string with the option to make it uppercase
+// Print a string with the option to make it uppercase.
 type mycli struct {
-	// make the input string all uppercase
+	// Make the input string all uppercase.
 	//
 	// clap:opt upper,u
 	toUpper bool
-	// the input string
+	// The input string.
 	//
 	// clap:arg_required
 	input string
