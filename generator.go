@@ -141,7 +141,7 @@ func (c *command) Overview() string {
 	for i := range paras {
 		s.WriteString(ww.wrap(paras[i], 3, 90))
 		if i != len(paras)-1 {
-			s.WriteByte('\n')
+			s.WriteString("\n\n")
 		}
 	}
 	return s.String()
