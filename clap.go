@@ -16,12 +16,6 @@ type clapUsagePrinter interface {
 	printUsage(to *os.File)
 }
 
-func exitMissingArg(u clapUsagePrinter, name string) {
-	claperr("not enough args: no \033[1;33m%s\033[0m provided\n", name)
-	u.printUsage(os.Stderr)
-	os.Exit(1)
-}
-
 func exitUsgGood(u clapUsagePrinter) {
 	u.printUsage(os.Stdout)
 	os.Exit(0)
@@ -32,7 +26,7 @@ func clapParseBool(s string) bool {
 		return true
 	}
 	if s != "false" {
-		claperr("invalid boolean value '%%s'\n", s)
+		claperr("invalid boolean value '%s'\n", s)
 		os.Exit(1)
 	}
 	return false

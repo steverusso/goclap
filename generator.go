@@ -47,11 +47,11 @@ func newGenerator(incVersion bool) (generator, error) {
 	}, nil
 }
 
-func (g *generator) writeHeader(hasSubcmds bool) error {
+func (g *generator) writeHeader(root *command) error {
 	type headerData struct {
 		IncVersion bool
 		Version    string
-		HasSubcmds bool
+		RootCmd    *command
 	}
 
 	t, err := template.New("header").Parse(headerTmplText)
@@ -60,8 +60,8 @@ func (g *generator) writeHeader(hasSubcmds bool) error {
 	}
 	err = t.Execute(&g.buf, headerData{
 		IncVersion: g.incVersion,
-		HasSubcmds: hasSubcmds,
 		Version:    getBuildVersionInfo().String(),
+		RootCmd:    root,
 	})
 	if err != nil {
 		return fmt.Errorf("executing header template: %w", err)
@@ -280,6 +280,29 @@ func (o *option) QuotedPlainNames() string {
 		comma = ", "
 	}
 	return long + comma + short
+}
+
+// HasArgSlotSomewhere returns true if this command or one of its subcommands contains a
+// required positional argument.
+func (c *command) HasArgSlotSomewhere() bool {
+	if c.HasRequiredArgs() {
+		return true
+	}
+	for _, ch := range c.Subcmds {
+		if ch.HasArgSlotSomewhere() {
+			return true
+		}
+	}
+	return false
+}
+
+func (c *command) HasRequiredArgs() bool {
+	for _, arg := range c.Args {
+		if arg.IsRequired() {
+			return true
+		}
+	}
+	return false
 }
 
 func (c *command) IsRoot() bool     { return c.FieldName == "%[1]s" }

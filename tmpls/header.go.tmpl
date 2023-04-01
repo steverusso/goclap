@@ -16,16 +16,19 @@ type clapUsagePrinter interface {
 	printUsage(to *os.File)
 }
 
+{{- if .RootCmd.HasReqArgSomewhere }}
+
 func exitMissingArg(u clapUsagePrinter, name string) {
 	claperr("not enough args: no \033[1;33m%s\033[0m provided\n", name)
 	u.printUsage(os.Stderr)
 	os.Exit(1)
 }
+{{- end }}
 
-{{- if .HasSubcmds }}
+{{- if .RootCmd.HasSubcmds }}
 
 func exitUnknownCmd(u clapUsagePrinter, name string) {
-	claperr("unknown command '%%s'\n", name)
+	claperr("unknown command '%s'\n", name)
 	u.printUsage(os.Stderr)
 	os.Exit(1)
 }
@@ -41,7 +44,7 @@ func clapParseBool(s string) bool {
 		return true
 	}
 	if s != "false" {
-		claperr("invalid boolean value '%%s'\n", s)
+		claperr("invalid boolean value '%s'\n", s)
 		os.Exit(1)
 	}
 	return false
