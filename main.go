@@ -197,7 +197,7 @@ func gen(c *goclap) error {
 	if err != nil {
 		return fmt.Errorf("initializing generator: %w", err)
 	}
-	err = g.writeHeader(root.HasSubcmds())
+	err = g.writeHeader(&root)
 	if err != nil {
 		return err
 	}
