@@ -187,7 +187,7 @@ func (c *command) RequiredArgs() []argument {
 	return reqs
 }
 
-func (c *command) NeedsVarEqv() bool {
+func (c *command) HasNonHelpOpt() bool {
 	for _, o := range c.Opts {
 		if o.Long != "help" {
 			return true
@@ -196,7 +196,7 @@ func (c *command) NeedsVarEqv() bool {
 	return false
 }
 
-func (c *command) NeedsVarHasEq() bool {
+func (c *command) HasStringOpt() bool {
 	for _, o := range c.Opts {
 		if o.FieldType.IsString() {
 			return true
@@ -282,14 +282,14 @@ func (o *option) QuotedPlainNames() string {
 	return long + comma + short
 }
 
-// HasArgSlotSomewhere returns true if this command or one of its subcommands contains a
+// HasReqArgSomewhere returns true if this command or one of its subcommands contains a
 // required positional argument.
-func (c *command) HasArgSlotSomewhere() bool {
+func (c *command) HasReqArgSomewhere() bool {
 	if c.HasRequiredArgs() {
 		return true
 	}
 	for _, ch := range c.Subcmds {
-		if ch.HasArgSlotSomewhere() {
+		if ch.HasReqArgSomewhere() {
 			return true
 		}
 	}

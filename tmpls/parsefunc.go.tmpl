@@ -18,9 +18,9 @@ func (c *{{ .TypeName }}) parse(args []string) {
 			break
 		}
 
-		{{- if .NeedsVarHasEq }}
+		{{- if .HasStringOpt }}
 		k, eqv, hasEq := optParts(args[i][1:])
-		{{- else if .NeedsVarEqv }}
+		{{- else if .HasNonHelpOpt }}
 		k, eqv, _ := optParts(args[i][1:])
 		{{- else }}
 		k, _, _ := optParts(args[i][1:])
