@@ -4,9 +4,20 @@ import (
 	"errors"
 	"fmt"
 	"go/ast"
+	"regexp"
 	"strings"
 	"unicode"
 )
+
+// backtickRepl describes how groups of backticks are replaced within usage message
+// strings using regular expressions. The usage messages are raw strings in the generated
+// code, so backticks would be syntactically broken delimiters of different raw strings.
+// Therefore, groups of backticks are placed into their own double-quoted strings and
+// concatenated to the rest of the usage message string.
+const backtickRepl = "`+\"$0\"+`"
+
+// One or more backticks.
+var backtickRE = regexp.MustCompile("`+")
 
 var helpOption = option{
 	Short: "h",
@@ -294,6 +305,12 @@ func parseComments(cg *ast.CommentGroup) clapData {
 		paras = append(paras, p.String())
 	}
 	cd.overview = paras
+
+	// Put groups of backticks into their own strings.
+	cd.Blurb = backtickRE.ReplaceAllString(cd.Blurb, backtickRepl)
+	for i := range cd.overview {
+		cd.overview[i] = backtickRE.ReplaceAllString(cd.overview[i], backtickRepl)
+	}
 
 	return cd
 }
