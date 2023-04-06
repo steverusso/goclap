@@ -34,11 +34,6 @@ func exitUnknownCmd(u clapUsagePrinter, name string) {
 }
 {{- end }}
 
-func exitUsgGood(u clapUsagePrinter) {
-	u.printUsage(os.Stdout)
-	os.Exit(0)
-}
-
 func clapParseBool(s string) bool {
 	if s == "" || s == "true" {
 		return true
@@ -91,7 +86,8 @@ argsLoop:
 		}
 		k, eqv, hasEq := optParts(args[i][1:])
 		if k == "h" || k == "help" {
-			exitUsgGood(u)
+			u.printUsage(os.Stdout)
+			os.Exit(0)
 		}
 		for z := range data {
 			if k == data[z].long || k == data[z].short {
