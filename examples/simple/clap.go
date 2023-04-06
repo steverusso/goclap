@@ -22,17 +22,12 @@ func exitMissingArg(u clapUsagePrinter, name string) {
 	os.Exit(1)
 }
 
-func exitUsgGood(u clapUsagePrinter) {
-	u.printUsage(os.Stdout)
-	os.Exit(0)
-}
-
 func clapParseBool(s string) bool {
 	if s == "" || s == "true" {
 		return true
 	}
 	if s != "false" {
-		claperr("invalid boolean value '%%s'\n", s)
+		claperr("invalid boolean value '%s'\n", s)
 		os.Exit(1)
 	}
 	return false
@@ -60,6 +55,53 @@ func optParts(arg string) (string, string, bool) {
 	return arg, "", false
 }
 
+type clapOpt struct {
+	long  string
+	short string
+	v     any
+}
+
+func parseOpts(args []string, u clapUsagePrinter, data []clapOpt) int {
+	var i int
+argsLoop:
+	for ; i < len(args); i++ {
+		if args[i][0] != '-' {
+			break
+		}
+		if args[i] == "--" {
+			i++
+			break
+		}
+		k, eqv, hasEq := optParts(args[i][1:])
+		if k == "h" || k == "help" {
+			u.printUsage(os.Stdout)
+			os.Exit(0)
+		}
+		for z := range data {
+			if k == data[z].long || k == data[z].short {
+				switch v := data[z].v.(type) {
+				case *bool:
+					*v = clapParseBool(eqv)
+				case *string:
+					if hasEq {
+						*v = eqv
+					} else if i == len(args)-1 {
+						claperr("string option '%s' needs an argument\n", k)
+						os.Exit(1)
+					} else {
+						i++
+						*v = args[i]
+					}
+				}
+				continue argsLoop
+			}
+		}
+		claperr("unknown option '%s'\n", k)
+		os.Exit(1)
+	}
+	return i
+}
+
 func (*mycli) printUsage(to *os.File) {
 	fmt.Fprintf(to, `%[1]s - print a string with the option to make it uppercase
 
@@ -79,27 +121,9 @@ func (c *mycli) parse(args []string) {
 	if len(args) > 0 && len(args) == len(os.Args) {
 		args = args[1:]
 	}
-	var i int
-	for ; i < len(args); i++ {
-		if args[i][0] != '-' {
-			break
-		}
-		if args[i] == "--" {
-			i++
-			break
-		}
-		k, eqv, _ := optParts(args[i][1:])
-
-		switch k {
-		case "upper", "u":
-			c.toUpper = clapParseBool(eqv)
-		case "help", "h":
-			exitUsgGood(c)
-		default:
-			claperr("unknown option '%s'\n", k)
-			os.Exit(1)
-		}
-	}
+	i := parseOpts(args, c, []clapOpt{
+		{"upper", "u", &c.toUpper},
+	})
 	args = args[i:]
 	if len(args) < 1 {
 		exitMissingArg(c, "<input>")
