@@ -34,11 +34,6 @@ func exitUnknownCmd(u clapUsagePrinter, name string) {
 }
 {{- end }}
 
-func exitUsgGood(u clapUsagePrinter) {
-	u.printUsage(os.Stdout)
-	os.Exit(0)
-}
-
 func clapParseBool(s string) bool {
 	if s == "" || s == "true" {
 		return true
@@ -70,4 +65,51 @@ func optParts(arg string) (string, string, bool) {
 		return name, eqVal, true
 	}
 	return arg, "", false
+}
+
+type clapOpt struct {
+	long  string
+	short string
+	into  interface{}
+}
+
+func parseOpts(args []string, u clapUsagePrinter, data []clapOpt) int {
+	var i int
+argsLoop:
+	for ; i < len(args); i++ {
+		if args[i][0] != '-' {
+			break
+		}
+		if args[i] == "--" {
+			i++
+			break
+		}
+		k, eqv, hasEq := optParts(args[i][1:])
+		if k == "h" || k == "help" {
+			u.printUsage(os.Stdout)
+			os.Exit(0)
+		}
+		for z := range data {
+			if k == data[z].long || k == data[z].short {
+				switch into := data[z].into.(type) {
+				case *bool:
+					*into = clapParseBool(eqv)
+				case *string:
+					if hasEq {
+						*into = eqv
+					} else if i == len(args)-1 {
+						claperr("string option '%s' needs an argument\n", k)
+						os.Exit(1)
+					} else {
+						i++
+						*into = args[i]
+					}
+				}
+				continue argsLoop
+			}
+		}
+		claperr("unknown option '%s'\n", k)
+		os.Exit(1)
+	}
+	return i
 }
