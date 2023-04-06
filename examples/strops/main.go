@@ -11,7 +11,7 @@ import (
 
 // Perform different string operations.
 type strops struct {
-	// Make the input string all uppercase.
+	// Make the `input` string all uppercase.
 	//
 	// clap:opt upper,u
 	toUpper bool

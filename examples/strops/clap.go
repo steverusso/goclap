@@ -109,7 +109,7 @@ usage:
    %[1]s [options] <input>
 
 options:
-   -u, --upper           make the input string all uppercase
+   -u, --upper           make the `+"`"+`input`+"`"+` string all uppercase
    -r, --reverse         reverse the final string
        --prefix  <str>   add this prefix to the final string
    -h, --help            show this help message
