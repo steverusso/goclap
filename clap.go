@@ -16,11 +16,6 @@ type clapUsagePrinter interface {
 	printUsage(to *os.File)
 }
 
-func exitUsgGood(u clapUsagePrinter) {
-	u.printUsage(os.Stdout)
-	os.Exit(0)
-}
-
 func clapParseBool(s string) bool {
 	if s == "" || s == "true" {
 		return true
@@ -54,6 +49,53 @@ func optParts(arg string) (string, string, bool) {
 	return arg, "", false
 }
 
+type clapOpt struct {
+	long  string
+	short string
+	v     any
+}
+
+func parseOpts(args []string, u clapUsagePrinter, data []clapOpt) int {
+	var i int
+argsLoop:
+	for ; i < len(args); i++ {
+		if args[i][0] != '-' {
+			break
+		}
+		if args[i] == "--" {
+			i++
+			break
+		}
+		k, eqv, hasEq := optParts(args[i][1:])
+		if k == "h" || k == "help" {
+			u.printUsage(os.Stdout)
+			os.Exit(0)
+		}
+		for z := range data {
+			if k == data[z].long || k == data[z].short {
+				switch v := data[z].v.(type) {
+				case *bool:
+					*v = clapParseBool(eqv)
+				case *string:
+					if hasEq {
+						*v = eqv
+					} else if i == len(args)-1 {
+						claperr("string option '%s' needs an argument\n", k)
+						os.Exit(1)
+					} else {
+						i++
+						*v = args[i]
+					}
+				}
+				continue argsLoop
+			}
+		}
+		claperr("unknown option '%s'\n", k)
+		os.Exit(1)
+	}
+	return i
+}
+
 func (*goclap) printUsage(to *os.File) {
 	fmt.Fprintf(to, `%[1]s - pre-build tool to generate command line argument parsing code from Go comments
 
@@ -74,57 +116,11 @@ func (c *goclap) parse(args []string) {
 	if len(args) > 0 && len(args) == len(os.Args) {
 		args = args[1:]
 	}
-	var i int
-	for ; i < len(args); i++ {
-		if args[i][0] != '-' {
-			break
-		}
-		if args[i] == "--" {
-			i++
-			break
-		}
-		k, eqv, hasEq := optParts(args[i][1:])
-
-		switch k {
-		case "version", "v":
-			c.version = clapParseBool(eqv)
-		case "include-version":
-			c.incVersion = clapParseBool(eqv)
-		case "type":
-			if hasEq {
-				c.rootCmdType = eqv
-			} else if i == len(args)-1 {
-				claperr("string option '%s' needs an argument\n", k)
-				os.Exit(1)
-			} else {
-				i++
-				c.rootCmdType = args[i]
-			}
-		case "srcdir":
-			if hasEq {
-				c.srcDir = eqv
-			} else if i == len(args)-1 {
-				claperr("string option '%s' needs an argument\n", k)
-				os.Exit(1)
-			} else {
-				i++
-				c.srcDir = args[i]
-			}
-		case "out", "o":
-			if hasEq {
-				c.outFilePath = eqv
-			} else if i == len(args)-1 {
-				claperr("string option '%s' needs an argument\n", k)
-				os.Exit(1)
-			} else {
-				i++
-				c.outFilePath = args[i]
-			}
-		case "help", "h":
-			exitUsgGood(c)
-		default:
-			claperr("unknown option '%s'\n", k)
-			os.Exit(1)
-		}
-	}
+	parseOpts(args, c, []clapOpt{
+		{"version", "v", &c.version},
+		{"include-version", "", &c.incVersion},
+		{"type", "", &c.rootCmdType},
+		{"srcdir", "", &c.srcDir},
+		{"out", "o", &c.outFilePath},
+	})
 }
