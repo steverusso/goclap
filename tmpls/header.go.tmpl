@@ -70,7 +70,7 @@ func optParts(arg string) (string, string, bool) {
 type clapOpt struct {
 	long  string
 	short string
-	into  interface{}
+	v     any
 }
 
 func parseOpts(args []string, u clapUsagePrinter, data []clapOpt) int {
@@ -91,18 +91,18 @@ argsLoop:
 		}
 		for z := range data {
 			if k == data[z].long || k == data[z].short {
-				switch into := data[z].into.(type) {
+				switch v := data[z].v.(type) {
 				case *bool:
-					*into = clapParseBool(eqv)
+					*v = clapParseBool(eqv)
 				case *string:
 					if hasEq {
-						*into = eqv
+						*v = eqv
 					} else if i == len(args)-1 {
 						claperr("string option '%s' needs an argument\n", k)
 						os.Exit(1)
 					} else {
 						i++
-						*into = args[i]
+						*v = args[i]
 					}
 				}
 				continue argsLoop
