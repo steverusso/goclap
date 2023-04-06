@@ -196,15 +196,6 @@ func (c *command) HasNonHelpOpt() bool {
 	return false
 }
 
-func (c *command) HasStringOpt() bool {
-	for _, o := range c.Opts {
-		if o.FieldType.IsString() {
-			return true
-		}
-	}
-	return false
-}
-
 func (arg *argument) UsgName() string {
 	if arg.IsRequired() {
 		return "<" + arg.name + ">"
@@ -264,22 +255,6 @@ func (o *option) usgArgName() string {
 		return "<" + name + ">"
 	}
 	return "<arg>"
-}
-
-func (o *option) QuotedPlainNames() string {
-	long := o.Long
-	if long != "" {
-		long = "\"" + long + "\""
-	}
-	short := o.Short
-	if short != "" {
-		short = "\"" + short + "\""
-	}
-	comma := ""
-	if o.Long != "" && o.Short != "" {
-		comma = ", "
-	}
-	return long + comma + short
 }
 
 // HasReqArgSomewhere returns true if this command or one of its subcommands contains a
