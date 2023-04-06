@@ -8,52 +8,14 @@ func (c *{{ .TypeName }}) parse(args []string) {
 	{{- end -}}
 
 	{{- /* Parse options. */}}
-	var i int
-	for ; i < len(args); i++ {
-		if args[i][0] != '-' {
-			break
-		}
-		if args[i] == "--" {
-			i++
-			break
-		}
-
-		{{- if .HasStringOpt }}
-		k, eqv, hasEq := optParts(args[i][1:])
-		{{- else if .HasNonHelpOpt }}
-		k, eqv, _ := optParts(args[i][1:])
-		{{- else }}
-		k, _, _ := optParts(args[i][1:])
-		{{- end }}
-
-		switch k {
+	{{ if or .HasArgs .HasSubcmds }}i := {{ end -}}
+	parseOpts(args, c, {{ if not .HasNonHelpOpt }}nil){{ else }}[]clapOpt{
 	{{- range .Opts }}
-		case {{ .QuotedPlainNames }}:
-		{{- /* Hard code the 'help' case. */ -}}
-		{{- if eq .Long "help" }}
-			exitUsgGood(c)
-			{{- continue }}
-		{{ end -}}
-
-		{{- if .FieldType.IsBool }}
-			c.{{ .FieldName }} = clapParseBool(eqv)
-		{{- else if .FieldType.IsString }}
-			if hasEq {
-				c.{{ .FieldName }} = eqv
-			} else if i == len(args)-1 {
-				claperr("string option '%s' needs an argument\n", k)
-				os.Exit(1)
-			} else {
-				i++
-				c.{{ .FieldName }} = args[i]
-			}
+		{{- if ne .Long "help" }}
+		{"{{ .Long }}", "{{ .Short }}", &c.{{ .FieldName }}},
 		{{- end -}}
-	{{ end }}
-		default:
-			claperr("unknown option '%s'\n", k)
-			os.Exit(1)
-		}
-	}
+	{{- end }}
+	}){{ end }}
 
 	{{- /* Arguments. */ -}}
 	{{- if .HasArgs }}
