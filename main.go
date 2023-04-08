@@ -37,8 +37,6 @@ type goclap struct {
 	outFilePath string
 }
 
-func unusedCode() {}
-
 type basicType int
 
 const (
