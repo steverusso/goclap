@@ -74,6 +74,10 @@ To just build the project as is, run `go build`. If you have
 [`gofumpt`](https://github.com/mvdan/gofumpt) installed, you can simply run `task` to fmt,
 lint and build the project.
 
+## Projects Using Goclap
+
+* [lockbook-x/lbcli](https://github.com/steverusso/lockbook-x/tree/master/lbcli)
+
 ## License
 
 This is free and unencumbered software released into the public domain. Please
