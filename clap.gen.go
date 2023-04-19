@@ -67,10 +67,6 @@ argsLoop:
 			break
 		}
 		k, eqv, hasEq := optParts(args[i][1:])
-		if k == "h" || k == "help" {
-			u.printUsage(os.Stdout)
-			os.Exit(0)
-		}
 		for z := range data {
 			if k == data[z].long || k == data[z].short {
 				switch v := data[z].v.(type) {
@@ -89,6 +85,10 @@ argsLoop:
 				}
 				continue argsLoop
 			}
+		}
+		if k == "h" || k == "help" {
+			u.printUsage(os.Stdout)
+			os.Exit(0)
 		}
 		claperr("unknown option '%s'\n", k)
 		os.Exit(1)

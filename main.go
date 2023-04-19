@@ -205,7 +205,7 @@ func gen(c *goclap) error {
 		return fmt.Errorf("generating: %w", err)
 	}
 
-	outName := "./clap.go"
+	outName := "./clap.gen.go"
 	if c.outFilePath != "" {
 		outName = c.outFilePath
 	}
