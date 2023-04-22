@@ -31,7 +31,7 @@ type goclap struct {
 	//
 	// clap:opt srcdir
 	srcDir string
-	// output file path (default "./clap.go")
+	// output file path (default "./clap.gen.go")
 	//
 	// clap:opt out,o
 	outFilePath string
