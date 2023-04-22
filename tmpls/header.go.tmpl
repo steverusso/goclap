@@ -16,6 +16,23 @@ type clapUsagePrinter interface {
 	printUsage(to *os.File)
 }
 
+{{- if .RootCmd.HasEnvArgOrOptSomewhere }}
+
+func clapSetEnv(name string, v any) bool {
+	s, ok := os.LookupEnv(name)
+	if !ok {
+		return false
+	}
+	switch v := v.(type) {
+	case *string:
+		*v = s
+	case *bool:
+		*v = (s != "false" && s != "0")
+	}
+	return true
+}
+{{- end }}
+
 {{- if .RootCmd.HasReqArgSomewhere }}
 
 func exitMissingArg(u clapUsagePrinter, name string) {

@@ -7,6 +7,11 @@ func (c *{{ .TypeName }}) parse(args []string) {
 	}
 	{{- end -}}
 
+	{{- /* Parse environment variables. */}}
+	{{ range .EnvVals -}}
+	clapSetEnv("{{ .VarName }}", &c.{{ .FieldName }})
+	{{- end }}
+
 	{{- /* Parse options. */}}
 	{{ if or .HasArgs .HasSubcmds }}i := {{ end -}}
 	parseOpts(args, c, {{ if not .HasNonHelpOpt }}nil){{ else }}[]clapOpt{
