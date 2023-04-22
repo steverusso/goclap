@@ -177,6 +177,34 @@ func (c *command) SubcmdNameColWidth() int {
 	return w
 }
 
+type clapEnvValue struct {
+	VarName   string
+	FieldName string
+}
+
+// EnvVals returns the environment variable name and the field name for any option or
+// arguments that use an `env` config.
+func (c *command) EnvVals() []clapEnvValue {
+	envs := make([]clapEnvValue, 0, len(c.Opts)+len(c.Args))
+	for i := range c.Opts {
+		if name, ok := c.Opts[i].data.getConfig("env"); ok {
+			envs = append(envs, clapEnvValue{
+				VarName:   name,
+				FieldName: c.Opts[i].FieldName,
+			})
+		}
+	}
+	for i := range c.Args {
+		if name, ok := c.Args[i].Data.getConfig("env"); ok {
+			envs = append(envs, clapEnvValue{
+				VarName:   name,
+				FieldName: c.Args[i].FieldName,
+			})
+		}
+	}
+	return envs
+}
+
 func (c *command) RequiredArgs() []argument {
 	reqs := make([]argument, 0, len(c.Args))
 	for _, arg := range c.Args {
@@ -210,7 +238,11 @@ func (arg *argument) IsRequired() bool {
 
 // Usg returns this option's usage message text given how wide the name column should be.
 func (o *option) Usg(nameWidth int) string {
-	return fmt.Sprintf("%-*s   %s", nameWidth, o.usgNamesAndArg(), o.data.Blurb)
+	var envName string
+	if v, ok := o.data.getConfig("env"); ok {
+		envName = " [$" + v + "]"
+	}
+	return fmt.Sprintf("%-*s   %s%s", nameWidth, o.usgNamesAndArg(), o.data.Blurb, envName)
 }
 
 func (o *option) usgNamesAndArg() string {
@@ -274,6 +306,27 @@ func (c *command) HasReqArgSomewhere() bool {
 func (c *command) HasRequiredArgs() bool {
 	for _, arg := range c.Args {
 		if arg.IsRequired() {
+			return true
+		}
+	}
+	return false
+}
+
+// HasEnvArgOrOptSomewhere returns true if this command or one of its subcommands contains
+// an option or an argument that uses an environment variable config.
+func (c *command) HasEnvArgOrOptSomewhere() bool {
+	for i := range c.Opts {
+		if _, ok := c.Opts[i].data.getConfig("env"); ok {
+			return true
+		}
+	}
+	for i := range c.Args {
+		if _, ok := c.Args[i].Data.getConfig("env"); ok {
+			return true
+		}
+	}
+	for i := range c.Subcmds {
+		if c.Subcmds[i].HasEnvArgOrOptSomewhere() {
 			return true
 		}
 	}
