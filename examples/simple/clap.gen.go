@@ -73,10 +73,6 @@ argsLoop:
 			break
 		}
 		k, eqv, hasEq := optParts(args[i][1:])
-		if k == "h" || k == "help" {
-			u.printUsage(os.Stdout)
-			os.Exit(0)
-		}
 		for z := range data {
 			if k == data[z].long || k == data[z].short {
 				switch v := data[z].v.(type) {
@@ -95,6 +91,10 @@ argsLoop:
 				}
 				continue argsLoop
 			}
+		}
+		if k == "h" || k == "help" {
+			u.printUsage(os.Stdout)
+			os.Exit(0)
 		}
 		claperr("unknown option '%s'\n", k)
 		os.Exit(1)
@@ -121,6 +121,7 @@ func (c *mycli) parse(args []string) {
 	if len(args) > 0 && len(args) == len(os.Args) {
 		args = args[1:]
 	}
+
 	i := parseOpts(args, c, []clapOpt{
 		{"upper", "u", &c.toUpper},
 	})
