@@ -183,8 +183,7 @@ func gen(c *goclap) error {
 		return fmt.Errorf("could not find a struct type named '%s'", rootCmdTypeName)
 	}
 
-	b := builder{pkg: targetPkg}
-	data := b.getCmdClapData(rootCmdTypeName)
+	data := getCmdClapData(targetPkg, rootCmdTypeName)
 	if data.Blurb == "" {
 		warn("no root command description provided")
 	}
@@ -198,11 +197,11 @@ func gen(c *goclap) error {
 		FieldName: "%[1]s",
 		Data:      data,
 	}
-	if err := b.addChildren(&root, rootStrct); err != nil {
+	if err := addChildren(targetPkg, &root, rootStrct); err != nil {
 		return err
 	}
 
-	g, err := newGenerator(b.pkg.Name, c.incVersion)
+	g, err := newGenerator(targetPkg.Name, c.incVersion)
 	if err != nil {
 		return fmt.Errorf("initializing generator: %w", err)
 	}
