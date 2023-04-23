@@ -4,18 +4,10 @@ package simple_env
 
 import (
 	"fmt"
-	"os"
 )
 
-func ExampleEnvCLI() {
-	originalValue := os.Getenv("INPUT_STRING")
-	defer func() {
-		os.Setenv("INPUT_STRING", originalValue)
-	}()
-	os.Setenv("INPUT_STRING", "abc123")
-
-	c := mycli{}
-	c.parse(nil)
+func Example_configFromEnv() {
+	c := configFromEnv()
 
 	fmt.Println(c.input)
 	// Output: abc123
