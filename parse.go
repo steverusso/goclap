@@ -25,11 +25,7 @@ var helpOption = option{
 	data:  clapData{Blurb: "show this help message"},
 }
 
-type builder struct {
-	pkg *ast.Package
-}
-
-func (b *builder) addChildren(c *command, strct *ast.StructType) error {
+func addChildren(pkg *ast.Package, c *command, strct *ast.StructType) error {
 	// Read in the struct fields.
 	for _, field := range strct.Fields.List {
 		if len(field.Names) > 1 {
@@ -50,7 +46,7 @@ func (b *builder) addChildren(c *command, strct *ast.StructType) error {
 			}
 			// The field, which is of type `*IDENT,` will be a command if `IDENT`
 			// identifies a struct defined within this package.
-			subStrct := findStruct(b.pkg, idnt.Name)
+			subStrct := findStruct(pkg, idnt.Name)
 			if subStrct == nil {
 				warn("skipping %s: if type '%s' is defined, it's not a struct", typeAndField, idnt.Name)
 				continue
@@ -60,10 +56,10 @@ func (b *builder) addChildren(c *command, strct *ast.StructType) error {
 				parentNames: append(c.parentNames, c.UsgName()),
 				TypeName:    idnt.Name,
 				FieldName:   fieldName,
-				Data:        b.getCmdClapData(idnt.Name),
+				Data:        getCmdClapData(pkg, idnt.Name),
 			}
 			// Recursively build this subcommand from it's own struct type definition.
-			err := b.addChildren(&subcmd, subStrct)
+			err := addChildren(pkg, &subcmd, subStrct)
 			if err != nil {
 				return err
 			}
@@ -162,9 +158,9 @@ func findStruct(pkg *ast.Package, name string) *ast.StructType {
 	return strct
 }
 
-func (b *builder) getCmdClapData(typ string) clapData {
+func getCmdClapData(pkg *ast.Package, typ string) clapData {
 	var commentGrp *ast.CommentGroup
-	ast.Inspect(b.pkg, func(n ast.Node) bool {
+	ast.Inspect(pkg, func(n ast.Node) bool {
 		switch n := n.(type) {
 		case *ast.GenDecl:
 			if n.Doc != nil {
