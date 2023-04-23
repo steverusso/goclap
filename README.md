@@ -1,5 +1,7 @@
 # goclap
 
+[![Go Report Card](https://goreportcard.com/badge/github.com/steverusso/goclap)](https://goreportcard.com/report/github.com/steverusso/goclap)
+
 ```
 go install github.com/steverusso/goclap@latest
 ```
