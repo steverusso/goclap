@@ -50,7 +50,7 @@ func (b *builder) addChildren(c *command, strct *ast.StructType) error {
 			}
 			// The field, which is of type `*IDENT,` will be a command if `IDENT`
 			// identifies a struct defined within this package.
-			subStrct := b.findStruct(idnt.Name)
+			subStrct := findStruct(b.pkg, idnt.Name)
 			if subStrct == nil {
 				warn("skipping %s: if type '%s' is defined, it's not a struct", typeAndField, idnt.Name)
 				continue
@@ -130,9 +130,9 @@ func basicTypeFromName(name string) basicType {
 	}
 }
 
-func (b *builder) findStruct(name string) *ast.StructType {
+func findStruct(pkg *ast.Package, name string) *ast.StructType {
 	var strct *ast.StructType
-	ast.Inspect(b.pkg, func(n ast.Node) bool {
+	ast.Inspect(pkg, func(n ast.Node) bool {
 		switch n := n.(type) {
 		case *ast.GenDecl:
 			for i := range n.Specs {

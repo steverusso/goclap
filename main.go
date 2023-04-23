@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"go/ast"
 	"go/parser"
 	"go/token"
 	"io"
@@ -164,17 +165,25 @@ func gen(c *goclap) error {
 		srcDir = c.srcDir
 	}
 	fset := token.NewFileSet() // positions are relative to fset
-	parsedDir, err := parser.ParseDir(fset, srcDir, nil, parser.ParseComments)
+	parsedPkgs, err := parser.ParseDir(fset, srcDir, nil, parser.ParseComments)
 	if err != nil {
 		return err
 	}
 
-	b := builder{pkg: parsedDir["main"]}
-
-	rootStrct := b.findStruct(rootCmdTypeName)
-	if rootStrct == nil {
+	var targetPkg *ast.Package
+	var rootStrct *ast.StructType
+	for _, pkg := range parsedPkgs {
+		if s := findStruct(pkg, rootCmdTypeName); s != nil {
+			targetPkg = pkg
+			rootStrct = s
+			break
+		}
+	}
+	if targetPkg == nil {
 		return fmt.Errorf("could not find a struct type named '%s'", rootCmdTypeName)
 	}
+
+	b := builder{pkg: targetPkg}
 	data := b.getCmdClapData(rootCmdTypeName)
 	if data.Blurb == "" {
 		warn("no root command description provided")
@@ -193,7 +202,7 @@ func gen(c *goclap) error {
 		return err
 	}
 
-	g, err := newGenerator(c.incVersion)
+	g, err := newGenerator(b.pkg.Name, c.incVersion)
 	if err != nil {
 		return fmt.Errorf("initializing generator: %w", err)
 	}
