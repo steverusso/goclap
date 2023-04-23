@@ -83,19 +83,10 @@ func (b *builder) addChildren(c *command, strct *ast.StructType) error {
 			continue
 		}
 		fieldDocs := parseComments(field.Doc)
-		var hasOptCfgs, hasArgCfgs bool
-		for i := range fieldDocs.configs {
-			k := fieldDocs.configs[i].key
-			if strings.HasPrefix(k, "opt") {
-				hasOptCfgs = true
-			}
-			if strings.HasPrefix(k, "arg") {
-				hasArgCfgs = true
-			}
-		}
-		if hasOptCfgs {
-			if hasArgCfgs {
-				return fmt.Errorf("%s has both option and argument config values", typeAndField)
+		cfgTypes := scanConfigTypes(fieldDocs.configs)
+		if cfgTypes.opts {
+			if cfgTypes.args {
+				return fmt.Errorf("%s has both option and argument configurations", typeAndField)
 			}
 			// The field is firmly considered an option at this point.
 			err := c.addOption(fieldDocs, fieldName, fieldType)
@@ -117,6 +108,25 @@ func (b *builder) addChildren(c *command, strct *ast.StructType) error {
 	}
 	c.Opts = append(c.Opts, helpOption)
 	return nil
+}
+
+type cfgTypes struct {
+	opts bool
+	args bool
+}
+
+func scanConfigTypes(cfgs []clapConfig) cfgTypes {
+	var ct cfgTypes
+	for i := range cfgs {
+		k := cfgs[i].key
+		if strings.HasPrefix(k, "opt") {
+			ct.opts = true
+		}
+		if strings.HasPrefix(k, "arg") {
+			ct.args = true
+		}
+	}
+	return ct
 }
 
 func basicTypeFromName(name string) basicType {
