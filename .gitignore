@@ -1,3 +1,6 @@
 goclap
 examples/simple/simple
 examples/strops/strops
+
+# JetBrains' IDEs
+.idea
