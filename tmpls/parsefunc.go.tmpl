@@ -8,7 +8,7 @@ func (c *{{ .TypeName }}) parse(args []string) {
 	{{- end -}}
 
 	{{- /* Parse environment variables. */}}
-	{{ range .EnvVals -}}
+	{{- range .EnvVals }}
 	clapSetEnv("{{ .VarName }}", &c.{{ .FieldName }})
 	{{- end }}
 
