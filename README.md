@@ -1,5 +1,6 @@
 # goclap
 
+[![GitHub CI](https://github.com/steverusso/goclap/actions/workflows/ci.yaml/badge.svg)](https://github.com/steverusso/goclap/actions/workflows/ci.yaml)
 [![Go Report Card](https://goreportcard.com/badge/github.com/steverusso/goclap)](https://goreportcard.com/report/github.com/steverusso/goclap)
 
 ```
