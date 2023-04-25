@@ -112,15 +112,17 @@ argsLoop:
 }
 
 func (*mycli) printUsage(to *os.File) {
-	fmt.Fprintf(to, `%[1]s - print a string with the option to make it uppercase
+	fmt.Fprintf(to, `%[1]s - print a string with a prefix
 
 usage:
-   %[1]s [options]
+   %[1]s [options] [input]
 
 options:
-   -u, --uname  <arg>    make the input string all uppercase [$MY_UNAME]
-   -p, --passwd  <arg>   the input string [$MY_PASSWD]
+   -p, --prefix  <arg>   the value to prepend to the input string [$MY_PREFIX]
    -h, --help            show this help message
+
+arguments:
+   [input]   the user provided input
 `, os.Args[0])
 }
 
@@ -128,10 +130,14 @@ func (c *mycli) parse(args []string) {
 	if len(args) > 0 && len(args) == len(os.Args) {
 		args = args[1:]
 	}
-	clapSetEnv("MY_UNAME", &c.username)
-	clapSetEnv("MY_PASSWD", &c.password)
-	parseOpts(args, c, []clapOpt{
-		{"uname", "u", &c.username},
-		{"passwd", "p", &c.password},
+	clapSetEnv("MY_PREFIX", &c.prefix)
+	clapSetEnv("MY_INPUT", &c.input)
+	i := parseOpts(args, c, []clapOpt{
+		{"prefix", "p", &c.prefix},
 	})
+	args = args[i:]
+	if len(args) < 1 {
+		return
+	}
+	c.input = args[0]
 }

@@ -8,23 +8,21 @@ import (
 	"os"
 )
 
-// Print a string with the option to make it uppercase.
+// Print a string with a prefix.
 type mycli struct {
-	// The user provided username.
+	// The value to prepend to the input string.
 	//
-	// clap:opt uname,u
-	// clap:env MY_UNAME
-	username string
-	// The user provided password.
+	// clap:opt prefix,p
+	// clap:env MY_PREFIX
+	prefix string
+	// The user provided input.
 	//
-	// clap:opt passwd,p
-	// clap:env MY_PASSWD
-	password string
+	// clap:env MY_INPUT
+	input string
 }
 
 func main() {
 	c := mycli{}
 	c.parse(os.Args)
-	fmt.Printf("username: %q\n", c.username)
-	fmt.Printf("password: %q\n", c.password)
+	fmt.Printf("'%s%s'\n", c.prefix, c.input)
 }
