@@ -1,5 +1,6 @@
 goclap
 examples/simple/simple
+examples/simple_env/simple_env
 examples/strops/strops
 
 # JetBrains' IDEs
