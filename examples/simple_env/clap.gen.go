@@ -122,7 +122,7 @@ options:
    -h, --help            show this help message
 
 arguments:
-   [input]   the user provided input
+   [input]   the user provided input [$MY_INPUT]
 `, os.Args[0])
 }
 
