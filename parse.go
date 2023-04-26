@@ -96,7 +96,7 @@ func addChildren(pkg *ast.Package, c *command, strct *ast.StructType) error {
 			return fmt.Errorf("%s: arguments cannot be type bool", typeAndField)
 		}
 		c.Args = append(c.Args, argument{
-			Data:      fieldDocs,
+			data:      fieldDocs,
 			FieldType: fieldType,
 			FieldName: fieldName,
 			name:      strings.ToLower(fieldName),

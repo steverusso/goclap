@@ -142,7 +142,7 @@ type argument struct {
 	FieldType basicType
 	FieldName string
 	name      string
-	Data      clapData
+	data      clapData
 }
 
 func (c *command) UsgName() string {
