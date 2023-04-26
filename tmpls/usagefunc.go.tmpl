@@ -17,11 +17,11 @@ options:{{ range .Opts }}
 {{ end -}}
 
 {{- if .HasArgs }}
-{{- $w := .ArgNameColWidth }}
+	{{- $nameWidth := .ArgNameColWidth }}
 
 arguments:
 {{- range .Args }}
-   {{ printf "%-*s   %s" $w .UsgName .Data.Blurb -}}
+   {{ .Usg $nameWidth -}}
 {{ end -}}{{ end -}}
 {{ if .HasSubcmds }}
 {{- $w := .SubcmdNameColWidth }}

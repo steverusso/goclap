@@ -240,7 +240,16 @@ func (arg *argument) IsRequired() bool {
 	return ok
 }
 
-// Usg returns this option's usage message text given how wide the name column should be.
+// Usg returns an argument's usage message text given how wide the name column should be.
+func (a *argument) Usg(nameWidth int) string {
+	var envName string
+	if v, ok := a.Data.getConfig("env"); ok {
+		envName = " [$" + v + "]"
+	}
+	return fmt.Sprintf("%-*s   %s%s", nameWidth, a.UsgName(), a.Data.Blurb, envName)
+}
+
+// Usg returns an option's usage message text given how wide the name column should be.
 func (o *option) Usg(nameWidth int) string {
 	var envName string
 	if v, ok := o.data.getConfig("env"); ok {
