@@ -199,7 +199,7 @@ func (c *command) EnvVals() []clapEnvValue {
 		}
 	}
 	for i := range c.Args {
-		if name, ok := c.Args[i].Data.getConfig("env"); ok {
+		if name, ok := c.Args[i].data.getConfig("env"); ok {
 			envs = append(envs, clapEnvValue{
 				VarName:   name,
 				FieldName: c.Args[i].FieldName,
@@ -236,11 +236,20 @@ func (arg *argument) UsgName() string {
 }
 
 func (arg *argument) IsRequired() bool {
-	_, ok := arg.Data.getConfig("arg_required")
+	_, ok := arg.data.getConfig("arg_required")
 	return ok
 }
 
-// Usg returns this option's usage message text given how wide the name column should be.
+// Usg returns an argument's usage message text given how wide the name column should be.
+func (a *argument) Usg(nameWidth int) string {
+	var envName string
+	if v, ok := a.data.getConfig("env"); ok {
+		envName = " [$" + v + "]"
+	}
+	return fmt.Sprintf("%-*s   %s%s", nameWidth, a.UsgName(), a.data.Blurb, envName)
+}
+
+// Usg returns an option's usage message text given how wide the name column should be.
 func (o *option) Usg(nameWidth int) string {
 	var envName string
 	if v, ok := o.data.getConfig("env"); ok {
@@ -325,7 +334,7 @@ func (c *command) HasEnvArgOrOptSomewhere() bool {
 		}
 	}
 	for i := range c.Args {
-		if _, ok := c.Args[i].Data.getConfig("env"); ok {
+		if _, ok := c.Args[i].data.getConfig("env"); ok {
 			return true
 		}
 	}
