@@ -57,7 +57,7 @@ func (c *{{ .TypeName }}) parse(args []string) {
 	}
 	switch args[i] {
 	{{- range .Subcmds }}
-	case "{{ .UsgName }}":
+	case {{ .QuotedNames }}:
 		c.{{ .FieldName }} = new({{ .TypeName }})
 		c.{{ .FieldName }}.parse(args[i+1:])
 	{{- end }}

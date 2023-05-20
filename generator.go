@@ -138,6 +138,18 @@ func (c *command) UsageLines() []string {
 	}
 }
 
+// QuotedNames returns a comma separated list of this command's name, plus any aliases,
+// each in double quotes.
+func (c *command) QuotedNames() string {
+	s := "\"" + c.UsgName() + "\""
+	if csv, ok := c.Data.getConfig("cmd_aliases"); ok {
+		for _, alias := range strings.Split(csv, ",") {
+			s += ", \"" + strings.TrimSpace(alias) + "\""
+		}
+	}
+	return s
+}
+
 func (c *command) Overview() string {
 	ww := wordWrapper{}
 	paras := c.Data.overview
