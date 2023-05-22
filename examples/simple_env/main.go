@@ -15,6 +15,11 @@ type mycli struct {
 	// clap:opt prefix,p
 	// clap:env MY_PREFIX
 	prefix string
+	// Print the output this many extra times.
+	//
+	// clap:opt count,c
+	// clap:env MY_COUNT
+	count uint
 	// The user provided input.
 	//
 	// clap:env MY_INPUT
@@ -24,5 +29,8 @@ type mycli struct {
 func main() {
 	c := mycli{}
 	c.parse(os.Args)
-	fmt.Printf("'%s%s'\n", c.prefix, c.input)
+
+	for i := uint(0); i < c.count+1; i++ {
+		fmt.Printf("'%s%s'\n", c.prefix, c.input)
+	}
 }

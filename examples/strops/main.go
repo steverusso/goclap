@@ -19,6 +19,11 @@ type strops struct {
 	//
 	// clap:opt reverse,r
 	reverse bool
+	// Repeat the string this many times.
+	//
+	// clap:opt repeat
+	// clap:opt_arg_name n
+	repeat int
 	// Add this prefix to the final string.
 	//
 	// clap:opt prefix
@@ -35,10 +40,6 @@ func main() {
 	c.parse(os.Args)
 
 	b := []byte(c.input)
-	if c.toUpper {
-		b = bytes.ToUpper(b)
-	}
-
 	if c.prefix != "" {
 		b = append([]byte(c.prefix), b...)
 	}
@@ -48,6 +49,12 @@ func main() {
 		for i := 0; i < n/2; i++ {
 			b[i], b[n-1-i] = b[n-1-i], b[i]
 		}
+	}
+	if c.toUpper {
+		b = bytes.ToUpper(b)
+	}
+	if c.repeat > 0 {
+		b = bytes.Repeat(b, c.repeat)
 	}
 
 	fmt.Println(string(b))

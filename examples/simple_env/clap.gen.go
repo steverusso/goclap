@@ -179,6 +179,7 @@ usage:
 
 options:
    -p, --prefix  <arg>   the value to prepend to the input string [$MY_PREFIX]
+   -c, --count  <arg>    print the output this many extra times [$MY_COUNT]
    -h, --help            show this help message
 
 arguments:
@@ -191,9 +192,11 @@ func (c *mycli) parse(args []string) {
 		args = args[1:]
 	}
 	clapSetEnv("MY_PREFIX", &c.prefix)
+	clapSetEnv("MY_COUNT", &c.count)
 	clapSetEnv("MY_INPUT", &c.input)
 	i := parseOpts(args, c, []clapOpt{
 		{"prefix", "p", &c.prefix},
+		{"count", "c", &c.count},
 	})
 	args = args[i:]
 	if len(args) < 1 {

@@ -170,6 +170,7 @@ usage:
 options:
    -u, --upper           make the `+"`"+`input`+"`"+` string all uppercase
    -r, --reverse         reverse the final string
+       --repeat  <n>     repeat the string this many times
        --prefix  <str>   add this prefix to the final string
    -h, --help            show this help message
 
@@ -185,6 +186,7 @@ func (c *strops) parse(args []string) {
 	i := parseOpts(args, c, []clapOpt{
 		{"upper", "u", &c.toUpper},
 		{"reverse", "r", &c.reverse},
+		{"repeat", "", &c.repeat},
 		{"prefix", "", &c.prefix},
 	})
 	args = args[i:]
