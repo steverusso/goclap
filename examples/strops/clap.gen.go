@@ -193,5 +193,5 @@ func (c *strops) parse(args []string) {
 	if len(args) < 1 {
 		exitMissingArg(c, "<input>")
 	}
-	c.input = args[0]
+	clapParseInto(&c.input, args[0])
 }
