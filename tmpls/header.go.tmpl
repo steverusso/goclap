@@ -20,13 +20,13 @@ type clapUsagePrinter interface {
 
 {{- if .RootCmd.HasEnvArgOrOptSomewhere }}
 
-func clapSetEnv(c clapUsagePrinter, name string, v any) {
+func clapSetEnv(name string, v any) {
 	ev, ok := os.LookupEnv(name)
 	if !ok {
 		return
 	}
 	if b, ok := v.(*bool); ok {
-		*v = (ev != "false" && ev != "0")
+		*b = (ev != "false" && ev != "0")
 		return
 	}
 	err := clapParseInto(v, ev)

@@ -5,6 +5,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -76,18 +77,23 @@ argsLoop:
 		k, eqv, hasEq := optParts(args[i][1:])
 		for z := range data {
 			if k == data[z].long || k == data[z].short {
-				switch v := data[z].v.(type) {
-				case *bool:
+				if v, ok := data[z].v.(*bool); ok {
 					*v = clapParseBool(eqv)
-				case *string:
+				} else {
+					var val string
 					if hasEq {
-						*v = eqv
+						val = eqv
 					} else if i == len(args)-1 {
-						claperr("string option '%s' needs an argument\n", k)
+						claperr("option '%s' needs an argument\n", k)
 						os.Exit(1)
 					} else {
 						i++
-						*v = args[i]
+						val = args[i]
+					}
+					err := clapParseInto(data[z].v, val)
+					if err != nil {
+						claperr("invalid argument for option '%s': %v\n", k, err)
+						os.Exit(1)
 					}
 				}
 				continue argsLoop
@@ -101,6 +107,58 @@ argsLoop:
 		os.Exit(1)
 	}
 	return i
+}
+
+func clapParseInto(v any, s string) error {
+	if v, ok := v.(*string); ok {
+		*v = s
+		return nil
+	}
+	var (
+		i64 int64
+		u64 uint64
+		err error
+	)
+	switch v := v.(type) {
+	case *int:
+		i64, err = strconv.ParseInt(s, 10, 0)
+		*v = int(i64)
+	case *int8:
+		i64, err = strconv.ParseInt(s, 10, 8)
+		*v = int8(i64)
+	case *int16:
+		i64, err = strconv.ParseInt(s, 10, 16)
+		*v = int16(i64)
+	case *int32:
+		i64, err = strconv.ParseInt(s, 10, 32)
+		*v = int32(i64)
+	case *int64:
+		*v, err = strconv.ParseInt(s, 10, 64)
+	case *uint:
+		u64, err = strconv.ParseUint(s, 10, 0)
+		*v = uint(u64)
+	case *uint8:
+		u64, err = strconv.ParseUint(s, 10, 8)
+		*v = uint8(u64)
+	case *uint16:
+		u64, err = strconv.ParseUint(s, 10, 16)
+		*v = uint16(u64)
+	case *uint32:
+		u64, err = strconv.ParseUint(s, 10, 32)
+		*v = uint32(u64)
+	case *uint64:
+		*v, err = strconv.ParseUint(s, 10, 64)
+	case *uintptr:
+		u64, err = strconv.ParseUint(s, 10, 64)
+		*v = uintptr(u64)
+	case *float32:
+		var f float64
+		f, err = strconv.ParseFloat(s, 32)
+		*v = float32(f)
+	case *float64:
+		*v, err = strconv.ParseFloat(s, 64)
+	}
+	return err
 }
 
 func (*strops) printUsage(to *os.File) {
