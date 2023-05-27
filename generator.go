@@ -129,8 +129,8 @@ func (c *command) UsageLines() []string {
 	}
 	argsSlot := ""
 	if c.HasArgs() {
-		for _, arg := range c.Args {
-			argsSlot += " " + arg.UsgName()
+		for _, a := range c.Args {
+			argsSlot += " " + a.UsgName()
 		}
 	}
 	return []string{
@@ -223,9 +223,9 @@ func (c *command) EnvVals() []clapEnvValue {
 
 func (c *command) RequiredArgs() []argument {
 	reqs := make([]argument, 0, len(c.Args))
-	for _, arg := range c.Args {
-		if arg.IsRequired() {
-			reqs = append(reqs, arg)
+	for _, a := range c.Args {
+		if a.IsRequired() {
+			reqs = append(reqs, a)
 		}
 	}
 	return reqs
@@ -240,15 +240,15 @@ func (c *command) HasNonHelpOpt() bool {
 	return false
 }
 
-func (arg *argument) UsgName() string {
-	if arg.IsRequired() {
-		return "<" + arg.name + ">"
+func (a *argument) UsgName() string {
+	if a.IsRequired() {
+		return "<" + a.name + ">"
 	}
-	return "[" + arg.name + "]"
+	return "[" + a.name + "]"
 }
 
-func (arg *argument) IsRequired() bool {
-	_, ok := arg.data.getConfig("arg_required")
+func (a *argument) IsRequired() bool {
+	_, ok := a.data.getConfig("arg_required")
 	return ok
 }
 
@@ -329,8 +329,8 @@ func (c *command) HasReqArgSomewhere() bool {
 }
 
 func (c *command) HasRequiredArgs() bool {
-	for _, arg := range c.Args {
-		if arg.IsRequired() {
+	for _, a := range c.Args {
+		if a.IsRequired() {
 			return true
 		}
 	}
