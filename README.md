@@ -8,10 +8,10 @@
 go install github.com/steverusso/goclap@latest
 ```
 
-A pre-build tool to generate **c**ommand **l**ine **a**rgument **p**arsing code
-from Go comments. The idea is inspired by the [`clap` Rust
-crate](https://github.com/clap-rs/clap), specifically its use of documentation
-and proc macros.
+A pre-build tool to generate **c**ommand **l**ine **a**rgument **p**arsing code from Go
+comments. The idea is inspired by the [`clap` Rust
+crate](https://github.com/clap-rs/clap), specifically its use of documentation and proc
+macros.
 
 ## Example
 
@@ -47,14 +47,14 @@ func main() {
 }
 ```
 
-By running `go generate` (assuming `goclap` is installed), the `mycli` struct,
-its fields, and their comments will be used to generate code for parsing
-command line arguments into a `mycli`. That code will be placed in a file named
-`clap.go` (see [the `simple` example's one](./examples/simple/clap.go)). The
-program can then be built with `go build`.
+By running `go generate` (assuming `goclap` is installed), the `mycli` struct, its fields,
+and their comments will be used to generate code for parsing command line arguments into a
+`mycli`. That code will be placed in a file named `clap.gen.go` (see [the `simple`
+example's one](./examples/simple/clap.gen.go)). The program can then be built with `go
+build`.
 
-Running `./simple -u hello` will output "HELLO", and running `./simple -h` will
-output the following help message:
+Running `./simple -u hello` will output "HELLO", and running `./simple -h` will output the
+following help message:
 
 ```
 ./simple - print a string with the option to make it uppercase
