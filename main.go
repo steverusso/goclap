@@ -43,6 +43,7 @@ type basicType int
 const (
 	typBool basicType = iota
 	typString
+	typNumber
 )
 
 func (t basicType) IsBool() bool   { return t == typBool }

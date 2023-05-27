@@ -39,14 +39,10 @@ func (c *{{ .TypeName }}) parse(args []string) {
 	if len(args) < {{ add $i 1 }} {
 		return
 	}
-			{{- end -}}
+			{{- end }}
+	clapParseInto(&c.{{ .FieldName }}, args[{{ $i }}])
 
-			{{- /* Parse positional args based on their type. */ -}}
-			{{- if $arg.FieldType.IsString }}
-	c.{{ $arg.FieldName }} = args[{{ $i }}]
-			{{- end -}}
-
-		{{ end -}}{{- /* range all args */ -}}
+		{{- end -}}{{- /* range all args */ -}}
 	{{- end }}{{- /* if args */ -}}
 
 	{{- /* Subcommands. */ -}}
