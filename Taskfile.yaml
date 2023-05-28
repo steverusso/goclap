@@ -10,8 +10,8 @@ tasks:
 
   install:
     - task: fmt
-    - go install -ldflags="-s -w"
     - task: lint
+    - go install -ldflags="-s -w"
 
   fmt:
     - goimports -w -l .
