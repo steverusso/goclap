@@ -73,10 +73,10 @@ arguments:
 ## Building
 
 To just build the project as is, run `go build`. If you have
-[`task`](https://github.com/go-task/task),
-[`goimports`](https://pkg.go.dev/golang.org/x/tools/cmd/goimports) and
-[`gofumpt`](https://github.com/mvdan/gofumpt) installed, you can simply run `task` to fmt,
-lint and build the project.
+[`task`](https://github.com/go-task/task) installed, as well as the necessary additional
+tools ([`goimports`](https://pkg.go.dev/golang.org/x/tools/cmd/goimports),
+[`gofumpt`](https://github.com/mvdan/gofumpt), [`staticcheck`](https://staticcheck.io/)),
+then you can run `task` to fmt, lint and build the project.
 
 ## Projects Using Goclap
 
