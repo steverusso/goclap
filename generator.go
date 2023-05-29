@@ -9,6 +9,8 @@ import (
 	"unicode"
 )
 
+const maxUsgLineLen = 90
+
 var (
 	//go:embed tmpls/header.go.tmpl
 	headerTmplText string
@@ -155,7 +157,7 @@ func (c *command) Overview() string {
 	paras := c.Data.overview
 	var s strings.Builder
 	for i := range paras {
-		s.WriteString(ww.wrap(paras[i], 3, 90))
+		s.WriteString(ww.wrap(paras[i], 3, maxUsgLineLen))
 		if i != len(paras)-1 {
 			s.WriteString("\n\n")
 		}
@@ -254,20 +256,22 @@ func (a *argument) IsRequired() bool {
 
 // Usg returns an argument's usage message text given how wide the name column should be.
 func (a *argument) Usg(nameWidth int) string {
-	var envName string
+	paddedName := fmt.Sprintf("   %-*s   ", nameWidth, a.UsgName())
+	desc := a.data.Blurb
 	if v, ok := a.data.getConfig("env"); ok {
-		envName = " [$" + v + "]"
+		desc += " [$" + v + "]"
 	}
-	return fmt.Sprintf("%-*s   %s%s", nameWidth, a.UsgName(), a.data.Blurb, envName)
+	return paddedName + wrapBlurb(desc, len(paddedName), maxUsgLineLen)
 }
 
 // Usg returns an option's usage message text given how wide the name column should be.
 func (o *option) Usg(nameWidth int) string {
-	var envName string
+	paddedNameAndArg := fmt.Sprintf("   %-*s   ", nameWidth, o.usgNamesAndArg())
+	desc := o.data.Blurb
 	if v, ok := o.data.getConfig("env"); ok {
-		envName = " [$" + v + "]"
+		desc += " [$" + v + "]"
 	}
-	return fmt.Sprintf("%-*s   %s%s", nameWidth, o.usgNamesAndArg(), o.data.Blurb, envName)
+	return paddedNameAndArg + wrapBlurb(desc, len(paddedNameAndArg), maxUsgLineLen)
 }
 
 func (o *option) usgNamesAndArg() string {
@@ -312,6 +316,12 @@ func (o *option) usgArgName() string {
 		return "<" + name + ">"
 	}
 	return "<arg>"
+}
+
+// Usg returns a command's usage message text given how wide the name column should be.
+func (c *command) Usg(nameWidth int) string {
+	paddedName := fmt.Sprintf("   %-*s   ", nameWidth, c.UsgName())
+	return paddedName + wrapBlurb(c.Data.Blurb, len(paddedName), maxUsgLineLen)
 }
 
 // HasReqArgSomewhere returns true if this command or one of its subcommands contains a
@@ -363,6 +373,12 @@ func (c *command) HasSubcmds() bool { return len(c.Subcmds) > 0 }
 func (c *command) HasOptions() bool { return len(c.Opts) > 0 }
 func (c *command) HasArgs() bool    { return len(c.Args) > 0 }
 
+func wrapBlurb(v string, indentLen, lineLen int) string {
+	var ww wordWrapper
+	s := ww.wrap(v, indentLen, lineLen)
+	return s[indentLen:]
+}
+
 type wordWrapper struct {
 	indent string
 	word   strings.Builder
@@ -370,10 +386,10 @@ type wordWrapper struct {
 	result strings.Builder
 }
 
-func (ww *wordWrapper) wrap(v string, indentWidth, width int) string {
-	ww.indent = strings.Repeat(" ", indentWidth)
-	ww.word.Grow(width)
-	ww.line.Grow(width)
+func (ww *wordWrapper) wrap(v string, indentLen, lineLen int) string {
+	ww.indent = strings.Repeat(" ", indentLen)
+	ww.word.Grow(lineLen)
+	ww.line.Grow(lineLen)
 	ww.line.WriteString(ww.indent)
 	ww.result.Grow(len(v))
 
@@ -387,14 +403,14 @@ func (ww *wordWrapper) wrap(v string, indentWidth, width int) string {
 			ww.takeLineAndReset()
 			continue
 		}
-		if ww.line.Len()+ww.word.Len() > width {
+		if ww.line.Len()+ww.word.Len() > lineLen {
 			ww.takeLineAndReset()
 		}
 		ww.takeWordAndReset()
 		ww.line.WriteRune(c)
 	}
 	if ww.word.Len() > 0 {
-		if ww.line.Len()+ww.word.Len() > width {
+		if ww.line.Len()+ww.word.Len() > lineLen {
 			ww.takeLineAndReset()
 		}
 		ww.takeWordAndReset()
@@ -415,7 +431,8 @@ func (ww *wordWrapper) takeWordAndReset() {
 }
 
 func (ww *wordWrapper) takeLineAndReset() {
-	ww.result.WriteString(ww.line.String())
+	ln := strings.TrimRightFunc(ww.line.String(), unicode.IsSpace) // remove trailing whitespace
+	ww.result.WriteString(ln)
 	ww.result.WriteRune('\n')
 	ww.line.Reset()
 	ww.line.WriteString(ww.indent)
