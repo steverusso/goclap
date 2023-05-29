@@ -9,6 +9,8 @@ import (
 	"unicode"
 )
 
+const maxUsgLineLen = 90
+
 var (
 	//go:embed tmpls/header.go.tmpl
 	headerTmplText string
@@ -155,7 +157,7 @@ func (c *command) Overview() string {
 	paras := c.Data.overview
 	var s strings.Builder
 	for i := range paras {
-		s.WriteString(ww.wrap(paras[i], 3, 90))
+		s.WriteString(ww.wrap(paras[i], 3, maxUsgLineLen))
 		if i != len(paras)-1 {
 			s.WriteString("\n\n")
 		}
@@ -259,7 +261,7 @@ func (a *argument) Usg(nameWidth int) string {
 	if v, ok := a.data.getConfig("env"); ok {
 		desc += " [$" + v + "]"
 	}
-	return paddedName + wrapBlurb(desc, len(paddedName), 90)
+	return paddedName + wrapBlurb(desc, len(paddedName), maxUsgLineLen)
 }
 
 // Usg returns an option's usage message text given how wide the name column should be.
@@ -269,7 +271,7 @@ func (o *option) Usg(nameWidth int) string {
 	if v, ok := o.data.getConfig("env"); ok {
 		desc += " [$" + v + "]"
 	}
-	return paddedNameAndArg + wrapBlurb(desc, len(paddedNameAndArg), 90)
+	return paddedNameAndArg + wrapBlurb(desc, len(paddedNameAndArg), maxUsgLineLen)
 }
 
 func (o *option) usgNamesAndArg() string {
@@ -319,7 +321,7 @@ func (o *option) usgArgName() string {
 // Usg returns a command's usage message text given how wide the name column should be.
 func (c *command) Usg(nameWidth int) string {
 	paddedName := fmt.Sprintf("   %-*s   ", nameWidth, c.UsgName())
-	return paddedName + wrapBlurb(c.Data.Blurb, len(paddedName), 90)
+	return paddedName + wrapBlurb(c.Data.Blurb, len(paddedName), maxUsgLineLen)
 }
 
 // HasReqArgSomewhere returns true if this command or one of its subcommands contains a
