@@ -13,22 +13,22 @@ usage:{{ range .UsageLines }}
 	{{- $nameWidth := .OptNameColWidth }}
 
 options:{{ range .Opts }}
-   {{ .Usg $nameWidth }}{{ end -}}
+{{ .Usg $nameWidth }}{{ end -}}
 {{ end -}}
 
 {{- if .HasArgs }}
 	{{- $nameWidth := .ArgNameColWidth }}
 
-arguments:
-{{- range .Args }}
-   {{ .Usg $nameWidth -}}
-{{ end -}}{{ end -}}
+arguments:{{ range .Args }}
+{{ .Usg $nameWidth -}}
+{{ end -}}
+{{ end -}}
+
 {{ if .HasSubcmds }}
 {{- $w := .SubcmdNameColWidth }}
 
-subcommands:
-{{- range .Subcmds }}
-   {{ printf "%-*s   %s" $w .UsgName .Data.Blurb -}}
+subcommands:{{ range .Subcmds }}
+{{ .Usg $w -}}
 {{ end -}}{{ end }}
 {{- if and .IsRoot .HasSubcmds }}
 
