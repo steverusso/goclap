@@ -153,11 +153,10 @@ func (c *command) QuotedNames() string {
 }
 
 func (c *command) Overview() string {
-	ww := wordWrapper{}
 	paras := c.Data.overview
 	var s strings.Builder
 	for i := range paras {
-		s.WriteString(ww.wrap(paras[i], 3, maxUsgLineLen))
+		s.WriteString(wrapText(paras[i], 3, maxUsgLineLen))
 		if i != len(paras)-1 {
 			s.WriteString("\n\n")
 		}
@@ -374,8 +373,7 @@ func (c *command) HasOptions() bool { return len(c.Opts) > 0 }
 func (c *command) HasArgs() bool    { return len(c.Args) > 0 }
 
 func wrapBlurb(v string, indentLen, lineLen int) string {
-	var ww wordWrapper
-	s := ww.wrap(v, indentLen, lineLen)
+	s := wrapText(v, indentLen, lineLen)
 	return s[indentLen:]
 }
 
@@ -386,7 +384,8 @@ type wordWrapper struct {
 	result strings.Builder
 }
 
-func (ww *wordWrapper) wrap(v string, indentLen, lineLen int) string {
+func wrapText(v string, indentLen, lineLen int) string {
+	var ww wordWrapper
 	ww.indent = strings.Repeat(" ", indentLen)
 	ww.word.Grow(lineLen)
 	ww.line.Grow(lineLen)
