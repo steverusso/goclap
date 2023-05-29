@@ -16,11 +16,12 @@ Please try to keep pull requests simple. Overly complex code changes are difficu
 properly review. A good rule of thumb is that the pull request should focus on only one of
 the following categories:
 
-* `doc`: documentation changes only (README, repo health files, source code comments, etc)
+* `docs`: documentation changes only (README, repo health files, source code comments, etc)
 * `feat`: implements a new feature
 * `tidy`: white-space changes, reformatting, repositioning, renaming, etc.
 * `refactor`: change that is not a new feature, bugfix, or tidy
 * `chore`: changes that don't involve source or doc files (ex: continuous integration files)
+* `test`: changes that only touch tests or test data
 * `examples/{name}`: changes to the examples
 
 The title of the pull request should begin with the type of change it contains followed by
