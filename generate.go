@@ -4,6 +4,8 @@ import (
 	"bytes"
 	_ "embed"
 	"fmt"
+	"io"
+	"os"
 	"strings"
 	"text/template"
 	"unicode"
@@ -22,8 +24,30 @@ var (
 	parseFnTmplText string
 )
 
-var parseFuncs = template.FuncMap{
-	"add": func(a, b int) int { return a + b },
+func generate(pkgName, outPath string, incVersion bool, root *command) error {
+	g, err := newGenerator(pkgName, incVersion)
+	if err != nil {
+		return fmt.Errorf("initializing generator: %w", err)
+	}
+	if err = g.writeHeader(root); err != nil {
+		return err
+	}
+	if err = g.genCommandCode(root); err != nil {
+		return fmt.Errorf("generating %w", err)
+	}
+	if outPath == "" {
+		outPath = "./clap.gen.go"
+	}
+	f, err := os.OpenFile(outPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o644)
+	if err != nil {
+		return fmt.Errorf("opening '%s': %w", outPath, err)
+	}
+	defer f.Close()
+
+	if _, err = io.Copy(f, &g.buf); err != nil {
+		return fmt.Errorf("copying buffer to output file: %w", err)
+	}
+	return nil
 }
 
 type generator struct {
@@ -38,6 +62,9 @@ func newGenerator(pkgName string, incVersion bool) (generator, error) {
 	usgFnTmpl, err := template.New("usagefunc").Parse(usgFnTmplText)
 	if err != nil {
 		return generator{}, fmt.Errorf("parsing template: %w", err)
+	}
+	parseFuncs := template.FuncMap{
+		"add": func(a, b int) int { return a + b },
 	}
 	parseFnTmpl, err := template.New("parsefunc").Funcs(parseFuncs).Parse(parseFnTmplText)
 	if err != nil {
@@ -75,9 +102,9 @@ func (g *generator) writeHeader(root *command) error {
 	return nil
 }
 
-func (g *generator) generate(c *command) error {
+func (g *generator) genCommandCode(c *command) error {
 	for i := range c.Subcmds {
-		if err := g.generate(&c.Subcmds[i]); err != nil {
+		if err := g.genCommandCode(&c.Subcmds[i]); err != nil {
 			return err
 		}
 	}
