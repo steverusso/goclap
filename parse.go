@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"go/ast"
+	"go/parser"
+	"go/token"
 	"regexp"
 	"strings"
 	"unicode"
@@ -23,6 +25,51 @@ var helpOption = option{
 	Short: "h",
 	Long:  "help",
 	data:  clapData{Blurb: "show this help message"},
+}
+
+func parse(srcDir, rootCmdTypeName string) (command, string, error) {
+	if srcDir == "" {
+		srcDir = "."
+	}
+
+	fset := token.NewFileSet() // positions are relative to fset
+	parsedPkgs, err := parser.ParseDir(fset, srcDir, nil, parser.ParseComments)
+	if err != nil {
+		return command{}, "", err
+	}
+
+	var targetPkg *ast.Package
+	var rootStrct *ast.StructType
+	for _, pkg := range parsedPkgs {
+		if s := findStruct(pkg, rootCmdTypeName); s != nil {
+			targetPkg = pkg
+			rootStrct = s
+			break
+		}
+	}
+	if targetPkg == nil {
+		return command{}, "", fmt.Errorf("could not find a struct type named '%s'", rootCmdTypeName)
+	}
+
+	data := getCmdClapData(targetPkg, rootCmdTypeName)
+	if data.Blurb == "" {
+		warn("no root command description provided")
+	}
+	root := command{
+		TypeName: rootCmdTypeName,
+		// This is a bit of a hack due to the following: the "name" of the root command is
+		// actually the name of the program, which is the first argument in `os.Args`.
+		// That gets passed as a fmt arg within the generated code when printing a
+		// command's usage. Therefore, we need a `%s` to show up wherever the root command
+		// name will appear in a usage message.
+		FieldName: "%[1]s",
+		Data:      data,
+	}
+
+	if err = addChildren(targetPkg, &root, rootStrct); err != nil {
+		return command{}, "", err
+	}
+	return root, targetPkg.Name, nil
 }
 
 func addChildren(pkg *ast.Package, c *command, strct *ast.StructType) error {
