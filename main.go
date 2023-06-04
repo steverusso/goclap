@@ -2,9 +2,6 @@ package main
 
 import (
 	"fmt"
-	"go/ast"
-	"go/parser"
-	"go/token"
 	"os"
 	"runtime/debug"
 	"strings"
@@ -159,49 +156,12 @@ func gen(c *goclap) error {
 		os.Exit(1)
 	}
 
-	srcDir := "."
-	if c.srcDir != "" {
-		srcDir = c.srcDir
-	}
-	fset := token.NewFileSet() // positions are relative to fset
-	parsedPkgs, err := parser.ParseDir(fset, srcDir, nil, parser.ParseComments)
+	rootCmd, pkgName, err := parse(c.srcDir, rootCmdTypeName)
 	if err != nil {
 		return err
 	}
 
-	var targetPkg *ast.Package
-	var rootStrct *ast.StructType
-	for _, pkg := range parsedPkgs {
-		if s := findStruct(pkg, rootCmdTypeName); s != nil {
-			targetPkg = pkg
-			rootStrct = s
-			break
-		}
-	}
-	if targetPkg == nil {
-		return fmt.Errorf("could not find a struct type named '%s'", rootCmdTypeName)
-	}
-
-	data := getCmdClapData(targetPkg, rootCmdTypeName)
-	if data.Blurb == "" {
-		warn("no root command description provided")
-	}
-	root := command{
-		TypeName: rootCmdTypeName,
-		// This is a bit of a hack due to the following: the "name" of the root command is
-		// actually the name of the program, which is the first argument in `os.Args`.
-		// That gets passed as a fmt arg within the generated code when printing a
-		// command's usage. Therefore, we need a `%s` to show up wherever the root command
-		// name will appear in a usage message.
-		FieldName: "%[1]s",
-		Data:      data,
-	}
-
-	if err = addChildren(targetPkg, &root, rootStrct); err != nil {
-		return err
-	}
-
-	err = generate(targetPkg.Name, c.outFilePath, c.incVersion, &root)
+	err = generate(pkgName, c.outFilePath, c.incVersion, &rootCmd)
 	if err != nil {
 		return err
 	}
