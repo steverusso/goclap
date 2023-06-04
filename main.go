@@ -5,7 +5,6 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
-	"io"
 	"os"
 	"runtime/debug"
 	"strings"
@@ -46,8 +45,7 @@ const (
 	typNumber
 )
 
-func (t basicType) IsBool() bool   { return t == typBool }
-func (t basicType) IsString() bool { return t == typString }
+func (t basicType) IsBool() bool { return t == typBool }
 
 type buildVersionInfo struct {
 	modVersion      string
@@ -198,35 +196,16 @@ func gen(c *goclap) error {
 		FieldName: "%[1]s",
 		Data:      data,
 	}
-	if err := addChildren(targetPkg, &root, rootStrct); err != nil {
+
+	if err = addChildren(targetPkg, &root, rootStrct); err != nil {
 		return err
 	}
 
-	g, err := newGenerator(targetPkg.Name, c.incVersion)
-	if err != nil {
-		return fmt.Errorf("initializing generator: %w", err)
-	}
-	err = g.writeHeader(&root)
+	err = generate(targetPkg.Name, c.outFilePath, c.incVersion, &root)
 	if err != nil {
 		return err
 	}
-	if err := g.generate(&root); err != nil {
-		return fmt.Errorf("generating: %w", err)
-	}
 
-	outName := "./clap.gen.go"
-	if c.outFilePath != "" {
-		outName = c.outFilePath
-	}
-	f, err := os.OpenFile(outName, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o644)
-	if err != nil {
-		return fmt.Errorf("opening '%s': %w", outName, err)
-	}
-	defer f.Close()
-
-	if _, err := io.Copy(f, &g.buf); err != nil {
-		return fmt.Errorf("copying buffer to output file: %w", err)
-	}
 	return nil
 }
 
