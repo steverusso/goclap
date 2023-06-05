@@ -1,15 +1,12 @@
-name: security
+name: goreportcard
 
 on:
   workflow_dispatch:
 
 jobs:
-  vulncheck:
+  goreportcard:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout Code
-      uses: actions/checkout@v3
-
     - name: Setup Go
       uses: actions/setup-go@v4
       with:
@@ -21,6 +18,9 @@ jobs:
         cd goreportcard
         make install
         go install ./cmd/goreportcard-cli
+
+    - name: Checkout Code
+      uses: actions/checkout@v3
 
     - name: Run goreportcard-cli
       run: goreportcard-cli -v goclap/...
