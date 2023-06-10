@@ -4,8 +4,6 @@ import (
 	"bytes"
 	_ "embed"
 	"fmt"
-	"io"
-	"os"
 	"strings"
 	"text/template"
 	"unicode"
@@ -24,30 +22,18 @@ var (
 	parseFnTmplText string
 )
 
-func generate(pkgName, outPath string, incVersion bool, root *command) error {
+func generate(pkgName string, incVersion bool, root *command) ([]byte, error) {
 	g, err := newGenerator(pkgName, incVersion)
 	if err != nil {
-		return fmt.Errorf("initializing generator: %w", err)
+		return nil, fmt.Errorf("initializing generator: %w", err)
 	}
 	if err = g.writeHeader(root); err != nil {
-		return err
+		return nil, err
 	}
 	if err = g.genCommandCode(root); err != nil {
-		return fmt.Errorf("generating %w", err)
+		return nil, fmt.Errorf("generating %w", err)
 	}
-	if outPath == "" {
-		outPath = "./clap.gen.go"
-	}
-	f, err := os.OpenFile(outPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o644)
-	if err != nil {
-		return fmt.Errorf("opening '%s': %w", outPath, err)
-	}
-	defer f.Close()
-
-	if _, err = io.Copy(f, &g.buf); err != nil {
-		return fmt.Errorf("copying buffer to output file: %w", err)
-	}
-	return nil
+	return g.buf.Bytes(), nil
 }
 
 type generator struct {
