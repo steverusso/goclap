@@ -161,9 +161,22 @@ func gen(c *goclap) error {
 		return err
 	}
 
-	err = generate(pkgName, c.outFilePath, c.incVersion, &rootCmd)
+	code, err := generate(pkgName, c.incVersion, &rootCmd)
 	if err != nil {
 		return err
+	}
+
+	if c.outFilePath == "" {
+		c.outFilePath = "./clap.gen.go"
+	}
+	f, err := os.OpenFile(c.outFilePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o644)
+	if err != nil {
+		return fmt.Errorf("opening '%s': %w", c.outFilePath, err)
+	}
+	defer f.Close()
+
+	if _, err = f.Write(code); err != nil {
+		return fmt.Errorf("writing code to output file: %w", err)
 	}
 
 	return nil
