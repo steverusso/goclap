@@ -48,23 +48,12 @@ func exitMissingArg(u clapUsagePrinter, name string) {
 
 {{- if .RootCmd.HasSubcmds }}
 
-func exitUnknownCmd(u clapUsagePrinter, name string) {
+func (z *clapper) exitUnknownCmd(name string) {
 	claperr("unknown command '%s'\n", name)
-	u.printUsage(os.Stderr)
+	z.cmd.printUsage(os.Stderr)
 	os.Exit(1)
 }
 {{- end }}
-
-func clapParseBool(s string) bool {
-	if s == "" || s == "true" {
-		return true
-	}
-	if s != "false" {
-		claperr("invalid boolean value '%s'\n", s)
-		os.Exit(1)
-	}
-	return false
-}
 
 func optParts(arg string) (string, string, bool) {
 	if arg == "-" {
@@ -88,57 +77,107 @@ func optParts(arg string) (string, string, bool) {
 	return arg, "", false
 }
 
-type clapOpt struct {
-	long  string
-	short string
-	v     any
+type clapper struct {
+	cmd      clapUsagePrinter
+	args     []string
+	idx      int
+	skip     bool
+	optsDone bool
+
+	curr struct {
+		key   string
+		eqVal string
+		hasEq bool
+	}
 }
 
-func parseOpts(args []string, u clapUsagePrinter, data []clapOpt) int {
-	var i int
-argsLoop:
-	for ; i < len(args); i++ {
-		if args[i][0] != '-' {
-			break
-		}
-		if args[i] == "--" {
-			i++
-			break
-		}
-		k, eqv, hasEq := optParts(args[i][1:])
-		for z := range data {
-			if k == data[z].long || k == data[z].short {
-				if v, ok := data[z].v.(*bool); ok {
-					*v = clapParseBool(eqv)
-				} else {
-					var val string
-					if hasEq {
-						val = eqv
-					} else if i == len(args)-1 {
-						claperr("option '%s' needs an argument\n", k)
-						os.Exit(1)
-					} else {
-						i++
-						val = args[i]
-					}
-					err := clapParseInto(data[z].v, val)
-					if err != nil {
-						claperr("invalid argument for option '%s': %v\n", k, err)
-						os.Exit(1)
-					}
-				}
-				continue argsLoop
-			}
-		}
-		if k == "h" || k == "help" {
-			u.printUsage(os.Stdout)
-			os.Exit(0)
-		}
-		claperr("unknown option '%s'\n", k)
+func (c *clapper) exitUsgGood() {
+	c.cmd.printUsage(os.Stdout)
+	os.Exit(0)
+}
+
+func (c *clapper) nextOpt() bool {
+	if c.skip {
+		c.idx++
+	}
+	if c.args[c.idx][0] != '-' {
+		c.optsDone = true
+		return false
+	}
+	if c.args[c.idx] == "--" {
+		c.idx++
+		c.optsDone = true
+		return false
+	}
+	c.curr.key, c.curr.eqVal, c.curr.hasEq = optParts(c.args[c.idx])
+	c.skip = false
+	return true
+}
+
+func (c *clapper) val() string {
+	if c.optsDone {
+		s := c.args[c.idx]
+		c.idx++
+		return s
+	}
+	if c.curr.hasEq {
+		return c.curr.eqVal
+	}
+	c.skip = true
+	if c.idx == len(c.args)-1 {
+		claperr("option '%s' needs an argument\n", c.curr.key)
 		os.Exit(1)
 	}
-	return i
+	return c.args[c.idx+1]
 }
+
+func (c *clapper) pBool() bool {
+	s := c.curr.eqVal
+	if s == "" || s == "true" {
+		return true
+	}
+	if s != "false" {
+		claperr("invalid boolean value '%s'\n", s)
+		os.Exit(1)
+	}
+	return false
+}
+
+{{- if .Types.HasInt }}
+
+func (c *clapper) pInt(bs int) int64 {
+	i64, err := strconv.ParseInt(c.val(), 10, bs)
+	if err != nil {
+		claperr("invalid argument for '%s': %v\n", c.curr.key, err)
+		os.Exit(1)
+	}
+	return i64
+}
+{{- end }}
+
+{{- if .Types.HasUint }}
+
+func (c *clapper) pUint(bs int) uint64 {
+	u64, err := strconv.ParseUint(c.val(), 10, bs)
+	if err != nil {
+		claperr("invalid argument for '%s': %v\n", c.curr.key, err)
+		os.Exit(1)
+	}
+	return u64
+}
+{{- end }}
+
+{{- if .Types.HasFloat }}
+
+func (c *clapper) pFloat(bs int) float64 {
+	f64, err := strconv.ParseFloat(c.val(), bs)
+	if err != nil {
+		claperr("invalid argument for '%s': %v\n", c.curr.key, err)
+		os.Exit(1)
+	}
+	return f64
+}
+{{- end }}
 
 func clapParseInto(v any, s string) error {
 	if v, ok := v.(*string); ok {

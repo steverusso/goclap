@@ -70,6 +70,7 @@ func (g *generator) writeHeader(root *command) error {
 		IncVersion bool
 		Version    string
 		RootCmd    *command
+		Types      basicTypeClass
 	}
 
 	t, err := template.New("header").Parse(headerTmplText)
@@ -81,11 +82,28 @@ func (g *generator) writeHeader(root *command) error {
 		IncVersion: g.incVersion,
 		Version:    getBuildVersionInfo().String(),
 		RootCmd:    root,
+		Types:      root.gatherTypes(),
 	})
 	if err != nil {
 		return fmt.Errorf("executing header template: %w", err)
 	}
 	return nil
+}
+
+func (c *command) gatherTypes() basicTypeClass {
+	var types basicTypeClass
+	for _, o := range c.Opts {
+		if o.Long != "help" {
+			types |= o.FieldType.typeClass()
+		}
+	}
+	for _, a := range c.Args {
+		types |= a.FieldType.typeClass()
+	}
+	for _, ch := range c.Subcmds {
+		types |= ch.gatherTypes()
+	}
+	return types
 }
 
 func (g *generator) genCommandCode(c *command) error {
@@ -328,6 +346,22 @@ func (o *option) usgArgName() string {
 		return "<" + name + ">"
 	}
 	return "<arg>"
+}
+
+func (o *option) QuotedPlainNames() string {
+	long := o.Long
+	if long != "" {
+		long = "\"" + long + "\""
+	}
+	short := o.Short
+	if short != "" {
+		short = "\"" + short + "\""
+	}
+	comma := ""
+	if o.Long != "" && o.Short != "" {
+		comma = ", "
+	}
+	return long + comma + short
 }
 
 // Usg returns a command's usage message text given how wide the name column should be.

@@ -121,7 +121,7 @@ func addChildren(pkg *ast.Package, c *command, strct *ast.StructType) error {
 			continue
 		}
 		fieldType := basicTypeFromName(idnt.Name)
-		if fieldType == -1 {
+		if fieldType == "" {
 			warn("skipping %s: unsupported option or argument type '%s'", typeAndField, idnt.Name)
 			continue
 		}
@@ -139,7 +139,7 @@ func addChildren(pkg *ast.Package, c *command, strct *ast.StructType) error {
 			continue
 		}
 		// The field is assumed to be an argument at this point.
-		if fieldType == typBool {
+		if fieldType.IsBool() {
 			return fmt.Errorf("%s: arguments cannot be type bool", typeAndField)
 		}
 		c.Args = append(c.Args, argument{
@@ -174,17 +174,13 @@ func scanConfigTypes(cfgs []clapConfig) cfgTypes {
 
 func basicTypeFromName(name string) basicType {
 	switch name {
-	case "bool":
-		return typBool
-	case "string":
-		return typString
-	case "int", "int8", "int16", "int32", "int64",
+	case "bool", "string",
+		"int", "int8", "int16", "int32", "int64",
 		"uint", "uint8", "uint16", "uint32", "uint64",
 		"uintptr", "byte", "rune", "float32", "float64":
-		return typNumber
-	default:
-		return -1
+		return basicType(name)
 	}
+	return ""
 }
 
 func findStruct(pkg *ast.Package, name string) *ast.StructType {

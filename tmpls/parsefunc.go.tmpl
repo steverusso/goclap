@@ -5,22 +5,36 @@ func (c *{{ .TypeName }}) parse(args []string) {
 	if len(args) > 0 && len(args) == len(os.Args) {
 		args = args[1:]
 	}
-	{{- end -}}
-
+	{{- end }}
+	z := clapper{cmd: c, args: args}
 	{{- /* Parse environment variables. */}}
 	{{- range .EnvVals }}
 	clapSetEnv("{{ .VarName }}", &c.{{ .FieldName }})
 	{{- end }}
 
-	{{- /* Parse options. */}}
-	{{ if or .HasArgs .HasSubcmds }}i := {{ end -}}
-	parseOpts(args, c, {{ if not .HasNonHelpOpt }}nil){{ else }}[]clapOpt{
+	for z.nextOpt() {
+		switch z.curr.key {
 	{{- range .Opts }}
-		{{- if ne .Long "help" }}
-		{"{{ .Long }}", "{{ .Short }}", &c.{{ .FieldName }}},
+		case {{ .QuotedPlainNames }}:
+		{{- if eq .Long "help" }}
+			z.exitUsgGood()
+			{{- continue }}
+		{{- end }}
+		{{- if .FieldType.IsBool }}
+			c.{{ .FieldName }} = z.pBool()
+		{{- else if .FieldType.IsString }}
+			c.{{ .FieldName }} = z.val()
+		{{- else if .FieldType.IsInt }}
+			c.{{ .FieldName }} = {{ .FieldType }}(z.pInt({{ .FieldType.BitSize }}))
+		{{- else if .FieldType.IsUint }}
+			c.{{ .FieldName }} = {{ .FieldType }}(z.pUint({{ .FieldType.BitSize }}))
 		{{- end -}}
 	{{- end }}
-	}){{ end }}
+		default:
+			claperr("unknown option '%s'\n", z.curr.key)
+			os.Exit(1)
+		}
+	}
 
 	{{- /* Arguments. */ -}}
 	{{- if .HasArgs }}
@@ -40,7 +54,16 @@ func (c *{{ .TypeName }}) parse(args []string) {
 		return
 	}
 			{{- end }}
-	clapParseInto(&c.{{ .FieldName }}, args[{{ $i }}])
+
+			{{- if .FieldType.IsString }}
+	c.{{ .FieldName }} = z.val()
+			{{- else if .FieldType.IsInt }}
+	c.{{ .FieldName }} = {{ .FieldType }}(z.pInt({{ .FieldType.BitSize }}))
+			{{- else if .FieldType.IsUint }}
+	c.{{ .FieldName }} = {{ .FieldType }}(z.pUint({{ .FieldType.BitSize }}))
+			{{- else if .FieldType.IsFloat }}
+	c.{{ .FieldName }} = {{ .FieldType }}(z.pFloat({{ .FieldType.BitSize }}))
+			{{- end -}}
 
 		{{- end -}}{{- /* range all args */ -}}
 	{{- end }}{{- /* if args */ -}}
@@ -58,7 +81,7 @@ func (c *{{ .TypeName }}) parse(args []string) {
 		c.{{ .FieldName }}.parse(args[i+1:])
 	{{- end }}
 	default:
-		exitUnknownCmd(c, args[i])
+		z.exitUnknownCmd(args[i])
 	}
 	{{- end }}
 }
