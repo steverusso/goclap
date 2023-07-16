@@ -43,11 +43,11 @@ type clapper struct {
 	skip     bool
 	optsDone bool
 
-	currEnv struct {
-		name  string
-		val   string
-		isSet bool
-	}
+{{- if .RootCmd.HasEnvArgOrOptSomewhere }}
+
+	currEnvName string
+	currEnvVal  string
+{{- end }}
 
 	curr struct {
 		key   string
@@ -64,8 +64,8 @@ func (c *clapper) exitUsgGood() {
 {{- if .RootCmd.HasEnvArgOrOptSomewhere }}
 
 func (z *clapper) stageEnv(name string) (ok bool) {
-	z.currEnv.name = name
-	z.currEnv.val, ok = os.LookupEnv(name)
+	z.currEnvName = name
+	z.currEnvVal, ok = os.LookupEnv(name)
 	return ok
 }
 {{- end }}
@@ -83,7 +83,6 @@ func (c *clapper) stageOpt() bool {
 		c.optsDone = true
 		return false
 	}
-	// c.curr.key, c.curr.eqVal, c.curr.hasEq = optParts(c.args[c.idx])
 
 	arg := c.args[c.idx]
 	if arg == "-" {
@@ -115,9 +114,11 @@ func (c *clapper) stageOpt() bool {
 }
 
 func (c *clapper) val() string {
-	if c.currEnv.name != "" {
-		return c.currEnv.val
+{{- if .RootCmd.HasEnvArgOrOptSomewhere }}
+	if c.currEnvName != "" {
+		return c.currEnvVal
 	}
+{{- end }}
 	if c.optsDone {
 		s := c.args[c.idx]
 		c.idx++

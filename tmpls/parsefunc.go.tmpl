@@ -18,7 +18,7 @@ func (c *{{ .TypeName }}) parse(args []string) {
 		{{- end }}
 	}
 	{{- end }}
-	z.currEnv.name, z.currEnv.val = "", ""
+	z.currEnvName, z.currEnvVal = "", ""
 	{{- end }}
 
 	for z.stageOpt() {
