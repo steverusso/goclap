@@ -18,25 +18,6 @@ type clapUsagePrinter interface {
 	printUsage(to *os.File)
 }
 
-{{- if .RootCmd.HasEnvArgOrOptSomewhere }}
-
-func clapSetEnv(name string, v any) {
-	ev, ok := os.LookupEnv(name)
-	if !ok {
-		return
-	}
-	if b, ok := v.(*bool); ok {
-		*b = (ev != "false" && ev != "0")
-		return
-	}
-	err := clapParseInto(v, ev)
-	if err != nil {
-		claperr("invalid argument for env var '%s': %v\n", name, err)
-		os.Exit(1)
-	}
-}
-{{- end }}
-
 {{- if .RootCmd.HasReqArgSomewhere }}
 
 func exitMissingArg(u clapUsagePrinter, name string) {
@@ -55,34 +36,18 @@ func (z *clapper) exitUnknownCmd(name string) {
 }
 {{- end }}
 
-func optParts(arg string) (string, string, bool) {
-	if arg == "-" {
-		claperr("emtpy option ('-') found\n")
-		os.Exit(1)
-	}
-	if arg[0] == '-' {
-		arg = arg[1:]
-	}
-	if arg[0] == '-' {
-		arg = arg[1:]
-	}
-	if eqIdx := strings.IndexByte(arg, '='); eqIdx != -1 {
-		name := arg[:eqIdx]
-		eqVal := ""
-		if eqIdx < len(arg) {
-			eqVal = arg[eqIdx+1:]
-		}
-		return name, eqVal, true
-	}
-	return arg, "", false
-}
-
 type clapper struct {
 	cmd      clapUsagePrinter
 	args     []string
 	idx      int
 	skip     bool
 	optsDone bool
+
+	currEnv struct {
+		name  string
+		val   string
+		isSet bool
+	}
 
 	curr struct {
 		key   string
@@ -96,7 +61,16 @@ func (c *clapper) exitUsgGood() {
 	os.Exit(0)
 }
 
-func (c *clapper) nextOpt() bool {
+{{- if .RootCmd.HasEnvArgOrOptSomewhere }}
+
+func (z *clapper) stageEnv(name string) (ok bool) {
+	z.currEnv.name = name
+	z.currEnv.val, ok = os.LookupEnv(name)
+	return ok
+}
+{{- end }}
+
+func (c *clapper) stageOpt() bool {
 	if c.skip {
 		c.idx++
 	}
@@ -109,12 +83,41 @@ func (c *clapper) nextOpt() bool {
 		c.optsDone = true
 		return false
 	}
-	c.curr.key, c.curr.eqVal, c.curr.hasEq = optParts(c.args[c.idx])
+	// c.curr.key, c.curr.eqVal, c.curr.hasEq = optParts(c.args[c.idx])
+
+	arg := c.args[c.idx]
+	if arg == "-" {
+		claperr("emtpy option ('-') found\n")
+		os.Exit(1)
+	}
+	if arg[0] == '-' {
+		arg = arg[1:]
+	}
+	if arg[0] == '-' {
+		arg = arg[1:]
+	}
+	if eqIdx := strings.IndexByte(arg, '='); eqIdx != -1 {
+		c.curr.key = arg[:eqIdx]
+		eqVal := ""
+		if eqIdx < len(arg) {
+			eqVal = arg[eqIdx+1:]
+		}
+		c.curr.eqVal = eqVal
+		c.curr.hasEq = true
+	} else {
+		c.curr.key = arg
+		c.curr.hasEq = false
+		c.curr.eqVal = ""
+	}
+
 	c.skip = false
 	return true
 }
 
 func (c *clapper) val() string {
+	if c.currEnv.name != "" {
+		return c.currEnv.val
+	}
 	if c.optsDone {
 		s := c.args[c.idx]
 		c.idx++
@@ -133,10 +136,10 @@ func (c *clapper) val() string {
 
 func (c *clapper) pBool() bool {
 	s := c.curr.eqVal
-	if s == "" || s == "true" {
+	if s == "" || s == "true" || s == "1" {
 		return true
 	}
-	if s != "false" {
+	if s != "false" && s != "0" {
 		claperr("invalid boolean value '%s'\n", s)
 		os.Exit(1)
 	}
@@ -178,55 +181,3 @@ func (c *clapper) pFloat(bs int) float64 {
 	return f64
 }
 {{- end }}
-
-func clapParseInto(v any, s string) error {
-	if v, ok := v.(*string); ok {
-		*v = s
-		return nil
-	}
-	var (
-		i64 int64
-		u64 uint64
-		err error
-	)
-	switch v := v.(type) {
-	case *int:
-		i64, err = strconv.ParseInt(s, 10, 0)
-		*v = int(i64)
-	case *int8:
-		i64, err = strconv.ParseInt(s, 10, 8)
-		*v = int8(i64)
-	case *int16:
-		i64, err = strconv.ParseInt(s, 10, 16)
-		*v = int16(i64)
-	case *int32:
-		i64, err = strconv.ParseInt(s, 10, 32)
-		*v = int32(i64)
-	case *int64:
-		*v, err = strconv.ParseInt(s, 10, 64)
-	case *uint:
-		u64, err = strconv.ParseUint(s, 10, 0)
-		*v = uint(u64)
-	case *uint8:
-		u64, err = strconv.ParseUint(s, 10, 8)
-		*v = uint8(u64)
-	case *uint16:
-		u64, err = strconv.ParseUint(s, 10, 16)
-		*v = uint16(u64)
-	case *uint32:
-		u64, err = strconv.ParseUint(s, 10, 32)
-		*v = uint32(u64)
-	case *uint64:
-		*v, err = strconv.ParseUint(s, 10, 64)
-	case *uintptr:
-		u64, err = strconv.ParseUint(s, 10, 64)
-		*v = uintptr(u64)
-	case *float32:
-		var f float64
-		f, err = strconv.ParseFloat(s, 32)
-		*v = float32(f)
-	case *float64:
-		*v, err = strconv.ParseFloat(s, 64)
-	}
-	return err
-}

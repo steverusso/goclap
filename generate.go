@@ -77,14 +77,13 @@ func (g *generator) writeHeader(root *command) error {
 	if err != nil {
 		return fmt.Errorf("parsing header template: %w", err)
 	}
-	err = t.Execute(&g.buf, headerData{
+	if err = t.Execute(&g.buf, headerData{
 		PkgName:    g.pkgName,
 		IncVersion: g.incVersion,
 		Version:    getBuildVersionInfo().String(),
 		RootCmd:    root,
 		Types:      root.gatherTypes(),
-	})
-	if err != nil {
+	}); err != nil {
 		return fmt.Errorf("executing header template: %w", err)
 	}
 	return nil
@@ -100,8 +99,8 @@ func (c *command) gatherTypes() basicTypeClass {
 	for _, a := range c.Args {
 		types |= a.FieldType.typeClass()
 	}
-	for _, ch := range c.Subcmds {
-		types |= ch.gatherTypes()
+	for _, sc := range c.Subcmds {
+		types |= sc.gatherTypes()
 	}
 	return types
 }
@@ -228,6 +227,7 @@ func (c *command) SubcmdNameColWidth() int {
 type clapEnvValue struct {
 	VarName   string
 	FieldName string
+	FieldType basicType
 }
 
 // EnvVals returns the environment variable name and the field name for any option or
@@ -239,6 +239,7 @@ func (c *command) EnvVals() []clapEnvValue {
 			envs = append(envs, clapEnvValue{
 				VarName:   name,
 				FieldName: c.Opts[i].FieldName,
+				FieldType: c.Opts[i].FieldType,
 			})
 		}
 	}
@@ -247,6 +248,7 @@ func (c *command) EnvVals() []clapEnvValue {
 			envs = append(envs, clapEnvValue{
 				VarName:   name,
 				FieldName: c.Args[i].FieldName,
+				FieldType: c.Args[i].FieldType,
 			})
 		}
 	}

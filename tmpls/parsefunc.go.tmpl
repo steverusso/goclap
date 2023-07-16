@@ -8,11 +8,20 @@ func (c *{{ .TypeName }}) parse(args []string) {
 	{{- end }}
 	z := clapper{cmd: c, args: args}
 	{{- /* Parse environment variables. */}}
-	{{- range .EnvVals }}
-	clapSetEnv("{{ .VarName }}", &c.{{ .FieldName }})
+	{{- with .EnvVals }}
+	{{- range . }}
+	if z.stageEnv("{{ .VarName }}") {
+		{{- if .FieldType.IsBool }}
+		c.{{ .FieldName }} = z.pBool()
+		{{- else if .FieldType.IsString }}
+		c.{{ .FieldName }} = z.val()
+		{{- end }}
+	}
+	{{- end }}
+	z.currEnv.name, z.currEnv.val = "", ""
 	{{- end }}
 
-	for z.nextOpt() {
+	for z.stageOpt() {
 		switch z.curr.key {
 	{{- range .Opts }}
 		case {{ .QuotedPlainNames }}:
@@ -38,7 +47,7 @@ func (c *{{ .TypeName }}) parse(args []string) {
 
 	{{- /* Arguments. */ -}}
 	{{- if .HasArgs }}
-	args = args[i:]
+	args = args[z.idx:]
 
 		{{- /* Add error handling for missing arguments that are required. */ -}}
 		{{- range $i, $arg := .RequiredArgs }}
@@ -70,18 +79,18 @@ func (c *{{ .TypeName }}) parse(args []string) {
 
 	{{- /* Subcommands. */ -}}
 	{{- if .HasSubcmds }}
-	if i >= len(args) {
+	if z.idx >= len(args) {
 		c.printUsage(os.Stderr)
 		os.Exit(1)
 	}
-	switch args[i] {
+	switch args[z.idx] {
 	{{- range .Subcmds }}
 	case {{ .QuotedNames }}:
 		c.{{ .FieldName }} = new({{ .TypeName }})
-		c.{{ .FieldName }}.parse(args[i+1:])
+		c.{{ .FieldName }}.parse(args[z.idx+1:])
 	{{- end }}
 	default:
-		z.exitUnknownCmd(args[i])
+		z.exitUnknownCmd(args[z.idx])
 	}
 	{{- end }}
 }
