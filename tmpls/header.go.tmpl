@@ -5,7 +5,8 @@ package {{ .PkgName }}
 import (
 	"fmt"
 	"os"
-	"strconv"
+	{{- with .Types }}{{ if or .HasInt .HasUint .HasFloat }}
+	"strconv"{{ end }}{{ end }}
 	"strings"
 )
 
@@ -135,6 +136,8 @@ func (c *clapper) val() string {
 	return c.args[c.idx+1]
 }
 
+{{- if .Types.HasBool }}
+
 func (c *clapper) pBool() bool {
 	s := c.curr.eqVal
 	if s == "" || s == "true" || s == "1" {
@@ -146,6 +149,7 @@ func (c *clapper) pBool() bool {
 	}
 	return false
 }
+{{- end }}
 
 {{- if .Types.HasInt }}
 
