@@ -24,11 +24,11 @@ func (c *{{ .TypeName }}) parse(args []string) {
 		{{- end }}
 	}
 	{{- end }}
-	z.currEnvName, z.currEnvVal = "", ""
+	z.envName, z.envVal = "", ""
 	{{- end }}
 
 	for z.stageOpt() {
-		switch z.curr.key {
+		switch z.optName {
 	{{- range .Opts }}
 		case {{ .QuotedPlainNames }}:
 		{{- if eq .Long "help" }}
@@ -48,7 +48,7 @@ func (c *{{ .TypeName }}) parse(args []string) {
 		{{- end -}}
 	{{- end }}
 		default:
-			claperr("unknown option '%s'\n", z.curr.key)
+			claperr("unknown option '%s'\n", z.optName)
 			os.Exit(1)
 		}
 	}
