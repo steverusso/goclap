@@ -20,11 +20,9 @@ type clapUsagePrinter interface {
 }
 
 type clapper struct {
-	cmd      clapUsagePrinter
-	args     []string
-	idx      int
-	skip     bool
-	optsDone bool
+	cmd  clapUsagePrinter
+	args []string
+	idx  int
 
 {{- if .RootCmd.HasEnvArgOrOptSomewhere }}
 
@@ -70,30 +68,32 @@ func (z *clapper) stageEnv(name string) (ok bool) {
 {{- end }}
 
 func (c *clapper) stageOpt() bool {
-	if c.skip {
+	if c.optName != "" {
 		c.idx++
 	}
-	if c.args[c.idx][0] != '-' {
-		c.optsDone = true
+	if c.idx > len(c.args)-1 {
+		c.optName = ""
 		return false
 	}
-	if c.args[c.idx] == "--" {
-		c.idx++
-		c.optsDone = true
-		return false
-	}
-
 	arg := c.args[c.idx]
-	if arg == "-" {
+	if arg[0] != '-' {
+		c.optName = ""
+		return false
+	}
+	arg = arg[1:]
+	if arg == "" {
 		claperr("emtpy option ('-') found\n")
 		os.Exit(1)
 	}
 	if arg[0] == '-' {
 		arg = arg[1:]
 	}
-	if arg[0] == '-' {
-		arg = arg[1:]
+	if arg == "" {
+		c.idx++
+		c.optName = ""
+		return false
 	}
+
 	c.optEqVal = ""
 	if eqIdx := strings.IndexByte(arg, '='); eqIdx != -1 {
 		c.optName = arg[:eqIdx]
@@ -105,37 +105,39 @@ func (c *clapper) stageOpt() bool {
 		c.optName = arg
 		c.optHasEq = false
 	}
-
-	c.skip = false
 	return true
 }
 
-func (c *clapper) val() string {
+func (c *clapper) nextStr() string {
 {{- if .RootCmd.HasEnvArgOrOptSomewhere }}
 	if c.envName != "" {
 		return c.envVal
 	}
 {{- end }}
-	if c.optsDone {
-		s := c.args[c.idx]
+	if c.optName != "" {
+		if c.optHasEq {
+			return c.optEqVal
+		}
+		if c.idx == len(c.args)-1 {
+			claperr("option '%s' needs an argument\n", c.optName)
+			os.Exit(1)
+		}
 		c.idx++
-		return s
+		return c.args[c.idx]
 	}
-	if c.optHasEq {
-		return c.optEqVal
-	}
-	c.skip = true
-	if c.idx == len(c.args)-1 {
-		claperr("option '%s' needs an argument\n", c.optName)
-		os.Exit(1)
-	}
-	return c.args[c.idx+1]
+	c.idx++
+	return c.args[c.idx-1]
 }
 
 {{- if .Types.HasBool }}
 
-func (c *clapper) pBool() bool {
-	s := c.optEqVal
+func (c *clapper) thisBool() bool {
+	{{ if .RootCmd.HasEnvArgOrOptSomewhere }}var s string
+	if c.envName != "" {
+		s = c.envVal
+	} else {
+		s = c.optEqVal
+	}{{ else }}s := c.optEqVal{{ end }}
 	if s == "" || s == "true" || s == "1" {
 		return true
 	}
@@ -149,8 +151,8 @@ func (c *clapper) pBool() bool {
 
 {{- if .Types.HasInt }}
 
-func (c *clapper) pInt(bs int) int64 {
-	i64, err := strconv.ParseInt(c.val(), 10, bs)
+func (c *clapper) nextInt(bs int) int64 {
+	i64, err := strconv.ParseInt(c.nextStr(), 10, bs)
 	if err != nil {
 		claperr("invalid argument for '%s': %v\n", c.optName, err)
 		os.Exit(1)
@@ -161,8 +163,8 @@ func (c *clapper) pInt(bs int) int64 {
 
 {{- if .Types.HasUint }}
 
-func (c *clapper) pUint(bs int) uint64 {
-	u64, err := strconv.ParseUint(c.val(), 10, bs)
+func (c *clapper) nextUint(bs int) uint64 {
+	u64, err := strconv.ParseUint(c.nextStr(), 10, bs)
 	if err != nil {
 		claperr("invalid argument for '%s': %v\n", c.optName, err)
 		os.Exit(1)
@@ -173,8 +175,8 @@ func (c *clapper) pUint(bs int) uint64 {
 
 {{- if .Types.HasFloat }}
 
-func (c *clapper) pFloat(bs int) float64 {
-	f64, err := strconv.ParseFloat(c.val(), bs)
+func (c *clapper) nextFloat(bs int) float64 {
+	f64, err := strconv.ParseFloat(c.nextStr(), bs)
 	if err != nil {
 		claperr("invalid argument for '%s': %v\n", c.optName, err)
 		os.Exit(1)

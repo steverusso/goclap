@@ -12,21 +12,22 @@ func (c *{{ .TypeName }}) parse(args []string) {
 	{{- range . }}
 	if z.stageEnv("{{ .VarName }}") {
 		{{- if .FieldType.IsBool }}
-		c.{{ .FieldName }} = z.pBool()
+		c.{{ .FieldName }} = z.thisBool()
 		{{- else if .FieldType.IsString }}
-		c.{{ .FieldName }} = z.val()
+		c.{{ .FieldName }} = z.nextStr()
 		{{- else if .FieldType.IsInt }}
-		c.{{ .FieldName }} = {{ .FieldType }}(z.pInt({{ .FieldType.BitSize }}))
+		c.{{ .FieldName }} = {{ .FieldType }}(z.nextInt({{ .FieldType.BitSize }}))
 		{{- else if .FieldType.IsUint }}
-		c.{{ .FieldName }} = {{ .FieldType }}(z.pUint({{ .FieldType.BitSize }}))
+		c.{{ .FieldName }} = {{ .FieldType }}(z.nextUint({{ .FieldType.BitSize }}))
 		{{- else if .FieldType.IsFloat }}
-		c.{{ .FieldName }} = {{ .FieldType }}(z.pFloat({{ .FieldType.BitSize }}))
+		c.{{ .FieldName }} = {{ .FieldType }}(z.nextFloat({{ .FieldType.BitSize }}))
 		{{- end }}
 	}
 	{{- end }}
 	z.envName, z.envVal = "", ""
 	{{- end }}
 
+	{{- /* Parse options. */}}
 	for z.stageOpt() {
 		switch z.optName {
 	{{- range .Opts }}
@@ -36,15 +37,15 @@ func (c *{{ .TypeName }}) parse(args []string) {
 			{{- continue }}
 		{{- end }}
 		{{- if .FieldType.IsBool }}
-			c.{{ .FieldName }} = z.pBool()
+			c.{{ .FieldName }} = z.thisBool()
 		{{- else if .FieldType.IsString }}
-			c.{{ .FieldName }} = z.val()
+			c.{{ .FieldName }} = z.nextStr()
 		{{- else if .FieldType.IsInt }}
-			c.{{ .FieldName }} = {{ .FieldType }}(z.pInt({{ .FieldType.BitSize }}))
+			c.{{ .FieldName }} = {{ .FieldType }}(z.nextInt({{ .FieldType.BitSize }}))
 		{{- else if .FieldType.IsUint }}
-			c.{{ .FieldName }} = {{ .FieldType }}(z.pUint({{ .FieldType.BitSize }}))
+			c.{{ .FieldName }} = {{ .FieldType }}(z.nextUint({{ .FieldType.BitSize }}))
 		{{- else if .FieldType.IsFloat }}
-			c.{{ .FieldName }} = {{ .FieldType }}(z.pFloat({{ .FieldType.BitSize }}))
+			c.{{ .FieldName }} = {{ .FieldType }}(z.nextFloat({{ .FieldType.BitSize }}))
 		{{- end -}}
 	{{- end }}
 		default:
@@ -73,13 +74,13 @@ func (c *{{ .TypeName }}) parse(args []string) {
 			{{- end }}
 
 			{{- if .FieldType.IsString }}
-	c.{{ .FieldName }} = z.val()
+	c.{{ .FieldName }} = z.nextStr()
 			{{- else if .FieldType.IsInt }}
-	c.{{ .FieldName }} = {{ .FieldType }}(z.pInt({{ .FieldType.BitSize }}))
+	c.{{ .FieldName }} = {{ .FieldType }}(z.nextInt({{ .FieldType.BitSize }}))
 			{{- else if .FieldType.IsUint }}
-	c.{{ .FieldName }} = {{ .FieldType }}(z.pUint({{ .FieldType.BitSize }}))
+	c.{{ .FieldName }} = {{ .FieldType }}(z.nextUint({{ .FieldType.BitSize }}))
 			{{- else if .FieldType.IsFloat }}
-	c.{{ .FieldName }} = {{ .FieldType }}(z.pFloat({{ .FieldType.BitSize }}))
+	c.{{ .FieldName }} = {{ .FieldType }}(z.nextFloat({{ .FieldType.BitSize }}))
 			{{- end -}}
 
 		{{- end -}}{{- /* range all args */ -}}
