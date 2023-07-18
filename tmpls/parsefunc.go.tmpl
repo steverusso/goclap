@@ -6,7 +6,7 @@ func (c *{{ .TypeName }}) parse(args []string) {
 		args = args[1:]
 	}
 	{{- end }}
-	z := clapper{cmd: c, args: args}
+	z := clapper{usg: c.printUsage, args: args}
 	{{- /* Parse environment variables. */}}
 	{{- with .EnvVals }}
 	{{- range . }}
