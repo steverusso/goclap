@@ -63,17 +63,17 @@ func (z *clapper) stageEnv(name string) (ok bool) {
 }
 {{- end }}
 
-func (c *clapper) stageOpt() bool {
-	if c.optName != "" {
-		c.idx++
+func (z *clapper) stageOpt() bool {
+	if z.optName != "" {
+		z.idx++
 	}
-	if c.idx > len(c.args)-1 {
-		c.optName = ""
+	if z.idx > len(z.args)-1 {
+		z.optName = ""
 		return false
 	}
-	arg := c.args[c.idx]
+	arg := z.args[z.idx]
 	if arg[0] != '-' {
-		c.optName = ""
+		z.optName = ""
 		return false
 	}
 	arg = arg[1:]
@@ -85,55 +85,55 @@ func (c *clapper) stageOpt() bool {
 		arg = arg[1:]
 	}
 	if arg == "" {
-		c.idx++
-		c.optName = ""
+		z.idx++
+		z.optName = ""
 		return false
 	}
 
-	c.optEqVal = ""
+	z.optEqVal = ""
 	if eqIdx := strings.IndexByte(arg, '='); eqIdx != -1 {
-		c.optName = arg[:eqIdx]
+		z.optName = arg[:eqIdx]
 		if eqIdx < len(arg) {
-			c.optEqVal = arg[eqIdx+1:]
+			z.optEqVal = arg[eqIdx+1:]
 		}
-		c.optHasEq = true
+		z.optHasEq = true
 	} else {
-		c.optName = arg
-		c.optHasEq = false
+		z.optName = arg
+		z.optHasEq = false
 	}
 	return true
 }
 
-func (c *clapper) nextStr() string {
+func (z *clapper) nextStr() string {
 {{- if .RootCmd.HasEnvArgOrOptSomewhere }}
-	if c.envName != "" {
-		return c.envVal
+	if z.envName != "" {
+		return z.envVal
 	}
 {{- end }}
-	if c.optName != "" {
-		if c.optHasEq {
-			return c.optEqVal
+	if z.optName != "" {
+		if z.optHasEq {
+			return z.optEqVal
 		}
-		if c.idx == len(c.args)-1 {
-			claperr("option '%s' needs an argument\n", c.optName)
+		if z.idx == len(z.args)-1 {
+			claperr("option '%s' needs an argument\n", z.optName)
 			os.Exit(1)
 		}
-		c.idx++
-		return c.args[c.idx]
+		z.idx++
+		return z.args[z.idx]
 	}
-	c.idx++
-	return c.args[c.idx-1]
+	z.idx++
+	return z.args[z.idx-1]
 }
 
 {{- if .Types.HasBool }}
 
-func (c *clapper) thisBool() bool {
+func (z *clapper) thisBool() bool {
 	{{ if .RootCmd.HasEnvArgOrOptSomewhere }}var s string
-	if c.envName != "" {
-		s = c.envVal
+	if z.envName != "" {
+		s = z.envVal
 	} else {
-		s = c.optEqVal
-	}{{ else }}s := c.optEqVal{{ end }}
+		s = z.optEqVal
+	}{{ else }}s := z.optEqVal{{ end }}
 	if s == "" || s == "true" || s == "1" {
 		return true
 	}
@@ -147,10 +147,10 @@ func (c *clapper) thisBool() bool {
 
 {{- if .Types.HasInt }}
 
-func (c *clapper) nextInt(bs int) int64 {
-	i64, err := strconv.ParseInt(c.nextStr(), 10, bs)
+func (z *clapper) nextInt(bs int) int64 {
+	i64, err := strconv.ParseInt(z.nextStr(), 10, bs)
 	if err != nil {
-		claperr("invalid argument for '%s': %v\n", c.optName, err)
+		claperr("invalid argument for '%s': %v\n", z.optName, err)
 		os.Exit(1)
 	}
 	return i64
@@ -159,10 +159,10 @@ func (c *clapper) nextInt(bs int) int64 {
 
 {{- if .Types.HasUint }}
 
-func (c *clapper) nextUint(bs int) uint64 {
-	u64, err := strconv.ParseUint(c.nextStr(), 10, bs)
+func (z *clapper) nextUint(bs int) uint64 {
+	u64, err := strconv.ParseUint(z.nextStr(), 10, bs)
 	if err != nil {
-		claperr("invalid argument for '%s': %v\n", c.optName, err)
+		claperr("invalid argument for '%s': %v\n", z.optName, err)
 		os.Exit(1)
 	}
 	return u64
@@ -171,10 +171,10 @@ func (c *clapper) nextUint(bs int) uint64 {
 
 {{- if .Types.HasFloat }}
 
-func (c *clapper) nextFloat(bs int) float64 {
-	f64, err := strconv.ParseFloat(c.nextStr(), bs)
+func (z *clapper) nextFloat(bs int) float64 {
+	f64, err := strconv.ParseFloat(z.nextStr(), bs)
 	if err != nil {
-		claperr("invalid argument for '%s': %v\n", c.optName, err)
+		claperr("invalid argument for '%s': %v\n", z.optName, err)
 		os.Exit(1)
 	}
 	return f64
