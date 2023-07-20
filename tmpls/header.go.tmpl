@@ -3,6 +3,8 @@
 package {{ .PkgName }}
 
 import (
+	{{- with .Types }}{{ if or .HasInt .HasUint .HasFloat }}
+	"errors"{{ end }}{{ end }}
 	"fmt"
 	"os"
 	{{- with .Types }}{{ if or .HasInt .HasUint .HasFloat }}
@@ -125,7 +127,25 @@ func (z *clapper) nextStr() string {
 	return z.args[z.idx-1]
 }
 
-{{- if .Types.HasBool }}
+{{- if or .Types.HasInt .Types.HasUint .Types.HasFloat }}
+
+func (z *clapper) exitBadInput(typ string, err error) {
+	var forWhat string
+	switch {
+	case z.optName != "":
+		forWhat = "option '" + z.optName + "'"
+	{{- if .RootCmd.HasEnvArgOrOptSomewhere }}
+	case z.envName != "":
+		forWhat = "env var '" + z.envName + "'"{{ end }}
+	default:
+		forWhat = "argument"
+	}
+	claperr("invalid %s for %s: %v\n", typ, forWhat, err)
+	os.Exit(1)
+}
+{{- end }}
+
+{{- if .Types.HasAny "bool" }}
 
 func (z *clapper) thisBool() bool {
 	{{ if .RootCmd.HasEnvArgOrOptSomewhere }}var s string
@@ -138,44 +158,139 @@ func (z *clapper) thisBool() bool {
 		return true
 	}
 	if s != "false" && s != "0" {
-		claperr("invalid boolean value '%s'\n", s)
-		os.Exit(1)
+		z.exitBadInput("bool", fmt.Errorf("%q not recognized as a boolean", s))
 	}
 	return false
 }
 {{- end }}
 
-{{- if .Types.HasInt }}
+{{- if .Types.HasAny "int" }}
 
-func (z *clapper) nextInt(bs int) int64 {
-	i64, err := strconv.ParseInt(z.nextStr(), 10, bs)
+func (z *clapper) nextInt() int {
+	u64, err := strconv.ParseInt(z.nextStr(), 10, 0)
 	if err != nil {
-		claperr("invalid argument for '%s': %v\n", z.optName, err)
-		os.Exit(1)
+		z.exitBadInput("int", errors.Unwrap(err))
 	}
-	return i64
+	return int(u64)
 }
 {{- end }}
 
-{{- if .Types.HasUint }}
+{{- if .Types.HasAny "int8" }}
 
-func (z *clapper) nextUint(bs int) uint64 {
-	u64, err := strconv.ParseUint(z.nextStr(), 10, bs)
+func (z *clapper) nextInt8() int8 {
+	u64, err := strconv.ParseInt(z.nextStr(), 10, 8)
 	if err != nil {
-		claperr("invalid argument for '%s': %v\n", z.optName, err)
-		os.Exit(1)
+		z.exitBadInput("int8", errors.Unwrap(err))
+	}
+	return int8(u64)
+}
+{{- end }}
+
+{{- if .Types.HasAny "int16" }}
+
+func (z *clapper) nextInt16() int16 {
+	u64, err := strconv.ParseInt(z.nextStr(), 10, 16)
+	if err != nil {
+		z.exitBadInput("int16", errors.Unwrap(err))
+	}
+	return int16(u64)
+}
+{{- end }}
+
+{{- if .Types.HasAny "int32" "rune" }}
+
+func (z *clapper) nextInt32() int32 {
+	u64, err := strconv.ParseInt(z.nextStr(), 10, 32)
+	if err != nil {
+		z.exitBadInput("int32", errors.Unwrap(err))
+	}
+	return int32(u64)
+}
+{{- end }}
+
+{{- if .Types.HasAny "int64" }}
+
+func (z *clapper) nextInt64() int64 {
+	u64, err := strconv.ParseInt(z.nextStr(), 10, 64)
+	if err != nil {
+		z.exitBadInput("int64", errors.Unwrap(err))
 	}
 	return u64
 }
 {{- end }}
 
-{{- if .Types.HasFloat }}
+{{- if .Types.HasAny "uint" }}
 
-func (z *clapper) nextFloat(bs int) float64 {
-	f64, err := strconv.ParseFloat(z.nextStr(), bs)
+func (z *clapper) nextUint() uint {
+	u64, err := strconv.ParseUint(z.nextStr(), 10, 0)
 	if err != nil {
-		claperr("invalid argument for '%s': %v\n", z.optName, err)
-		os.Exit(1)
+		z.exitBadInput("uint", errors.Unwrap(err))
+	}
+	return uint(u64)
+}
+{{- end }}
+
+{{- if .Types.HasAny "uint8" "byte" }}
+
+func (z *clapper) nextUint8() uint8 {
+	u64, err := strconv.ParseUint(z.nextStr(), 10, 8)
+	if err != nil {
+		z.exitBadInput("uint8", errors.Unwrap(err))
+	}
+	return uint8(u64)
+}
+{{- end }}
+
+{{- if .Types.HasAny "uint16" }}
+
+func (z *clapper) nextUint16() uint16 {
+	u64, err := strconv.ParseUint(z.nextStr(), 10, 16)
+	if err != nil {
+		z.exitBadInput("uint16", errors.Unwrap(err))
+	}
+	return uint16(u64)
+}
+{{- end }}
+
+{{- if .Types.HasAny "uint32" }}
+
+func (z *clapper) nextUint32() uint32 {
+	u64, err := strconv.ParseUint(z.nextStr(), 10, 32)
+	if err != nil {
+		z.exitBadInput("uint32", errors.Unwrap(err))
+	}
+	return uint32(u64)
+}
+{{- end }}
+
+{{- if .Types.HasAny "uint64" }}
+
+func (z *clapper) nextUint64() uint64 {
+	u64, err := strconv.ParseUint(z.nextStr(), 10, 64)
+	if err != nil {
+		z.exitBadInput("uint64", errors.Unwrap(err))
+	}
+	return u64
+}
+{{- end }}
+
+{{- if .Types.HasAny "float32" }}
+
+func (z *clapper) nextFloat32() float32 {
+	f64, err := strconv.ParseFloat(z.nextStr(), 32)
+	if err != nil {
+		z.exitBadInput("float32", errors.Unwrap(err))
+	}
+	return float32(f64)
+}
+{{- end }}
+
+{{- if .Types.HasAny "float64" }}
+
+func (z *clapper) nextFloat64() float64 {
+	f64, err := strconv.ParseFloat(z.nextStr(), 64)
+	if err != nil {
+		z.exitBadInput("float64", errors.Unwrap(err))
 	}
 	return f64
 }

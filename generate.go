@@ -70,8 +70,11 @@ func (g *generator) writeHeader(root *command) error {
 		IncVersion bool
 		Version    string
 		RootCmd    *command
-		Types      basicTypeClass
+		Types      typeSet
 	}
+
+	ts := typeSet{}
+	root.getTypes(ts)
 
 	t, err := template.New("header").Parse(headerTmplText)
 	if err != nil {
@@ -82,27 +85,75 @@ func (g *generator) writeHeader(root *command) error {
 		IncVersion: g.incVersion,
 		Version:    getBuildVersionInfo().String(),
 		RootCmd:    root,
-		Types:      root.gatherTypes(),
+		Types:      ts,
 	}); err != nil {
 		return fmt.Errorf("executing header template: %w", err)
 	}
 	return nil
 }
 
-func (c *command) gatherTypes() basicTypeClass {
-	var types basicTypeClass
+func (c *command) getTypes(ts typeSet) {
 	for _, o := range c.Opts {
 		if o.Long != "help" {
-			types |= o.FieldType.typeClass()
+			ts[o.FieldType] = struct{}{}
 		}
 	}
 	for _, a := range c.Args {
-		types |= a.FieldType.typeClass()
+		ts[a.FieldType] = struct{}{}
 	}
 	for _, sc := range c.Subcmds {
-		types |= sc.gatherTypes()
+		sc.getTypes(ts)
 	}
-	return types
+}
+
+type typeSet map[basicType]struct{}
+
+func (ts typeSet) HasAny(names ...basicType) bool {
+	for i := range names {
+		if _, ok := ts[names[i]]; ok {
+			return true
+		}
+	}
+	return false
+}
+
+func (ts typeSet) HasInt() bool {
+	return ts.HasAny("int", "int8", "int16", "int32", "int64", "rune")
+}
+
+func (ts typeSet) HasUint() bool {
+	return ts.HasAny("uint", "uint8", "uint16", "uint32", "uint64", "byte")
+}
+
+func (ts typeSet) HasFloat() bool {
+	return ts.HasAny("float32", "float64")
+}
+
+var clapperMethodMap = map[basicType]string{
+	// int*
+	"int":   "nextInt",
+	"int8":  "nextInt8",
+	"int16": "nextInt16",
+	"int32": "nextInt32",
+	"int64": "nextInt64",
+	// uint*
+	"uint":   "nextUint",
+	"uint8":  "nextUint8",
+	"uint16": "nextUint16",
+	"uint32": "nextUint32",
+	"uint64": "nextUint64",
+	// float*
+	"float32": "nextFloat32",
+	"float64": "nextFloat64",
+	// misc
+	"bool":   "thisBool",
+	"string": "nextStr",
+	"byte":   "nextUint8",
+	"rune":   "nextInt32",
+}
+
+func (t basicType) ClapperMethodName() string {
+	return clapperMethodMap[t]
 }
 
 func (g *generator) genCommandCode(c *command) error {

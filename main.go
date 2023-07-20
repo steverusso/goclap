@@ -34,64 +34,9 @@ type goclap struct {
 	outFilePath string
 }
 
-type basicTypeClass uint8
-
-const (
-	typStr basicTypeClass = 1 << iota
-	typInt
-	typUint
-	typFloat
-	typBool
-)
-
-func (c basicTypeClass) HasInt() bool   { return c&typInt == typInt }
-func (c basicTypeClass) HasUint() bool  { return c&typUint == typUint }
-func (c basicTypeClass) HasFloat() bool { return c&typFloat == typFloat }
-func (c basicTypeClass) HasBool() bool  { return c&typBool == typBool }
-
 type basicType string
 
-func (t basicType) BitSize() int {
-	switch t {
-	case "int8", "uint8", "byte":
-		return 8
-	case "int16", "uint16":
-		return 16
-	case "int32", "uint32", "rune":
-		return 32
-	case "int", "int64", "uint", "uint64", "uintptr":
-		return 64
-	}
-	return 0
-}
-
-func (t basicType) IsBool() bool   { return t == "bool" }
-func (t basicType) IsString() bool { return t == "string" }
-func (t basicType) IsFloat() bool  { return t == "float32" || t == "float64" }
-
-func (t basicType) IsInt() bool {
-	return t == "int" || t == "int8" || t == "int16" ||
-		t == "int32" || t == "int64" || t == "rune"
-}
-
-func (t basicType) IsUint() bool {
-	return t == "uint" || t == "uint8" || t == "uint16" || t == "uint32" ||
-		t == "uint64" || t == "uintptr" || t == "byte"
-}
-
-func (t basicType) typeClass() basicTypeClass {
-	switch {
-	case t.IsInt():
-		return typInt
-	case t.IsUint():
-		return typUint
-	case t.IsFloat():
-		return typFloat
-	case t.IsBool():
-		return typBool
-	}
-	return typStr
-}
+func (t basicType) IsBool() bool { return t == "bool" }
 
 type buildVersionInfo struct {
 	modVersion      string

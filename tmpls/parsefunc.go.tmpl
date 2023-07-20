@@ -11,17 +11,7 @@ func (c *{{ .TypeName }}) parse(args []string) {
 	{{- with .EnvVals }}
 	{{- range . }}
 	if z.stageEnv("{{ .VarName }}") {
-		{{- if .FieldType.IsBool }}
-		c.{{ .FieldName }} = z.thisBool()
-		{{- else if .FieldType.IsString }}
-		c.{{ .FieldName }} = z.nextStr()
-		{{- else if .FieldType.IsInt }}
-		c.{{ .FieldName }} = {{ .FieldType }}(z.nextInt({{ .FieldType.BitSize }}))
-		{{- else if .FieldType.IsUint }}
-		c.{{ .FieldName }} = {{ .FieldType }}(z.nextUint({{ .FieldType.BitSize }}))
-		{{- else if .FieldType.IsFloat }}
-		c.{{ .FieldName }} = {{ .FieldType }}(z.nextFloat({{ .FieldType.BitSize }}))
-		{{- end }}
+		c.{{ .FieldName }} = z.{{ .FieldType.ClapperMethodName }}()
 	}
 	{{- end }}
 	z.envName, z.envVal = "", ""
@@ -36,17 +26,7 @@ func (c *{{ .TypeName }}) parse(args []string) {
 			z.exitUsgGood()
 			{{- continue }}
 		{{- end }}
-		{{- if .FieldType.IsBool }}
-			c.{{ .FieldName }} = z.thisBool()
-		{{- else if .FieldType.IsString }}
-			c.{{ .FieldName }} = z.nextStr()
-		{{- else if .FieldType.IsInt }}
-			c.{{ .FieldName }} = {{ .FieldType }}(z.nextInt({{ .FieldType.BitSize }}))
-		{{- else if .FieldType.IsUint }}
-			c.{{ .FieldName }} = {{ .FieldType }}(z.nextUint({{ .FieldType.BitSize }}))
-		{{- else if .FieldType.IsFloat }}
-			c.{{ .FieldName }} = {{ .FieldType }}(z.nextFloat({{ .FieldType.BitSize }}))
-		{{- end -}}
+			c.{{ .FieldName }} = z.{{ .FieldType.ClapperMethodName }}()
 	{{- end }}
 		default:
 			claperr("unknown option '%s'\n", z.optName)
@@ -73,15 +53,7 @@ func (c *{{ .TypeName }}) parse(args []string) {
 	}
 			{{- end }}
 
-			{{- if .FieldType.IsString }}
-	c.{{ .FieldName }} = z.nextStr()
-			{{- else if .FieldType.IsInt }}
-	c.{{ .FieldName }} = {{ .FieldType }}(z.nextInt({{ .FieldType.BitSize }}))
-			{{- else if .FieldType.IsUint }}
-	c.{{ .FieldName }} = {{ .FieldType }}(z.nextUint({{ .FieldType.BitSize }}))
-			{{- else if .FieldType.IsFloat }}
-	c.{{ .FieldName }} = {{ .FieldType }}(z.nextFloat({{ .FieldType.BitSize }}))
-			{{- end -}}
+	c.{{ .FieldName }} = z.{{ .FieldType.ClapperMethodName }}()
 
 		{{- end -}}{{- /* range all args */ -}}
 	{{- end }}{{- /* if args */ -}}
