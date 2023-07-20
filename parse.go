@@ -22,9 +22,10 @@ const backtickRepl = "`+\"$0\"+`"
 var backtickRE = regexp.MustCompile("`+")
 
 var helpOption = option{
-	Short: "h",
-	Long:  "help",
-	data:  clapData{Blurb: "show this help message"},
+	Short:     "h",
+	Long:      "help",
+	FieldType: "bool",
+	data:      clapData{Blurb: "show this help message"},
 }
 
 func parse(srcDir, rootCmdTypeName string) (command, string, error) {
