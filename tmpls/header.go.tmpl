@@ -17,7 +17,7 @@ func claperr(format string, a ...any) {
 	fmt.Fprintf(os.Stderr, format, a...)
 }
 
-type clapper struct {
+type clapParser struct {
 	usg  func(to *os.File)
 	args []string
 	idx  int
@@ -33,49 +33,49 @@ type clapper struct {
 	optHasEq bool
 }
 
-func (z *clapper) exitUsgGood() {
-	z.usg(os.Stdout)
+func (p *clapParser) exitUsgGood() {
+	p.usg(os.Stdout)
 	os.Exit(0)
 }
 
 {{- if .RootCmd.HasReqArgSomewhere }}
 
-func (z *clapper) exitMissingArg(name string) {
+func (p *clapParser) exitMissingArg(name string) {
 	claperr("not enough args: no \033[1;33m%s\033[0m provided\n", name)
-	z.usg(os.Stderr)
+	p.usg(os.Stderr)
 	os.Exit(1)
 }
 {{- end }}
 
 {{- if .RootCmd.HasSubcmds }}
 
-func (z *clapper) exitUnknownCmd(name string) {
+func (p *clapParser) exitUnknownCmd(name string) {
 	claperr("unknown command '%s'\n", name)
-	z.usg(os.Stderr)
+	p.usg(os.Stderr)
 	os.Exit(1)
 }
 {{- end }}
 
 {{- if .RootCmd.HasEnvArgOrOptSomewhere }}
 
-func (z *clapper) stageEnv(name string) (ok bool) {
-	z.envName = name
-	z.envVal, ok = os.LookupEnv(name)
+func (p *clapParser) stageEnv(name string) (ok bool) {
+	p.envName = name
+	p.envVal, ok = os.LookupEnv(name)
 	return ok
 }
 {{- end }}
 
-func (z *clapper) stageOpt() bool {
-	if z.optName != "" {
-		z.idx++
+func (p *clapParser) stageOpt() bool {
+	if p.optName != "" {
+		p.idx++
 	}
-	if z.idx > len(z.args)-1 {
-		z.optName = ""
+	if p.idx > len(p.args)-1 {
+		p.optName = ""
 		return false
 	}
-	arg := z.args[z.idx]
+	arg := p.args[p.idx]
 	if arg[0] != '-' {
-		z.optName = ""
+		p.optName = ""
 		return false
 	}
 	arg = arg[1:]
@@ -87,56 +87,56 @@ func (z *clapper) stageOpt() bool {
 		arg = arg[1:]
 	}
 	if arg == "" {
-		z.idx++
-		z.optName = ""
+		p.idx++
+		p.optName = ""
 		return false
 	}
 
-	z.optEqVal = ""
+	p.optEqVal = ""
 	if eqIdx := strings.IndexByte(arg, '='); eqIdx != -1 {
-		z.optName = arg[:eqIdx]
+		p.optName = arg[:eqIdx]
 		if eqIdx < len(arg) {
-			z.optEqVal = arg[eqIdx+1:]
+			p.optEqVal = arg[eqIdx+1:]
 		}
-		z.optHasEq = true
+		p.optHasEq = true
 	} else {
-		z.optName = arg
-		z.optHasEq = false
+		p.optName = arg
+		p.optHasEq = false
 	}
 	return true
 }
 
-func (z *clapper) nextStr() string {
+func (p *clapParser) nextStr() string {
 {{- if .RootCmd.HasEnvArgOrOptSomewhere }}
-	if z.envName != "" {
-		return z.envVal
+	if p.envName != "" {
+		return p.envVal
 	}
 {{- end }}
-	if z.optName != "" {
-		if z.optHasEq {
-			return z.optEqVal
+	if p.optName != "" {
+		if p.optHasEq {
+			return p.optEqVal
 		}
-		if z.idx == len(z.args)-1 {
-			claperr("option '%s' needs an argument\n", z.optName)
+		if p.idx == len(p.args)-1 {
+			claperr("option '%s' needs an argument\n", p.optName)
 			os.Exit(1)
 		}
-		z.idx++
-		return z.args[z.idx]
+		p.idx++
+		return p.args[p.idx]
 	}
-	z.idx++
-	return z.args[z.idx-1]
+	p.idx++
+	return p.args[p.idx-1]
 }
 
 {{- if or .Types.HasBool .Types.HasInt .Types.HasUint .Types.HasFloat }}
 
-func (z *clapper) exitBadInput(typ string, err error) {
+func (p *clapParser) exitBadInput(typ string, err error) {
 	var forWhat string
 	switch {
-	case z.optName != "":
-		forWhat = "option '" + z.optName + "'"
+	case p.optName != "":
+		forWhat = "option '" + p.optName + "'"
 	{{- if .RootCmd.HasEnvArgOrOptSomewhere }}
-	case z.envName != "":
-		forWhat = "env var '" + z.envName + "'"{{ end }}
+	case p.envName != "":
+		forWhat = "env var '" + p.envName + "'"{{ end }}
 	default:
 		forWhat = "argument"
 	}
@@ -147,18 +147,18 @@ func (z *clapper) exitBadInput(typ string, err error) {
 
 {{- if .Types.HasAny "bool" }}
 
-func (z *clapper) thisBool() bool {
+func (p *clapParser) thisBool() bool {
 	{{ if .RootCmd.HasEnvArgOrOptSomewhere }}var s string
-	if z.envName != "" {
-		s = z.envVal
+	if p.envName != "" {
+		s = p.envVal
 	} else {
-		s = z.optEqVal
-	}{{ else }}s := z.optEqVal{{ end }}
+		s = p.optEqVal
+	}{{ else }}s := p.optEqVal{{ end }}
 	if s == "" || s == "true" || s == "1" {
 		return true
 	}
 	if s != "false" && s != "0" {
-		z.exitBadInput("bool", fmt.Errorf("%q not recognized as a boolean", s))
+		p.exitBadInput("bool", fmt.Errorf("%q not recognized as a boolean", s))
 	}
 	return false
 }
@@ -166,10 +166,10 @@ func (z *clapper) thisBool() bool {
 
 {{- if .Types.HasAny "int" }}
 
-func (z *clapper) nextInt() int {
-	u64, err := strconv.ParseInt(z.nextStr(), 10, 0)
+func (p *clapParser) nextInt() int {
+	u64, err := strconv.ParseInt(p.nextStr(), 10, 0)
 	if err != nil {
-		z.exitBadInput("int", errors.Unwrap(err))
+		p.exitBadInput("int", errors.Unwrap(err))
 	}
 	return int(u64)
 }
@@ -177,10 +177,10 @@ func (z *clapper) nextInt() int {
 
 {{- if .Types.HasAny "int8" }}
 
-func (z *clapper) nextInt8() int8 {
-	u64, err := strconv.ParseInt(z.nextStr(), 10, 8)
+func (p *clapParser) nextInt8() int8 {
+	u64, err := strconv.ParseInt(p.nextStr(), 10, 8)
 	if err != nil {
-		z.exitBadInput("int8", errors.Unwrap(err))
+		p.exitBadInput("int8", errors.Unwrap(err))
 	}
 	return int8(u64)
 }
@@ -188,10 +188,10 @@ func (z *clapper) nextInt8() int8 {
 
 {{- if .Types.HasAny "int16" }}
 
-func (z *clapper) nextInt16() int16 {
-	u64, err := strconv.ParseInt(z.nextStr(), 10, 16)
+func (p *clapParser) nextInt16() int16 {
+	u64, err := strconv.ParseInt(p.nextStr(), 10, 16)
 	if err != nil {
-		z.exitBadInput("int16", errors.Unwrap(err))
+		p.exitBadInput("int16", errors.Unwrap(err))
 	}
 	return int16(u64)
 }
@@ -199,10 +199,10 @@ func (z *clapper) nextInt16() int16 {
 
 {{- if .Types.HasAny "int32" "rune" }}
 
-func (z *clapper) nextInt32() int32 {
-	u64, err := strconv.ParseInt(z.nextStr(), 10, 32)
+func (p *clapParser) nextInt32() int32 {
+	u64, err := strconv.ParseInt(p.nextStr(), 10, 32)
 	if err != nil {
-		z.exitBadInput("int32", errors.Unwrap(err))
+		p.exitBadInput("int32", errors.Unwrap(err))
 	}
 	return int32(u64)
 }
@@ -210,10 +210,10 @@ func (z *clapper) nextInt32() int32 {
 
 {{- if .Types.HasAny "int64" }}
 
-func (z *clapper) nextInt64() int64 {
-	u64, err := strconv.ParseInt(z.nextStr(), 10, 64)
+func (p *clapParser) nextInt64() int64 {
+	u64, err := strconv.ParseInt(p.nextStr(), 10, 64)
 	if err != nil {
-		z.exitBadInput("int64", errors.Unwrap(err))
+		p.exitBadInput("int64", errors.Unwrap(err))
 	}
 	return u64
 }
@@ -221,10 +221,10 @@ func (z *clapper) nextInt64() int64 {
 
 {{- if .Types.HasAny "uint" }}
 
-func (z *clapper) nextUint() uint {
-	u64, err := strconv.ParseUint(z.nextStr(), 10, 0)
+func (p *clapParser) nextUint() uint {
+	u64, err := strconv.ParseUint(p.nextStr(), 10, 0)
 	if err != nil {
-		z.exitBadInput("uint", errors.Unwrap(err))
+		p.exitBadInput("uint", errors.Unwrap(err))
 	}
 	return uint(u64)
 }
@@ -232,10 +232,10 @@ func (z *clapper) nextUint() uint {
 
 {{- if .Types.HasAny "uint8" "byte" }}
 
-func (z *clapper) nextUint8() uint8 {
-	u64, err := strconv.ParseUint(z.nextStr(), 10, 8)
+func (p *clapParser) nextUint8() uint8 {
+	u64, err := strconv.ParseUint(p.nextStr(), 10, 8)
 	if err != nil {
-		z.exitBadInput("uint8", errors.Unwrap(err))
+		p.exitBadInput("uint8", errors.Unwrap(err))
 	}
 	return uint8(u64)
 }
@@ -243,10 +243,10 @@ func (z *clapper) nextUint8() uint8 {
 
 {{- if .Types.HasAny "uint16" }}
 
-func (z *clapper) nextUint16() uint16 {
-	u64, err := strconv.ParseUint(z.nextStr(), 10, 16)
+func (p *clapParser) nextUint16() uint16 {
+	u64, err := strconv.ParseUint(p.nextStr(), 10, 16)
 	if err != nil {
-		z.exitBadInput("uint16", errors.Unwrap(err))
+		p.exitBadInput("uint16", errors.Unwrap(err))
 	}
 	return uint16(u64)
 }
@@ -254,10 +254,10 @@ func (z *clapper) nextUint16() uint16 {
 
 {{- if .Types.HasAny "uint32" }}
 
-func (z *clapper) nextUint32() uint32 {
-	u64, err := strconv.ParseUint(z.nextStr(), 10, 32)
+func (p *clapParser) nextUint32() uint32 {
+	u64, err := strconv.ParseUint(p.nextStr(), 10, 32)
 	if err != nil {
-		z.exitBadInput("uint32", errors.Unwrap(err))
+		p.exitBadInput("uint32", errors.Unwrap(err))
 	}
 	return uint32(u64)
 }
@@ -265,10 +265,10 @@ func (z *clapper) nextUint32() uint32 {
 
 {{- if .Types.HasAny "uint64" }}
 
-func (z *clapper) nextUint64() uint64 {
-	u64, err := strconv.ParseUint(z.nextStr(), 10, 64)
+func (p *clapParser) nextUint64() uint64 {
+	u64, err := strconv.ParseUint(p.nextStr(), 10, 64)
 	if err != nil {
-		z.exitBadInput("uint64", errors.Unwrap(err))
+		p.exitBadInput("uint64", errors.Unwrap(err))
 	}
 	return u64
 }
@@ -276,10 +276,10 @@ func (z *clapper) nextUint64() uint64 {
 
 {{- if .Types.HasAny "float32" }}
 
-func (z *clapper) nextFloat32() float32 {
-	f64, err := strconv.ParseFloat(z.nextStr(), 32)
+func (p *clapParser) nextFloat32() float32 {
+	f64, err := strconv.ParseFloat(p.nextStr(), 32)
 	if err != nil {
-		z.exitBadInput("float32", errors.Unwrap(err))
+		p.exitBadInput("float32", errors.Unwrap(err))
 	}
 	return float32(f64)
 }
@@ -287,10 +287,10 @@ func (z *clapper) nextFloat32() float32 {
 
 {{- if .Types.HasAny "float64" }}
 
-func (z *clapper) nextFloat64() float64 {
-	f64, err := strconv.ParseFloat(z.nextStr(), 64)
+func (p *clapParser) nextFloat64() float64 {
+	f64, err := strconv.ParseFloat(p.nextStr(), 64)
 	if err != nil {
-		z.exitBadInput("float64", errors.Unwrap(err))
+		p.exitBadInput("float64", errors.Unwrap(err))
 	}
 	return f64
 }

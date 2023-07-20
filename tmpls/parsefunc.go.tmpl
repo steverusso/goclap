@@ -6,42 +6,42 @@ func (c *{{ .TypeName }}) parse(args []string) {
 		args = args[1:]
 	}
 	{{- end }}
-	z := clapper{usg: c.printUsage, args: args}
+	p := clapParser{usg: c.printUsage, args: args}
 	{{- /* Parse environment variables. */}}
 	{{- with .EnvVals }}
 	{{- range . }}
-	if z.stageEnv("{{ .VarName }}") {
-		c.{{ .FieldName }} = z.{{ .FieldType.ClapperMethodName }}()
+	if p.stageEnv("{{ .VarName }}") {
+		c.{{ .FieldName }} = p.{{ .FieldType.ClapperMethodName }}()
 	}
 	{{- end }}
-	z.envName, z.envVal = "", ""
+	p.envName, p.envVal = "", ""
 	{{- end }}
 
 	{{- /* Parse options. */}}
-	for z.stageOpt() {
-		switch z.optName {
+	for p.stageOpt() {
+		switch p.optName {
 	{{- range .Opts }}
 		case {{ .QuotedPlainNames }}:
 		{{- if eq .Long "help" }}
-			z.exitUsgGood()
+			p.exitUsgGood()
 			{{- continue }}
 		{{- end }}
-			c.{{ .FieldName }} = z.{{ .FieldType.ClapperMethodName }}()
+			c.{{ .FieldName }} = p.{{ .FieldType.ClapperMethodName }}()
 	{{- end }}
 		default:
-			claperr("unknown option '%s'\n", z.optName)
+			claperr("unknown option '%s'\n", p.optName)
 			os.Exit(1)
 		}
 	}
 
 	{{- /* Arguments. */ -}}
 	{{- if .HasArgs }}
-	args = args[z.idx:]
+	args = args[p.idx:]
 
 		{{- /* Add error handling for missing arguments that are required. */ -}}
 		{{- range $i, $arg := .RequiredArgs }}
 	if len(args) < {{ add $i 1 }} {
-		z.exitMissingArg("{{ $arg.UsgName }}")
+		p.exitMissingArg("{{ $arg.UsgName }}")
 	}
 		{{- end -}}
 
@@ -53,25 +53,25 @@ func (c *{{ .TypeName }}) parse(args []string) {
 	}
 			{{- end }}
 
-	c.{{ .FieldName }} = z.{{ .FieldType.ClapperMethodName }}()
+	c.{{ .FieldName }} = p.{{ .FieldType.ClapperMethodName }}()
 
 		{{- end -}}{{- /* range all args */ -}}
 	{{- end }}{{- /* if args */ -}}
 
 	{{- /* Subcommands. */ -}}
 	{{- if .HasSubcmds }}
-	if z.idx >= len(args) {
+	if p.idx >= len(args) {
 		c.printUsage(os.Stderr)
 		os.Exit(1)
 	}
-	switch args[z.idx] {
+	switch args[p.idx] {
 	{{- range .Subcmds }}
 	case {{ .QuotedNames }}:
 		c.{{ .FieldName }} = new({{ .TypeName }})
-		c.{{ .FieldName }}.parse(args[z.idx+1:])
+		c.{{ .FieldName }}.parse(args[p.idx+1:])
 	{{- end }}
 	default:
-		z.exitUnknownCmd(args[z.idx])
+		p.exitUnknownCmd(args[p.idx])
 	}
 	{{- end }}
 }
