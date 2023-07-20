@@ -117,6 +117,10 @@ func (ts typeSet) HasAny(names ...basicType) bool {
 	return false
 }
 
+func (ts typeSet) HasBool() bool {
+	return ts.HasAny("bool")
+}
+
 func (ts typeSet) HasInt() bool {
 	return ts.HasAny("int", "int8", "int16", "int32", "int64", "rune")
 }

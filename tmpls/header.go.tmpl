@@ -127,7 +127,7 @@ func (z *clapper) nextStr() string {
 	return z.args[z.idx-1]
 }
 
-{{- if or .Types.HasInt .Types.HasUint .Types.HasFloat }}
+{{- if or .Types.HasBool .Types.HasInt .Types.HasUint .Types.HasFloat }}
 
 func (z *clapper) exitBadInput(typ string, err error) {
 	var forWhat string
