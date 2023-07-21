@@ -155,7 +155,7 @@ func gen(c *goclap) error {
 		return err
 	}
 
-	code, err := generate(pkgName, c.incVersion, &rootCmd)
+	code, err := generate(c.incVersion, pkgName, &rootCmd)
 	if err != nil {
 		return err
 	}

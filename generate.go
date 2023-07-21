@@ -22,12 +22,12 @@ var (
 	parseFnTmplText string
 )
 
-func generate(pkgName string, incVersion bool, root *command) ([]byte, error) {
-	g, err := newGenerator(pkgName, incVersion)
+func generate(incVersion bool, pkgName string, root *command) ([]byte, error) {
+	g, err := newGenerator()
 	if err != nil {
 		return nil, fmt.Errorf("initializing generator: %w", err)
 	}
-	if err = g.writeHeader(root); err != nil {
+	if err = g.writeHeader(incVersion, pkgName, root); err != nil {
 		return nil, err
 	}
 	if err = g.genCommandCode(root); err != nil {
@@ -37,14 +37,12 @@ func generate(pkgName string, incVersion bool, root *command) ([]byte, error) {
 }
 
 type generator struct {
-	pkgName     string
-	incVersion  bool
 	buf         bytes.Buffer
 	usgFnTmpl   *template.Template
 	parseFnTmpl *template.Template
 }
 
-func newGenerator(pkgName string, incVersion bool) (generator, error) {
+func newGenerator() (generator, error) {
 	usgFnTmpl, err := template.New("usagefunc").Parse(usgFnTmplText)
 	if err != nil {
 		return generator{}, fmt.Errorf("parsing template: %w", err)
@@ -57,8 +55,6 @@ func newGenerator(pkgName string, incVersion bool) (generator, error) {
 		return generator{}, fmt.Errorf("parsing template: %w", err)
 	}
 	return generator{
-		pkgName:     pkgName,
-		incVersion:  incVersion,
 		usgFnTmpl:   usgFnTmpl,
 		parseFnTmpl: parseFnTmpl,
 	}, nil
@@ -75,7 +71,7 @@ type headerData struct {
 	NeedsStrconvCode bool
 }
 
-func (g *generator) writeHeader(root *command) error {
+func (g *generator) writeHeader(incVersion bool, pkgName string, root *command) error {
 	ts := typeSet{}
 	root.getTypes(ts)
 
@@ -84,8 +80,8 @@ func (g *generator) writeHeader(root *command) error {
 		return fmt.Errorf("parsing header template: %w", err)
 	}
 	data := headerData{
-		PkgName:    g.pkgName,
-		IncVersion: g.incVersion,
+		PkgName:    pkgName,
+		IncVersion: incVersion,
 		Version:    getBuildVersionInfo().String(),
 		RootCmd:    root,
 		Types:      ts,
