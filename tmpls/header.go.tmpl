@@ -3,12 +3,12 @@
 package {{ .PkgName }}
 
 import (
-	{{- with .Types }}{{ if or .HasInt .HasUint .HasFloat }}
-	"errors"{{ end }}{{ end }}
+	{{- if .NeedsStrconvCode }}
+	"errors"{{ end }}
 	"fmt"
 	"os"
-	{{- with .Types }}{{ if or .HasInt .HasUint .HasFloat }}
-	"strconv"{{ end }}{{ end }}
+	{{- if .NeedsStrconvCode }}
+	"strconv"{{ end }}
 	"strings"
 )
 
@@ -22,7 +22,7 @@ type clapParser struct {
 	args []string
 	idx  int
 
-{{- if .RootCmd.HasEnvArgOrOptSomewhere }}
+{{- if .NeedsEnvCode }}
 
 	envName string
 	envVal  string
@@ -56,7 +56,7 @@ func (p *clapParser) exitUnknownCmd(name string) {
 }
 {{- end }}
 
-{{- if .RootCmd.HasEnvArgOrOptSomewhere }}
+{{- if .NeedsEnvCode }}
 
 func (p *clapParser) stageEnv(name string) (ok bool) {
 	p.envName = name
@@ -107,7 +107,7 @@ func (p *clapParser) stageOpt() bool {
 }
 
 func (p *clapParser) nextStr() string {
-{{- if .RootCmd.HasEnvArgOrOptSomewhere }}
+{{- if .NeedsEnvCode }}
 	if p.envName != "" {
 		return p.envVal
 	}
@@ -127,14 +127,14 @@ func (p *clapParser) nextStr() string {
 	return p.args[p.idx-1]
 }
 
-{{- if or .Types.HasBool .Types.HasInt .Types.HasUint .Types.HasFloat }}
+{{- if or .Types.HasBool .NeedsStrconvCode }}
 
 func (p *clapParser) exitBadInput(typ string, err error) {
 	var forWhat string
 	switch {
 	case p.optName != "":
 		forWhat = "option '" + p.optName + "'"
-	{{- if .RootCmd.HasEnvArgOrOptSomewhere }}
+	{{- if .NeedsEnvCode }}
 	case p.envName != "":
 		forWhat = "env var '" + p.envName + "'"{{ end }}
 	default:
@@ -148,7 +148,7 @@ func (p *clapParser) exitBadInput(typ string, err error) {
 {{- if .Types.HasAny "bool" }}
 
 func (p *clapParser) thisBool() bool {
-	{{ if .RootCmd.HasEnvArgOrOptSomewhere }}var s string
+	{{ if .NeedsEnvCode }}var s string
 	if p.envName != "" {
 		s = p.envVal
 	} else {

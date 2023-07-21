@@ -64,15 +64,18 @@ func newGenerator(pkgName string, incVersion bool) (generator, error) {
 	}, nil
 }
 
-func (g *generator) writeHeader(root *command) error {
-	type headerData struct {
-		PkgName    string
-		IncVersion bool
-		Version    string
-		RootCmd    *command
-		Types      typeSet
-	}
+type headerData struct {
+	PkgName    string
+	IncVersion bool
+	Version    string
+	RootCmd    *command
+	Types      typeSet
 
+	NeedsEnvCode     bool
+	NeedsStrconvCode bool
+}
+
+func (g *generator) writeHeader(root *command) error {
 	ts := typeSet{}
 	root.getTypes(ts)
 
@@ -80,13 +83,20 @@ func (g *generator) writeHeader(root *command) error {
 	if err != nil {
 		return fmt.Errorf("parsing header template: %w", err)
 	}
-	if err = t.Execute(&g.buf, headerData{
+	data := headerData{
 		PkgName:    g.pkgName,
 		IncVersion: g.incVersion,
 		Version:    getBuildVersionInfo().String(),
 		RootCmd:    root,
 		Types:      ts,
-	}); err != nil {
+
+		NeedsEnvCode: root.HasEnvArgOrOptSomewhere(),
+		NeedsStrconvCode: ts.HasAny("float32", "float64",
+			"int", "int8", "int16", "int32", "int64", "rune",
+			"uint", "uint8", "uint16", "uint32", "uint64", "byte",
+		),
+	}
+	if err = t.Execute(&g.buf, data); err != nil {
 		return fmt.Errorf("executing header template: %w", err)
 	}
 	return nil
@@ -117,21 +127,7 @@ func (ts typeSet) HasAny(names ...basicType) bool {
 	return false
 }
 
-func (ts typeSet) HasBool() bool {
-	return ts.HasAny("bool")
-}
-
-func (ts typeSet) HasInt() bool {
-	return ts.HasAny("int", "int8", "int16", "int32", "int64", "rune")
-}
-
-func (ts typeSet) HasUint() bool {
-	return ts.HasAny("uint", "uint8", "uint16", "uint32", "uint64", "byte")
-}
-
-func (ts typeSet) HasFloat() bool {
-	return ts.HasAny("float32", "float64")
-}
+func (ts typeSet) HasBool() bool { return ts.HasAny("bool") }
 
 var clapperMethodMap = map[basicType]string{
 	// int*
@@ -318,15 +314,6 @@ func (c *command) RequiredArgs() []argument {
 		}
 	}
 	return reqs
-}
-
-func (c *command) HasNonHelpOpt() bool {
-	for _, o := range c.Opts {
-		if o.Long != "help" {
-			return true
-		}
-	}
-	return false
 }
 
 func (a *argument) UsgName() string {
