@@ -127,7 +127,7 @@ func (p *clapParser) nextStr() string {
 	return p.args[p.idx-1]
 }
 
-{{- if or .Types.HasBool .NeedsStrconvCode }}
+{{- if or .NeedsStrconvCode (.Types.HasAny "bool") }}
 
 func (p *clapParser) exitBadInput(typ string, err error) {
 	var forWhat string

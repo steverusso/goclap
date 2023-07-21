@@ -125,8 +125,6 @@ func (ts typeSet) HasAny(names ...basicType) bool {
 	return false
 }
 
-func (ts typeSet) HasBool() bool { return ts.HasAny("bool") }
-
 var clapperMethodMap = map[basicType]string{
 	// int*
 	"int":   "nextInt",
