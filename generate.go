@@ -61,11 +61,10 @@ func newGenerator() (generator, error) {
 }
 
 type headerData struct {
-	PkgName    string
-	IncVersion bool
-	Version    string
-	RootCmd    *command
-	Types      typeSet
+	PkgName string
+	Version string
+	RootCmd *command
+	Types   typeSet
 
 	NeedsEnvCode     bool
 	NeedsStrconvCode bool
@@ -79,12 +78,11 @@ func (g *generator) writeHeader(incVersion bool, pkgName string, root *command) 
 	if err != nil {
 		return fmt.Errorf("parsing header template: %w", err)
 	}
+
 	data := headerData{
-		PkgName:    pkgName,
-		IncVersion: incVersion,
-		Version:    getBuildVersionInfo().String(),
-		RootCmd:    root,
-		Types:      ts,
+		PkgName: pkgName,
+		RootCmd: root,
+		Types:   ts,
 
 		NeedsEnvCode: root.HasEnvArgOrOptSomewhere(),
 		NeedsStrconvCode: ts.HasAny("float32", "float64",
@@ -92,6 +90,10 @@ func (g *generator) writeHeader(incVersion bool, pkgName string, root *command) 
 			"uint", "uint8", "uint16", "uint32", "uint64", "byte",
 		),
 	}
+	if incVersion {
+		data.Version = getBuildVersionInfo().String()
+	}
+
 	if err = t.Execute(&g.buf, data); err != nil {
 		return fmt.Errorf("executing header template: %w", err)
 	}
