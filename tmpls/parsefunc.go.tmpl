@@ -11,7 +11,7 @@ func (c *{{ .TypeName }}) parse(args []string) {
 	{{- with .EnvVals }}
 	{{- range . }}
 	if p.stageEnv("{{ .VarName }}") {
-		c.{{ .FieldName }} = p.{{ .FieldType.ClapperMethodName }}()
+		c.{{ .FieldName }} = p.{{ .FieldType.ClapIterMethodName }}()
 	}
 	{{- end }}
 	p.envName, p.envVal = "", ""
@@ -26,7 +26,7 @@ func (c *{{ .TypeName }}) parse(args []string) {
 			p.exitUsgGood()
 			{{- continue }}
 		{{- end }}
-			c.{{ .FieldName }} = p.{{ .FieldType.ClapperMethodName }}()
+			c.{{ .FieldName }} = p.{{ .FieldType.ClapIterMethodName }}()
 	{{- end }}
 		default:
 			claperr("unknown option '%s'\n", p.optName)
@@ -35,17 +35,17 @@ func (c *{{ .TypeName }}) parse(args []string) {
 	}
 
 	{{- /* Arguments. */ -}}
-	{{- if .HasArgs }}
+	{{- with .Args }}
 	args = args[p.idx:]
 
 		{{- /* Add error handling for missing arguments that are required. */ -}}
-		{{- range $i, $arg := .RequiredArgs }}
+		{{- range $i, $arg := $.RequiredArgs }}
 	if len(args) < {{ add $i 1 }} {
 		p.exitMissingArg("{{ $arg.UsgName }}")
 	}
 		{{- end -}}
 
-		{{- range $i, $arg := .Args }}
+		{{- range $i, $arg := . }}
 
 			{{- if not $arg.IsRequired }}
 	if len(args) < {{ add $i 1 }} {
@@ -53,19 +53,19 @@ func (c *{{ .TypeName }}) parse(args []string) {
 	}
 			{{- end }}
 
-	c.{{ .FieldName }} = p.{{ .FieldType.ClapperMethodName }}()
+	c.{{ .FieldName }} = p.{{ .FieldType.ClapIterMethodName }}()
 
 		{{- end -}}{{- /* range all args */ -}}
 	{{- end }}{{- /* if args */ -}}
 
 	{{- /* Subcommands. */ -}}
-	{{- if .HasSubcmds }}
+	{{- with .Subcmds }}
 	if p.idx >= len(args) {
 		c.printUsage(os.Stderr)
 		os.Exit(1)
 	}
 	switch args[p.idx] {
-	{{- range .Subcmds }}
+	{{- range . }}
 	case {{ .QuotedNames }}:
 		c.{{ .FieldName }} = new({{ .TypeName }})
 		c.{{ .FieldName }}.parse(args[p.idx+1:])

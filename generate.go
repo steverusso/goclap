@@ -125,7 +125,7 @@ func (ts typeSet) HasAny(names ...basicType) bool {
 	return false
 }
 
-var clapperMethodMap = map[basicType]string{
+var clapIterMethodMap = map[basicType]string{
 	// int*
 	"int":   "nextInt",
 	"int8":  "nextInt8",
@@ -148,8 +148,8 @@ var clapperMethodMap = map[basicType]string{
 	"rune":   "nextInt32",
 }
 
-func (t basicType) ClapperMethodName() string {
-	return clapperMethodMap[t]
+func (t basicType) ClapIterMethodName() string {
+	return clapIterMethodMap[t]
 }
 
 func (g *generator) genCommandCode(c *command) error {
@@ -207,10 +207,8 @@ func (c *command) UsageLines() []string {
 		commandSlot = " <command>"
 	}
 	argsSlot := ""
-	if c.HasArgs() {
-		for _, a := range c.Args {
-			argsSlot += " " + a.UsgName()
-		}
+	for i := range c.Args {
+		argsSlot += " " + c.Args[i].UsgName()
 	}
 	return []string{
 		c.UsgName() + optionsSlot + commandSlot + argsSlot,
@@ -451,8 +449,6 @@ func (c *command) HasEnvArgOrOptSomewhere() bool {
 
 func (c *command) IsRoot() bool     { return c.FieldName == "%[1]s" }
 func (c *command) HasSubcmds() bool { return len(c.Subcmds) > 0 }
-func (c *command) HasOptions() bool { return len(c.Opts) > 0 }
-func (c *command) HasArgs() bool    { return len(c.Args) > 0 }
 
 func wrapBlurb(v string, indentLen, lineLen int) string {
 	s := wrapText(v, indentLen, lineLen)

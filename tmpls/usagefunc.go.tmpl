@@ -9,29 +9,29 @@ overview:
 usage:{{ range .UsageLines }}
    {{ . }}{{ end }}
 
-{{- if .HasOptions }}
-	{{- $nameWidth := .OptNameColWidth }}
+{{- with .Opts }}
+	{{- $nameWidth := $.OptNameColWidth }}
 
-options:{{ range .Opts }}
+options:{{ range . }}
 {{ .Usg $nameWidth }}{{ end -}}
 {{ end -}}
 
-{{- if .HasArgs }}
-	{{- $nameWidth := .ArgNameColWidth }}
+{{- with .Args }}
+	{{- $nameWidth := $.ArgNameColWidth }}
 
-arguments:{{ range .Args }}
+arguments:{{ range . }}
 {{ .Usg $nameWidth -}}
 {{ end -}}
 {{ end -}}
 
-{{ if .HasSubcmds }}
-{{- $w := .SubcmdNameColWidth }}
+{{ with .Subcmds }}
+{{- $w := $.SubcmdNameColWidth }}
 
-subcommands:{{ range .Subcmds }}
+subcommands:{{ range . }}
 {{ .Usg $w -}}
-{{ end -}}{{ end }}
-{{- if and .IsRoot .HasSubcmds }}
+{{ end -}}
+{{- if $.IsRoot }}
 
-run '%[1]s <subcommand> -h' for more information on specific commands.{{ end }}
+run '%[1]s <subcommand> -h' for more information on specific commands.{{ end }}{{ end }}
 `, os.Args[0])
 }
