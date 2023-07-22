@@ -413,20 +413,13 @@ func (c *command) Usg(nameWidth int) string {
 // HasReqArgSomewhere returns true if this command or one of its subcommands contains a
 // required positional argument.
 func (c *command) HasReqArgSomewhere() bool {
-	if c.HasRequiredArgs() {
-		return true
-	}
-	for _, ch := range c.Subcmds {
-		if ch.HasReqArgSomewhere() {
+	for _, a := range c.Args {
+		if a.IsRequired() {
 			return true
 		}
 	}
-	return false
-}
-
-func (c *command) HasRequiredArgs() bool {
-	for _, a := range c.Args {
-		if a.IsRequired() {
+	for _, ch := range c.Subcmds {
+		if ch.HasReqArgSomewhere() {
 			return true
 		}
 	}
