@@ -169,6 +169,5 @@ func (c *mycli) parse(args []string) {
 	if len(args) < 1 {
 		return
 	}
-
 	c.input = p.nextStr()
 }
