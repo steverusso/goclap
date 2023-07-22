@@ -388,14 +388,16 @@ func (o *option) usgArgName() string {
 	return "<arg>"
 }
 
+// QuotedPlainNames returns the option's long and / or short name(s) in double quotes and
+// separated by a comma. For example, the default help option would return `"h", "help"`.
 func (o *option) QuotedPlainNames() string {
 	long := o.Long
 	if long != "" {
-		long = "\"" + long + "\""
+		long = `"` + long + `"`
 	}
 	short := o.Short
 	if short != "" {
-		short = "\"" + short + "\""
+		short = `"` + short + `"`
 	}
 	comma := ""
 	if o.Long != "" && o.Short != "" {
