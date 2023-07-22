@@ -39,24 +39,17 @@ func (c *{{ .TypeName }}) parse(args []string) {
 	args = args[p.idx:]
 
 		{{- /* Add error handling for missing arguments that are required. */ -}}
-		{{- range $i, $arg := $.RequiredArgs }}
-	if len(args) < {{ add $i 1 }} {
-		p.exitMissingArg("{{ $arg.UsgName }}")
-	}
-		{{- end -}}
-
 		{{- range $i, $arg := . }}
-
-			{{- if not $arg.IsRequired }}
 	if len(args) < {{ add $i 1 }} {
+			{{- if $arg.IsRequired }}
+		p.exitMissingArg("{{ $arg.UsgName }}")
+			{{- else }}
 		return
-	}
 			{{- end }}
-
+	}
 	c.{{ .FieldName }} = p.{{ .FieldType.ClapIterMethodName }}()
-
 		{{- end -}}{{- /* range all args */ -}}
-	{{- end }}{{- /* if args */ -}}
+	{{- end }}{{- /* with args */ -}}
 
 	{{- /* Subcommands. */ -}}
 	{{- with .Subcmds }}

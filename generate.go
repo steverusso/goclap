@@ -300,16 +300,6 @@ func (c *command) EnvVals() []clapEnvValue {
 	return envs
 }
 
-func (c *command) RequiredArgs() []argument {
-	reqs := make([]argument, 0, len(c.Args))
-	for _, a := range c.Args {
-		if a.IsRequired() {
-			reqs = append(reqs, a)
-		}
-	}
-	return reqs
-}
-
 func (a *argument) UsgName() string {
 	if a.IsRequired() {
 		return "<" + a.name + ">"
