@@ -38,7 +38,6 @@ func (c *{{ .TypeName }}) parse(args []string) {
 	{{- with .Args }}
 	args = args[p.idx:]
 
-		{{- /* Add error handling for missing arguments that are required. */ -}}
 		{{- range $i, $arg := . }}
 	if len(args) < {{ add $i 1 }} {
 			{{- if $arg.IsRequired }}
