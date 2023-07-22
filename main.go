@@ -34,15 +34,9 @@ type goclap struct {
 	outFilePath string
 }
 
-type basicType int
+type basicType string
 
-const (
-	typBool basicType = iota
-	typString
-	typNumber
-)
-
-func (t basicType) IsBool() bool { return t == typBool }
+func (t basicType) IsBool() bool { return t == "bool" }
 
 type buildVersionInfo struct {
 	modVersion      string
@@ -161,7 +155,7 @@ func gen(c *goclap) error {
 		return err
 	}
 
-	code, err := generate(pkgName, c.incVersion, &rootCmd)
+	code, err := generate(c.incVersion, pkgName, &rootCmd)
 	if err != nil {
 		return err
 	}

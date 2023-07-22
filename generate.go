@@ -22,12 +22,12 @@ var (
 	parseFnTmplText string
 )
 
-func generate(pkgName string, incVersion bool, root *command) ([]byte, error) {
-	g, err := newGenerator(pkgName, incVersion)
+func generate(incVersion bool, pkgName string, root *command) ([]byte, error) {
+	g, err := newGenerator()
 	if err != nil {
 		return nil, fmt.Errorf("initializing generator: %w", err)
 	}
-	if err = g.writeHeader(root); err != nil {
+	if err = g.writeHeader(incVersion, pkgName, root); err != nil {
 		return nil, err
 	}
 	if err = g.genCommandCode(root); err != nil {
@@ -37,14 +37,12 @@ func generate(pkgName string, incVersion bool, root *command) ([]byte, error) {
 }
 
 type generator struct {
-	pkgName     string
-	incVersion  bool
 	buf         bytes.Buffer
 	usgFnTmpl   *template.Template
 	parseFnTmpl *template.Template
 }
 
-func newGenerator(pkgName string, incVersion bool) (generator, error) {
+func newGenerator() (generator, error) {
 	usgFnTmpl, err := template.New("usagefunc").Parse(usgFnTmplText)
 	if err != nil {
 		return generator{}, fmt.Errorf("parsing template: %w", err)
@@ -57,35 +55,101 @@ func newGenerator(pkgName string, incVersion bool) (generator, error) {
 		return generator{}, fmt.Errorf("parsing template: %w", err)
 	}
 	return generator{
-		pkgName:     pkgName,
-		incVersion:  incVersion,
 		usgFnTmpl:   usgFnTmpl,
 		parseFnTmpl: parseFnTmpl,
 	}, nil
 }
 
-func (g *generator) writeHeader(root *command) error {
-	type headerData struct {
-		PkgName    string
-		IncVersion bool
-		Version    string
-		RootCmd    *command
-	}
+type headerData struct {
+	PkgName string
+	Version string
+	RootCmd *command
+	Types   typeSet
+
+	NeedsEnvCode     bool
+	NeedsStrconvCode bool
+}
+
+func (g *generator) writeHeader(incVersion bool, pkgName string, root *command) error {
+	ts := typeSet{}
+	root.getTypes(ts)
 
 	t, err := template.New("header").Parse(headerTmplText)
 	if err != nil {
 		return fmt.Errorf("parsing header template: %w", err)
 	}
-	err = t.Execute(&g.buf, headerData{
-		PkgName:    g.pkgName,
-		IncVersion: g.incVersion,
-		Version:    getBuildVersionInfo().String(),
-		RootCmd:    root,
-	})
-	if err != nil {
+
+	data := headerData{
+		PkgName: pkgName,
+		RootCmd: root,
+		Types:   ts,
+
+		NeedsEnvCode: root.HasEnvArgOrOptSomewhere(),
+		NeedsStrconvCode: ts.HasAny("float32", "float64",
+			"int", "int8", "int16", "int32", "int64", "rune",
+			"uint", "uint8", "uint16", "uint32", "uint64", "byte",
+		),
+	}
+	if incVersion {
+		data.Version = getBuildVersionInfo().String()
+	}
+
+	if err = t.Execute(&g.buf, data); err != nil {
 		return fmt.Errorf("executing header template: %w", err)
 	}
 	return nil
+}
+
+func (c *command) getTypes(ts typeSet) {
+	for _, o := range c.Opts {
+		if o.Long != "help" {
+			ts[o.FieldType] = struct{}{}
+		}
+	}
+	for _, a := range c.Args {
+		ts[a.FieldType] = struct{}{}
+	}
+	for _, sc := range c.Subcmds {
+		sc.getTypes(ts)
+	}
+}
+
+type typeSet map[basicType]struct{}
+
+func (ts typeSet) HasAny(names ...basicType) bool {
+	for i := range names {
+		if _, ok := ts[names[i]]; ok {
+			return true
+		}
+	}
+	return false
+}
+
+var clapperMethodMap = map[basicType]string{
+	// int*
+	"int":   "nextInt",
+	"int8":  "nextInt8",
+	"int16": "nextInt16",
+	"int32": "nextInt32",
+	"int64": "nextInt64",
+	// uint*
+	"uint":   "nextUint",
+	"uint8":  "nextUint8",
+	"uint16": "nextUint16",
+	"uint32": "nextUint32",
+	"uint64": "nextUint64",
+	// float*
+	"float32": "nextFloat32",
+	"float64": "nextFloat64",
+	// misc
+	"bool":   "thisBool",
+	"string": "nextStr",
+	"byte":   "nextUint8",
+	"rune":   "nextInt32",
+}
+
+func (t basicType) ClapperMethodName() string {
+	return clapperMethodMap[t]
 }
 
 func (g *generator) genCommandCode(c *command) error {
@@ -210,6 +274,7 @@ func (c *command) SubcmdNameColWidth() int {
 type clapEnvValue struct {
 	VarName   string
 	FieldName string
+	FieldType basicType
 }
 
 // EnvVals returns the environment variable name and the field name for any option or
@@ -221,6 +286,7 @@ func (c *command) EnvVals() []clapEnvValue {
 			envs = append(envs, clapEnvValue{
 				VarName:   name,
 				FieldName: c.Opts[i].FieldName,
+				FieldType: c.Opts[i].FieldType,
 			})
 		}
 	}
@@ -229,6 +295,7 @@ func (c *command) EnvVals() []clapEnvValue {
 			envs = append(envs, clapEnvValue{
 				VarName:   name,
 				FieldName: c.Args[i].FieldName,
+				FieldType: c.Args[i].FieldType,
 			})
 		}
 	}
@@ -243,15 +310,6 @@ func (c *command) RequiredArgs() []argument {
 		}
 	}
 	return reqs
-}
-
-func (c *command) HasNonHelpOpt() bool {
-	for _, o := range c.Opts {
-		if o.Long != "help" {
-			return true
-		}
-	}
-	return false
 }
 
 func (a *argument) UsgName() string {
@@ -328,6 +386,22 @@ func (o *option) usgArgName() string {
 		return "<" + name + ">"
 	}
 	return "<arg>"
+}
+
+func (o *option) QuotedPlainNames() string {
+	long := o.Long
+	if long != "" {
+		long = "\"" + long + "\""
+	}
+	short := o.Short
+	if short != "" {
+		short = "\"" + short + "\""
+	}
+	comma := ""
+	if o.Long != "" && o.Short != "" {
+		comma = ", "
+	}
+	return long + comma + short
 }
 
 // Usg returns a command's usage message text given how wide the name column should be.
