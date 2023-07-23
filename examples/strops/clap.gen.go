@@ -168,6 +168,5 @@ func (c *strops) parse(args []string) {
 	if len(args) < 1 {
 		p.exitMissingArg("<input>")
 	}
-
 	c.input = p.nextStr()
 }
