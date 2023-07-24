@@ -333,10 +333,8 @@ func (o *option) Usg(nameWidth int) string {
 }
 
 func (o *option) usgNamesAndArg() string {
-	argName := o.usgArgName()
-
-	s := strings.Builder{}
-	s.Grow(len(o.Short) + len(o.Long) + len(argName) + 4)
+	var s strings.Builder
+	s.Grow(maxUsgLineLen / 3)
 	// short
 	if o.Short != "" {
 		s.WriteByte('-')
@@ -356,9 +354,9 @@ func (o *option) usgNamesAndArg() string {
 		s.WriteString(o.Long)
 	}
 	// arg name
-	if argName != "" {
+	if an := o.usgArgName(); an != "" {
 		s.WriteString("  ")
-		s.WriteString(argName)
+		s.WriteString(an)
 	}
 	return s.String()
 }
