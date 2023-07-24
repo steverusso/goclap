@@ -3,6 +3,15 @@
 version: '3'
 
 tasks:
+  get-tools:
+    prompt: >
+      You are about to install (or reinstall) the latest version of gofumpt, goimports, and staticcheck...
+      Do you wish to continue?
+    cmds:
+      - go install mvdan.cc/gofumpt@latest
+      - go install golang.org/x/tools/cmd/goimports@latest
+      - go install honnef.co/go/tools/cmd/staticcheck@latest
+
   default:
     - task: fmt
     - go build -ldflags="-s -w"

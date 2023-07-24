@@ -73,10 +73,13 @@ arguments:
 ## Building
 
 To just build the project as is, run `go build`. If you have
-[`task`](https://github.com/go-task/task) installed, as well as the necessary additional
-tools ([`goimports`](https://pkg.go.dev/golang.org/x/tools/cmd/goimports),
-[`gofumpt`](https://github.com/mvdan/gofumpt), [`staticcheck`](https://staticcheck.io/)),
-then you can run `task` to fmt, lint and build the project.
+[`task`](https://github.com/go-task/task) installed, you can run `task get-tools` to
+install the latest versions of
+([`goimports`](https://pkg.go.dev/golang.org/x/tools/cmd/goimports),
+[`gofumpt`](https://github.com/mvdan/gofumpt), and
+[`staticcheck`](https://staticcheck.io/)). Once you have those tools, you can run `task`
+to format, build, and lint the code, or you can run `task install` to format, lint, and
+install `goclap`.
 
 ## Projects Using Goclap
 
