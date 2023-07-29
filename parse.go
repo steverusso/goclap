@@ -20,6 +20,8 @@ const backtickRepl = "`+\"$0\"+`"
 // One or more backticks.
 var backtickRE = regexp.MustCompile("`+")
 
+// helpOption is the default help option that is automatically added to any command's
+// options.
 var helpOption = option{
 	Short:     "h",
 	Long:      "help",
@@ -174,10 +176,9 @@ func scanConfigTypes(cfgs []clapConfig) cfgTypes {
 
 func basicTypeFromName(name string) basicType {
 	switch name {
-	case "bool", "string",
+	case "bool", "string", "byte", "rune", "float32", "float64",
 		"int", "int8", "int16", "int32", "int64",
-		"uint", "uint8", "uint16", "uint32", "uint64",
-		"byte", "rune", "float32", "float64":
+		"uint", "uint8", "uint16", "uint32", "uint64":
 		return basicType(name)
 	}
 	return ""
@@ -314,6 +315,7 @@ func parseComments(cg *ast.CommentGroup) clapData {
 		}
 	}
 
+	// Grab all lines up to the first blank one as the "blurb."
 	for i := range lines {
 		if lines[i] == "" {
 			cd.Blurb = strings.TrimSpace(strings.Join(lines[:i], " "))
@@ -323,7 +325,7 @@ func parseComments(cg *ast.CommentGroup) clapData {
 	}
 
 	// Drop trailing '.' punctuation.
-	if n := len(cd.Blurb); cd.Blurb[n-1] == '.' {
+	if n := len(cd.Blurb); n > 0 && cd.Blurb[n-1] == '.' {
 		cd.Blurb = cd.Blurb[:n-1]
 	}
 
