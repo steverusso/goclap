@@ -8,7 +8,6 @@ import (
 	"go/token"
 	"regexp"
 	"strings"
-	"unicode"
 )
 
 // backtickRepl describes how groups of backticks are replaced within usage message
@@ -322,22 +321,10 @@ func parseComments(cg *ast.CommentGroup) clapData {
 			break
 		}
 	}
-	if n := len(cd.Blurb); n > 0 {
-		// Drop trailing '.' punctuation.
-		b := cd.Blurb
-		if b[n-1] == '.' {
-			b = b[:n-1]
-		}
-		// Make the first word lowercase as long as it's not all uppercase.
-		sp := strings.IndexFunc(b, unicode.IsSpace)
-		if sp == -1 {
-			sp = len(b)
-		}
-		word := b[:sp]
-		if word == "A" || !isStrAllUpper(word) {
-			b = strings.ToLower(word) + b[sp:]
-		}
-		cd.Blurb = b
+
+	// Drop trailing '.' punctuation.
+	if n := len(cd.Blurb); cd.Blurb[n-1] == '.' {
+		cd.Blurb = cd.Blurb[:n-1]
 	}
 
 	// The remaining groups of non-empty lines (if any) are considered the paragraphs of
@@ -367,13 +354,4 @@ func parseComments(cg *ast.CommentGroup) clapData {
 	}
 
 	return cd
-}
-
-func isStrAllUpper(s string) bool {
-	for _, c := range s {
-		if unicode.IsLower(c) {
-			return false
-		}
-	}
-	return true
 }
