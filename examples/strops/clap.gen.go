@@ -125,20 +125,20 @@ func (p *clapParser) nextInt() int {
 }
 
 func (*strops) printUsage(to *os.File) {
-	fmt.Fprintf(to, `%[1]s - perform different string operations
+	fmt.Fprintf(to, `%[1]s - Perform different string operations
 
 usage:
    %[1]s [options] <input>
 
 options:
-   -u, --upper           make the `+"`"+`input`+"`"+` string all uppercase
-   -r, --reverse         reverse the final string
-       --repeat  <n>     repeat the string this many times
-       --prefix  <str>   add this prefix to the final string
+   -u, --upper           Make the `+"`"+`input`+"`"+` string all uppercase
+   -r, --reverse         Reverse the final string
+       --repeat  <n>     Repeat the string this many times
+       --prefix  <str>   Add this prefix to the final string
    -h, --help            show this help message
 
 arguments:
-   <input>   the string on which to operate
+   <input>   The string on which to operate
 `, os.Args[0])
 }
 

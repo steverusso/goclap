@@ -122,18 +122,18 @@ func (p *clapParser) nextUint() uint {
 }
 
 func (*mycli) printUsage(to *os.File) {
-	fmt.Fprintf(to, `%[1]s - print a string with a prefix
+	fmt.Fprintf(to, `%[1]s - Print a string with a prefix
 
 usage:
    %[1]s [options] [input]
 
 options:
-   -p, --prefix  <arg>   the value to prepend to the input string [$MY_PREFIX]
-   -c, --count  <arg>    print the output this many extra times [$MY_COUNT]
+   -p, --prefix  <arg>   The value to prepend to the input string [$MY_PREFIX]
+   -c, --count  <arg>    Print the output this many extra times [$MY_COUNT]
    -h, --help            show this help message
 
 arguments:
-   [input]   the user provided input [$MY_INPUT]
+   [input]   The user provided input [$MY_INPUT]
 `, os.Args[0])
 }
 

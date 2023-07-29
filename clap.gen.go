@@ -109,17 +109,17 @@ func (p *clapParser) thisBool() bool {
 }
 
 func (*goclap) printUsage(to *os.File) {
-	fmt.Fprintf(to, `%[1]s - pre-build tool to generate command line argument parsing code from Go comments
+	fmt.Fprintf(to, `%[1]s - Pre-build tool to generate command line argument parsing code from Go comments
 
 usage:
    %[1]s [options]
 
 options:
-   -v, --version           print version info and exit
-       --include-version   include the version info in the generated code
-       --type  <arg>       the root command struct name
-       --srcdir  <arg>     directory of source files to parse (default ".")
-   -o, --out  <arg>        output file path (default "./clap.gen.go")
+   -v, --version           Print version info and exit
+       --include-version   Include the version info in the generated code
+       --type  <arg>       The root command struct name
+       --srcdir  <arg>     Directory of source files to parse (default ".")
+   -o, --out  <arg>        Output file path (default "./clap.gen.go")
    -h, --help              show this help message
 `, os.Args[0])
 }

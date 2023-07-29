@@ -115,17 +115,17 @@ func (p *clapParser) thisBool() bool {
 }
 
 func (*mycli) printUsage(to *os.File) {
-	fmt.Fprintf(to, `%[1]s - print a string with the option to make it uppercase
+	fmt.Fprintf(to, `%[1]s - Print a string with the option to make it uppercase
 
 usage:
    %[1]s [options] <input>
 
 options:
-   -u, --upper   make the input string all uppercase
+   -u, --upper   Make the input string all uppercase
    -h, --help    show this help message
 
 arguments:
-   <input>   the input string
+   <input>   The input string
 `, os.Args[0])
 }
 
