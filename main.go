@@ -12,14 +12,6 @@ import (
 
 // Pre-build tool to generate command line argument parsing code from Go comments.
 type goclap struct {
-	// Print version info and exit.
-	//
-	// clap:opt version,v
-	version bool
-	// Include the version info in the generated code.
-	//
-	// clap:opt include-version
-	incVersion bool
 	// The root command struct name.
 	//
 	// clap:opt type
@@ -28,10 +20,18 @@ type goclap struct {
 	//
 	// clap:opt srcdir
 	srcDir string
+	// Include goclap's version info in the generated code.
+	//
+	// clap:opt include-version
+	incVersion bool
 	// Output file path (default "./clap.gen.go").
 	//
-	// clap:opt out,o
+	// clap:opt out
 	outFilePath string
+	// Print version info and exit.
+	//
+	// clap:opt v
+	version bool
 }
 
 type basicType string

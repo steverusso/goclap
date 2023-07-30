@@ -115,12 +115,12 @@ usage:
    %[1]s [options]
 
 options:
-   -v, --version           Print version info and exit
-       --include-version   Include the version info in the generated code
-       --type  <arg>       The root command struct name
-       --srcdir  <arg>     Directory of source files to parse (default ".")
-   -o, --out  <arg>        Output file path (default "./clap.gen.go")
-   -h, --help              show this help message
+   -type  <arg>       The root command struct name
+   -srcdir  <arg>     Directory of source files to parse (default ".")
+   -include-version   Include goclap's version info in the generated code
+   -out  <arg>        Output file path (default "./clap.gen.go")
+   -v                 Print version info and exit
+   -h                 show this help message
 `, os.Args[0])
 }
 
@@ -131,17 +131,17 @@ func (c *goclap) parse(args []string) {
 	p := clapParser{usg: c.printUsage, args: args}
 	for p.stageOpt() {
 		switch p.optName {
-		case "version", "v":
-			c.version = p.thisBool()
-		case "include-version":
-			c.incVersion = p.thisBool()
 		case "type":
 			c.rootCmdType = p.nextStr()
 		case "srcdir":
 			c.srcDir = p.nextStr()
-		case "out", "o":
+		case "include-version":
+			c.incVersion = p.thisBool()
+		case "out":
 			c.outFilePath = p.nextStr()
-		case "help", "h":
+		case "v":
+			c.version = p.thisBool()
+		case "h":
 			p.exitUsgGood()
 		default:
 			claperr("unknown option '%s'\n", p.optName)

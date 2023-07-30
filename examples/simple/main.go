@@ -13,7 +13,7 @@ import (
 type mycli struct {
 	// Make the input string all uppercase.
 	//
-	// clap:opt upper,u
+	// clap:opt upper
 	toUpper bool
 	// The input string.
 	//

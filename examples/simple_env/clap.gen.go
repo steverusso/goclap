@@ -128,9 +128,9 @@ usage:
    %[1]s [options] [input]
 
 options:
-   -p, --prefix  <arg>   The value to prepend to the input string [$MY_PREFIX]
-   -c, --count  <arg>    Print the output this many extra times [$MY_COUNT]
-   -h, --help            show this help message
+   -prefix  <arg>   The value to prepend to the input string [$MY_PREFIX]
+   -count  <arg>    Print the output this many extra times [$MY_COUNT]
+   -h               show this help message
 
 arguments:
    [input]   The user provided input [$MY_INPUT]
@@ -154,11 +154,11 @@ func (c *mycli) parse(args []string) {
 	p.envName, p.envVal = "", ""
 	for p.stageOpt() {
 		switch p.optName {
-		case "prefix", "p":
+		case "prefix":
 			c.prefix = p.nextStr()
-		case "count", "c":
+		case "count":
 			c.count = p.nextUint()
-		case "help", "h":
+		case "h":
 			p.exitUsgGood()
 		default:
 			claperr("unknown option '%s'\n", p.optName)

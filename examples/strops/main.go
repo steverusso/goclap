@@ -13,11 +13,11 @@ import (
 type strops struct {
 	// Make the `input` string all uppercase.
 	//
-	// clap:opt upper,u
+	// clap:opt upper
 	toUpper bool
 	// Reverse the final string.
 	//
-	// clap:opt reverse,r
+	// clap:opt reverse
 	reverse bool
 	// Repeat the string this many times.
 	//
