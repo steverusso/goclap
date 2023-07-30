@@ -23,8 +23,7 @@ var backtickRE = regexp.MustCompile("`+")
 // helpOption is the default help option that is automatically added to any command's
 // options.
 var helpOption = option{
-	Short:     "h",
-	Long:      "help",
+	Name:      "h",
 	FieldType: "bool",
 	data:      clapData{Blurb: "show this help message"},
 }
@@ -230,7 +229,7 @@ func getCmdClapData(pkg *ast.Package, typ string) clapData {
 	return parseComments(commentGrp)
 }
 
-func parseOptNames(str string) (string, string, error) {
+/*func parseOptNames(str string) (string, string, error) {
 	names := strings.Split(str, ",")
 	for i := len(names) - 1; i >= 0; i-- {
 		if names[i] == "" {
@@ -265,23 +264,24 @@ func parseOptNames(str string) (string, string, error) {
 		return "", "", errors.New("'help' and 'h' are reserved option names")
 	}
 	return long, short, nil
-}
+}*/
 
 func (c *command) addOption(data clapData, fieldName string, typ basicType) error {
-	names, ok := data.getConfig("opt")
+	name, ok := data.getConfig("opt")
 	if !ok {
 		return errors.New("adding option without a 'clap:opt' directive")
 	}
-	long, short, err := parseOptNames(names)
+	/*long, short, err := parseOptNames(names)
 	if err != nil {
 		return fmt.Errorf("parsing option names: %w", err)
-	}
+	}*/
 	c.Opts = append(c.Opts, option{
 		FieldType: typ,
 		FieldName: fieldName,
-		Long:      long,
-		Short:     short,
+		Name:      name,
 		data:      data,
+		// Long:      long,
+		// Short:     short,
 	})
 	return nil
 }

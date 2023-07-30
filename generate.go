@@ -102,7 +102,7 @@ func (g *generator) writeHeader(incVersion bool, pkgName string, root *command) 
 
 func (c *command) getTypes(ts typeSet) {
 	for _, o := range c.Opts {
-		if o.Long != "help" {
+		if o.Name != "h" {
 			ts[o.FieldType] = struct{}{}
 		}
 	}
@@ -333,7 +333,7 @@ func (o *option) Usg(nameWidth int) string {
 }
 
 func (o *option) usgNamesAndArg() string {
-	var s strings.Builder
+	/*var s strings.Builder
 	s.Grow(maxUsgLineLen / 3)
 	// short
 	if o.Short != "" {
@@ -352,13 +352,13 @@ func (o *option) usgNamesAndArg() string {
 	if o.Long != "" {
 		s.WriteString("--")
 		s.WriteString(o.Long)
-	}
+	}*/
+	s := "-" + o.Name
 	// arg name
 	if an := o.usgArgName(); an != "" {
-		s.WriteString("  ")
-		s.WriteString(an)
+		s += "  " + an
 	}
-	return s.String()
+	return s
 }
 
 // usgArgName returns the usage text of an option argument for non-boolean options. For
@@ -377,7 +377,7 @@ func (o *option) usgArgName() string {
 // QuotedPlainNames returns the option's long and / or short name(s) in double quotes and
 // separated by a comma. For example, the default help option would return `"h", "help"`.
 func (o *option) QuotedPlainNames() string {
-	long := o.Long
+	/*long := o.Long
 	if long != "" {
 		long = `"` + long + `"`
 	}
@@ -389,7 +389,8 @@ func (o *option) QuotedPlainNames() string {
 	if o.Long != "" && o.Short != "" {
 		comma = ", "
 	}
-	return long + comma + short
+	return long + comma + short*/
+	return `"` + o.Name + `"`
 }
 
 // Usg returns a command's usage message text given how wide the name column should be.

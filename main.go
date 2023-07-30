@@ -123,8 +123,7 @@ type command struct {
 type option struct {
 	FieldType basicType
 	FieldName string
-	Long      string
-	Short     string
+	Name      string
 	data      clapData
 }
 
