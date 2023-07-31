@@ -242,7 +242,7 @@ func (c *command) Overview() string {
 func (c *command) OptNameColWidth() int {
 	w := 0
 	for _, o := range c.Opts {
-		if l := len(o.usgNamesAndArg()); l > w {
+		if l := len(o.usgNameAndArg()); l > w {
 			w = l
 		}
 	}
@@ -324,7 +324,7 @@ func (a *argument) Usg(nameWidth int) string {
 
 // Usg returns an option's usage message text given how wide the name column should be.
 func (o *option) Usg(nameWidth int) string {
-	paddedNameAndArg := fmt.Sprintf("   %-*s   ", nameWidth, o.usgNamesAndArg())
+	paddedNameAndArg := fmt.Sprintf("   %-*s   ", nameWidth, o.usgNameAndArg())
 	desc := o.data.Blurb
 	if v, ok := o.data.getConfig("env"); ok {
 		desc += " [$" + v + "]"
@@ -332,29 +332,8 @@ func (o *option) Usg(nameWidth int) string {
 	return paddedNameAndArg + wrapBlurb(desc, len(paddedNameAndArg), maxUsgLineLen)
 }
 
-func (o *option) usgNamesAndArg() string {
-	/*var s strings.Builder
-	s.Grow(maxUsgLineLen / 3)
-	// short
-	if o.Short != "" {
-		s.WriteByte('-')
-		s.WriteString(o.Short)
-	} else {
-		s.WriteString("  ")
-	}
-	// comma
-	if o.Long != "" && o.Short != "" {
-		s.WriteString(", ")
-	} else {
-		s.WriteString("  ")
-	}
-	// long
-	if o.Long != "" {
-		s.WriteString("--")
-		s.WriteString(o.Long)
-	}*/
+func (o *option) usgNameAndArg() string {
 	s := "-" + o.Name
-	// arg name
 	if an := o.usgArgName(); an != "" {
 		s += "  " + an
 	}
@@ -374,22 +353,8 @@ func (o *option) usgArgName() string {
 	return "<arg>"
 }
 
-// QuotedPlainNames returns the option's long and / or short name(s) in double quotes and
-// separated by a comma. For example, the default help option would return `"h", "help"`.
-func (o *option) QuotedPlainNames() string {
-	/*long := o.Long
-	if long != "" {
-		long = `"` + long + `"`
-	}
-	short := o.Short
-	if short != "" {
-		short = `"` + short + `"`
-	}
-	comma := ""
-	if o.Long != "" && o.Short != "" {
-		comma = ", "
-	}
-	return long + comma + short*/
+// QuotedPlainName returns the option's name in double quotes.
+func (o *option) QuotedPlainName() string {
 	return `"` + o.Name + `"`
 }
 
