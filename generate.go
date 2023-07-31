@@ -353,11 +353,6 @@ func (o *option) usgArgName() string {
 	return "<arg>"
 }
 
-// QuotedPlainName returns the option's name in double quotes.
-func (o *option) QuotedPlainName() string {
-	return `"` + o.Name + `"`
-}
-
 // Usg returns a command's usage message text given how wide the name column should be.
 func (c *command) Usg(nameWidth int) string {
 	paddedName := fmt.Sprintf("   %-*s   ", nameWidth, c.UsgName())

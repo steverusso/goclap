@@ -21,8 +21,8 @@ func (c *{{ .TypeName }}) parse(args []string) {
 	for p.stageOpt() {
 		switch p.optName {
 	{{- range .Opts }}
-		case {{ .QuotedPlainNames }}:
-		{{- if eq .Long "help" }}
+		case "{{ .Name }}":
+		{{- if eq .Name "h" }}
 			p.exitUsgGood()
 			{{- continue }}
 		{{- end }}
@@ -59,7 +59,7 @@ func (c *{{ .TypeName }}) parse(args []string) {
 	switch args[p.idx] {
 	{{- range . }}
 	case {{ .QuotedNames }}:
-		c.{{ .FieldName }} = new({{ .TypeName }})
+		c.{{ .FieldName }} = &{{ .TypeName }}{}
 		c.{{ .FieldName }}.parse(args[p.idx+1:])
 	{{- end }}
 	default:
