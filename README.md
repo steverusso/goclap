@@ -26,7 +26,7 @@ The following is taken from [`examples/simple/main.go`](./examples/simple/main.g
 type mycli struct {
 	// Make the input string all uppercase.
 	//
-	// clap:opt upper,u
+	// clap:opt upper
 	toUpper bool
 	// The input string.
 	//
@@ -57,17 +57,17 @@ Running `./simple -u hello` will output "HELLO", and running `./simple -h` will 
 following help message:
 
 ```
-./simple - print a string with the option to make it uppercase
+./simple - Print a string with the option to make it uppercase
 
 usage:
    ./simple [options] <input>
 
 options:
-   -u, --upper   make the input string all uppercase
-   -h, --help    show this help message
+   -upper   Make the input string all uppercase
+   -h       Show this help message
 
 arguments:
-   <input>   the input string
+   <input>   The input string
 ```
 
 ## Building

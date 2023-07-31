@@ -6,19 +6,20 @@ To get started, run `go build` and then `./strops -h`.
 ## Usage
 
 ```
-./strops - perform different string operations
+./strops - Perform different string operations
 
 usage:
    ./strops [options] <input>
 
 options:
-   -u, --upper           make the `input` string all uppercase
-   -r, --reverse         reverse the final string
-       --prefix  <str>   add this prefix to the final string
-   -h, --help            show this help message
+   -upper           Make the `input` string all uppercase
+   -reverse         Reverse the final string
+   -repeat  <n>     Repeat the string this many times
+   -prefix  <str>   Add this prefix to the final string
+   -h               show this help message
 
 arguments:
-   <input>   the string on which to operate
+   <input>   The string on which to operate
 ```
 
 ## Try It
