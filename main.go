@@ -30,7 +30,7 @@ type goclap struct {
 	outFilePath string
 	// Print version info and exit.
 	//
-	// clap:opt v
+	// clap:opt version
 	version bool
 }
 

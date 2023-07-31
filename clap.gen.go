@@ -119,7 +119,7 @@ options:
    -srcdir  <arg>     Directory of source files to parse (default ".")
    -include-version   Include goclap's version info in the generated code
    -out  <arg>        Output file path (default "./clap.gen.go")
-   -v                 Print version info and exit
+   -version           Print version info and exit
    -h                 Show this help message
 `, os.Args[0])
 }
@@ -139,7 +139,7 @@ func (c *goclap) parse(args []string) {
 			c.incVersion = p.thisBool()
 		case "out":
 			c.outFilePath = p.nextStr()
-		case "v":
+		case "version":
 			c.version = p.thisBool()
 		case "h":
 			p.exitUsgGood()
