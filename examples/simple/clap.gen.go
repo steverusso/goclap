@@ -122,7 +122,7 @@ usage:
 
 options:
    -upper   Make the input string all uppercase
-   -h       show this help message
+   -h       Show this help message
 
 arguments:
    <input>   The input string

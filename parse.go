@@ -25,7 +25,7 @@ var backtickRE = regexp.MustCompile("`+")
 var helpOption = option{
 	Name:      "h",
 	FieldType: "bool",
-	data:      clapData{Blurb: "show this help message"},
+	data:      clapData{Blurb: "Show this help message"},
 }
 
 func parse(srcDir, rootCmdTypeName string) (command, string, error) {

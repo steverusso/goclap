@@ -16,7 +16,7 @@ options:
    -reverse         Reverse the final string
    -repeat  <n>     Repeat the string this many times
    -prefix  <str>   Add this prefix to the final string
-   -h               show this help message
+   -h               Show this help message
 
 arguments:
    <input>   The string on which to operate

@@ -120,7 +120,7 @@ options:
    -include-version   Include goclap's version info in the generated code
    -out  <arg>        Output file path (default "./clap.gen.go")
    -v                 Print version info and exit
-   -h                 show this help message
+   -h                 Show this help message
 `, os.Args[0])
 }
 

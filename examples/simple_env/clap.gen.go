@@ -130,7 +130,7 @@ usage:
 options:
    -prefix  <arg>   The value to prepend to the input string [$MY_PREFIX]
    -count  <arg>    Print the output this many extra times [$MY_COUNT]
-   -h               show this help message
+   -h               Show this help message
 
 arguments:
    [input]   The user provided input [$MY_INPUT]
