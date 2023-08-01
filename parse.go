@@ -23,10 +23,9 @@ var backtickRE = regexp.MustCompile("`+")
 // helpOption is the default help option that is automatically added to any command's
 // options.
 var helpOption = option{
-	Short:     "h",
-	Long:      "help",
+	Name:      "h",
 	FieldType: "bool",
-	data:      clapData{Blurb: "show this help message"},
+	data:      clapData{Blurb: "Show this help message"},
 }
 
 func parse(srcDir, rootCmdTypeName string) (command, string, error) {
@@ -230,57 +229,15 @@ func getCmdClapData(pkg *ast.Package, typ string) clapData {
 	return parseComments(commentGrp)
 }
 
-func parseOptNames(str string) (string, string, error) {
-	names := strings.Split(str, ",")
-	for i := len(names) - 1; i >= 0; i-- {
-		if names[i] == "" {
-			names = append(names[:i], names[i+1:]...)
-		}
-	}
-	long := ""
-	short := ""
-	switch len(names) {
-	case 0:
-		return "", "", errors.New("'clap:opt' found but no names provided")
-	case 1:
-		v := names[0]
-		if len(v) == 1 {
-			short = v
-		} else {
-			long = v
-		}
-	case 2:
-		a, b := names[0], names[1]
-		if len(a) == 1 {
-			long, short = b, a
-		} else if len(b) == 1 {
-			long, short = a, b
-		} else {
-			return "", "", fmt.Errorf("two opt names found ('%s', '%s'), one must be the short version (only one character)", a, b)
-		}
-	default:
-		return "", "", fmt.Errorf("illegal `clap:opt` value '%s': too many comma separated values", str)
-	}
-	if long == "help" || short == "h" {
-		return "", "", errors.New("'help' and 'h' are reserved option names")
-	}
-	return long, short, nil
-}
-
 func (c *command) addOption(data clapData, fieldName string, typ basicType) error {
-	names, ok := data.getConfig("opt")
+	name, ok := data.getConfig("opt")
 	if !ok {
 		return errors.New("adding option without a 'clap:opt' directive")
-	}
-	long, short, err := parseOptNames(names)
-	if err != nil {
-		return fmt.Errorf("parsing option names: %w", err)
 	}
 	c.Opts = append(c.Opts, option{
 		FieldType: typ,
 		FieldName: fieldName,
-		Long:      long,
-		Short:     short,
+		Name:      name,
 		data:      data,
 	})
 	return nil

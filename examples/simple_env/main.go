@@ -12,12 +12,12 @@ import (
 type mycli struct {
 	// The value to prepend to the input string.
 	//
-	// clap:opt prefix,p
+	// clap:opt prefix
 	// clap:env MY_PREFIX
 	prefix string
 	// Print the output this many extra times.
 	//
-	// clap:opt count,c
+	// clap:opt count
 	// clap:env MY_COUNT
 	count uint
 	// The user provided input.

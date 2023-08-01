@@ -7,17 +7,18 @@ To get started, run `go build` and then `./simple_env -h`.
 ## Usage
 
 ```
-./simple_env - print a string with a prefix
+./simple_env - Print a string with a prefix
 
 usage:
    ./simple_env [options] [input]
 
 options:
-   -p, --prefix  <arg>   the value to prepend to the input string [$MY_PREFIX]
-   -h, --help            show this help message
+   -prefix  <arg>   The value to prepend to the input string [$MY_PREFIX]
+   -count  <arg>    Print the output this many extra times [$MY_COUNT]
+   -h               Show this help message
 
 arguments:
-   [input]   the user provided input [$MY_INPUT]
+   [input]   The user provided input [$MY_INPUT]
 ```
 
 ## Try It

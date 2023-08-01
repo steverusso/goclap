@@ -131,11 +131,11 @@ usage:
    %[1]s [options] <input>
 
 options:
-   -u, --upper           Make the `+"`"+`input`+"`"+` string all uppercase
-   -r, --reverse         Reverse the final string
-       --repeat  <n>     Repeat the string this many times
-       --prefix  <str>   Add this prefix to the final string
-   -h, --help            show this help message
+   -upper           Make the `+"`"+`input`+"`"+` string all uppercase
+   -reverse         Reverse the final string
+   -repeat  <n>     Repeat the string this many times
+   -prefix  <str>   Add this prefix to the final string
+   -h               Show this help message
 
 arguments:
    <input>   The string on which to operate
@@ -149,15 +149,15 @@ func (c *strops) parse(args []string) {
 	p := clapParser{usg: c.printUsage, args: args}
 	for p.stageOpt() {
 		switch p.optName {
-		case "upper", "u":
+		case "upper":
 			c.toUpper = p.thisBool()
-		case "reverse", "r":
+		case "reverse":
 			c.reverse = p.thisBool()
 		case "repeat":
 			c.repeat = p.nextInt()
 		case "prefix":
 			c.prefix = p.nextStr()
-		case "help", "h":
+		case "h":
 			p.exitUsgGood()
 		default:
 			claperr("unknown option '%s'\n", p.optName)

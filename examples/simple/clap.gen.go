@@ -121,8 +121,8 @@ usage:
    %[1]s [options] <input>
 
 options:
-   -u, --upper   Make the input string all uppercase
-   -h, --help    show this help message
+   -upper   Make the input string all uppercase
+   -h       Show this help message
 
 arguments:
    <input>   The input string
@@ -136,9 +136,9 @@ func (c *mycli) parse(args []string) {
 	p := clapParser{usg: c.printUsage, args: args}
 	for p.stageOpt() {
 		switch p.optName {
-		case "upper", "u":
+		case "upper":
 			c.toUpper = p.thisBool()
-		case "help", "h":
+		case "h":
 			p.exitUsgGood()
 		default:
 			claperr("unknown option '%s'\n", p.optName)
