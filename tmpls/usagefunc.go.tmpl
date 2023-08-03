@@ -1,6 +1,6 @@
 
-func (*{{ .TypeName }}) printUsage(to *os.File) {
-	fmt.Fprintf(to, `{{ .Parents }}{{ .UsgName }} - {{ .Data.Blurb }}
+func (*{{ .TypeName }}) usage() string {
+	return `{{ .Parents }}{{ .UsgName }} - {{ .Data.Blurb }}
 {{- with .Overview }}
 
 overview:
@@ -32,6 +32,6 @@ subcommands:{{ range . }}
 {{ end -}}
 {{- if $.IsRoot }}
 
-run '%[1]s <subcommand> -h' for more information on specific commands.{{ end }}{{ end }}
-`, os.Args[0])
+Run '{{ .UsgName }} <subcommand> -h' for more information on specific commands.{{ end }}{{ end }}
+`
 }

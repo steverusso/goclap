@@ -57,15 +57,11 @@ func parse(srcDir, rootCmdTypeName string) (command, string, error) {
 		warn("no root command description provided")
 	}
 	root := command{
-		TypeName: rootCmdTypeName,
-		// This is a bit of a hack due to the following: the "name" of the root command is
-		// actually the name of the program, which is the first argument in `os.Args`.
-		// That gets passed as a fmt arg within the generated code when printing a
-		// command's usage. Therefore, we need a `%s` to show up wherever the root command
-		// name will appear in a usage message.
-		FieldName: "%[1]s",
+		TypeName:  rootCmdTypeName,
+		FieldName: rootCmdTypeName,
 		Data:      data,
 	}
+	root.parentNames = []string{root.UsgName()}
 
 	if err = addChildren(targetPkg, &root, rootStrct); err != nil {
 		return command{}, "", err
