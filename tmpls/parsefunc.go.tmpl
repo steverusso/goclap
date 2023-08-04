@@ -6,64 +6,72 @@ func (c *{{ .TypeName }}) parse(args []string) {
 		args = args[1:]
 	}
 	{{- end }}
-	p := clapParser{usg: c.printUsage, args: args}
+
+	var err error
+
 	{{- /* Parse environment variables. */}}
 	{{- with .EnvVals }}
 	{{- range . }}
-	if p.stageEnv("{{ .VarName }}") {
-		c.{{ .FieldName }} = p.{{ .FieldType.ClapIterMethodName }}()
+	_, err = clap.ParseEnv(clap.New{{ .FieldType.ClapValueType }}(&c.{{ .FieldName }}), "{{ .VarName }}")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "%v", err)
+		os.Exit(2)
 	}
 	{{- end }}
-	p.envName, p.envVal = "", ""
 	{{- end }}
 
-	{{- /* Parse options. */}}
-	for p.stageOpt() {
-		switch p.optName {
+	f := flag.FlagSet{Usage: func() {}}
 	{{- range .Opts }}
-		case "{{ .Name }}":
-		{{- if eq .Name "h" }}
-			p.exitUsgGood()
-			{{- continue }}
+		{{- if ne .Name "h" }}
+	f.Var(clap.New{{ .FieldType.ClapValueType }}(&c.{{ .FieldName }}), "{{ .Name }}", "")
 		{{- end }}
-			c.{{ .FieldName }} = p.{{ .FieldType.ClapIterMethodName }}()
 	{{- end }}
-		default:
-			claperr("unknown option '%s'\n", p.optName)
-			os.Exit(1)
+	if err = f.Parse(args); err != nil {
+		if err == flag.ErrHelp {
+			fmt.Print(c.usage())
+			os.Exit(0)
 		}
+		fmt.Fprintf(os.Stderr, "error: %v.\nRun '{{ $.Parents }}{{ $.UsgName }} -h' for usage.", err)
+		os.Exit(2)
 	}
 
 	{{- /* Arguments. */ -}}
 	{{- with .Args }}
-	args = args[p.idx:]
+
+	rest := f.Args()
 
 		{{- range $i, $arg := . }}
-	if len(args) < {{ add $i 1 }} {
+	if len(rest) < {{ add $i 1 }} {
 			{{- if $arg.IsRequired }}
-		p.exitMissingArg("{{ $arg.UsgName }}")
+		fmt.Fprintf(os.Stderr, "error: missing arg {{ $arg.UsgName }}")
+		os.Exit(2)
 			{{- else }}
 		return
 			{{- end }}
 	}
-	c.{{ .FieldName }} = p.{{ .FieldType.ClapIterMethodName }}()
+	if err = clap.New{{ .FieldType.ClapValueType }}(&c.{{ .FieldName }}).Set(rest[{{ $i }}]); err != nil {
+		fmt.Fprintf(os.Stderr, "error: parsing arg: %v\n", err)
+	}
 		{{- end -}}{{- /* range all args */ -}}
 	{{- end }}{{- /* with args */ -}}
 
 	{{- /* Subcommands. */ -}}
 	{{- with .Subcmds }}
-	if p.idx >= len(args) {
-		c.printUsage(os.Stderr)
-		os.Exit(1)
+
+	rest := f.Args()
+	if len(rest) == 0 {
+		fmt.Fprintf(os.Stderr, "error: no subcommand provided\nRun '{{ $.Parents }}{{ $.UsgName }} -h' for usage.\n")
+		os.Exit(2)
 	}
-	switch args[p.idx] {
+	switch rest[0] {
 	{{- range . }}
 	case {{ .QuotedNames }}:
 		c.{{ .FieldName }} = &{{ .TypeName }}{}
-		c.{{ .FieldName }}.parse(args[p.idx+1:])
+		c.{{ .FieldName }}.parse(rest[1:])
 	{{- end }}
 	default:
-		p.exitUnknownCmd(args[p.idx])
+		fmt.Fprintf(os.Stderr, "error: unknown subcommand '%s'\nRun '{{ $.Parents }}{{ $.UsgName }} -h' for usage.\n", rest[0])
+		os.Exit(2)
 	}
 	{{- end }}
 }

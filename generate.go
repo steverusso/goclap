@@ -396,7 +396,6 @@ func (c *command) HasEnvArgOrOptSomewhere() bool {
 	return false
 }
 
-func (c *command) IsRoot() bool     { return c.FieldName == "%[1]s" }
 func (c *command) HasSubcmds() bool { return len(c.Subcmds) > 0 }
 
 func wrapBlurb(v string, indentLen, lineLen int) string {
