@@ -28,7 +28,7 @@ func (c *{{ .TypeName }}) parse(args []string) {
 	{{- end }}
 	if err = f.Parse(args); err != nil {
 		if err == flag.ErrHelp {
-			fmt.Print(c.usage())
+			fmt.Println(c.usage())
 			os.Exit(0)
 		}
 		fmt.Fprintf(os.Stderr, "error: %v.\nRun '{{ $.Parents }}{{ $.UsgName }} -h' for usage.", err)

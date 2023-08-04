@@ -3,129 +3,18 @@
 package main
 
 import (
-	"errors"
+	"flag"
 	"fmt"
 	"os"
-	"strconv"
-	"strings"
+
+	"github.com/steverusso/goclap/clap"
 )
 
-func claperr(format string, a ...any) {
-	format = "\033[1;31merror:\033[0m " + format
-	fmt.Fprintf(os.Stderr, format, a...)
-}
-
-type clapParser struct {
-	usg  func(to *os.File)
-	args []string
-	idx  int
-
-	envName string
-	envVal  string
-
-	optName  string
-	optEqVal string
-	optHasEq bool
-}
-
-func (p *clapParser) exitUsgGood() {
-	p.usg(os.Stdout)
-	os.Exit(0)
-}
-
-func (p *clapParser) stageEnv(name string) (ok bool) {
-	p.envName = name
-	p.envVal, ok = os.LookupEnv(name)
-	return ok
-}
-
-func (p *clapParser) stageOpt() bool {
-	if p.optName != "" {
-		p.idx++
-	}
-	if p.idx > len(p.args)-1 {
-		p.optName = ""
-		return false
-	}
-	arg := p.args[p.idx]
-	if arg[0] != '-' {
-		p.optName = ""
-		return false
-	}
-	arg = arg[1:]
-	if arg == "" {
-		claperr("emtpy option ('-') found\n")
-		os.Exit(1)
-	}
-	if arg[0] == '-' {
-		arg = arg[1:]
-	}
-	if arg == "" {
-		p.idx++
-		p.optName = ""
-		return false
-	}
-
-	p.optEqVal = ""
-	if eqIdx := strings.IndexByte(arg, '='); eqIdx != -1 {
-		p.optName = arg[:eqIdx]
-		if eqIdx < len(arg) {
-			p.optEqVal = arg[eqIdx+1:]
-		}
-		p.optHasEq = true
-	} else {
-		p.optName = arg
-		p.optHasEq = false
-	}
-	return true
-}
-
-func (p *clapParser) nextStr() string {
-	if p.envName != "" {
-		return p.envVal
-	}
-	if p.optName != "" {
-		if p.optHasEq {
-			return p.optEqVal
-		}
-		if p.idx == len(p.args)-1 {
-			claperr("option '%s' needs an argument\n", p.optName)
-			os.Exit(1)
-		}
-		p.idx++
-		return p.args[p.idx]
-	}
-	p.idx++
-	return p.args[p.idx-1]
-}
-
-func (p *clapParser) exitBadInput(typ string, err error) {
-	var forWhat string
-	switch {
-	case p.optName != "":
-		forWhat = "option '" + p.optName + "'"
-	case p.envName != "":
-		forWhat = "env var '" + p.envName + "'"
-	default:
-		forWhat = "argument"
-	}
-	claperr("invalid %s for %s: %v\n", typ, forWhat, err)
-	os.Exit(1)
-}
-
-func (p *clapParser) nextUint() uint {
-	u64, err := strconv.ParseUint(p.nextStr(), 10, 0)
-	if err != nil {
-		p.exitBadInput("uint", errors.Unwrap(err))
-	}
-	return uint(u64)
-}
-
-func (*mycli) printUsage(to *os.File) {
-	fmt.Fprintf(to, `%[1]s - Print a string with a prefix
+func (*mycli) usage() string {
+	return `mycli - Print a string with a prefix
 
 usage:
-   %[1]s [options] [input]
+   mycli [options] [input]
 
 options:
    -prefix  <arg>   The value to prepend to the input string [$MY_PREFIX]
@@ -133,41 +22,48 @@ options:
    -h               Show this help message
 
 arguments:
-   [input]   The user provided input [$MY_INPUT]
-`, os.Args[0])
+   [input]   The user provided input [$MY_INPUT]`
 }
 
 func (c *mycli) parse(args []string) {
 	if len(args) > 0 && len(args) == len(os.Args) {
 		args = args[1:]
 	}
-	p := clapParser{usg: c.printUsage, args: args}
-	if p.stageEnv("MY_PREFIX") {
-		c.prefix = p.nextStr()
+
+	var err error
+	_, err = clap.ParseEnv(clap.NewString(&c.prefix), "MY_PREFIX")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "%v", err)
+		os.Exit(2)
 	}
-	if p.stageEnv("MY_COUNT") {
-		c.count = p.nextUint()
+	_, err = clap.ParseEnv(clap.NewUint(&c.count), "MY_COUNT")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "%v", err)
+		os.Exit(2)
 	}
-	if p.stageEnv("MY_INPUT") {
-		c.input = p.nextStr()
+	_, err = clap.ParseEnv(clap.NewString(&c.input), "MY_INPUT")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "%v", err)
+		os.Exit(2)
 	}
-	p.envName, p.envVal = "", ""
-	for p.stageOpt() {
-		switch p.optName {
-		case "prefix":
-			c.prefix = p.nextStr()
-		case "count":
-			c.count = p.nextUint()
-		case "h":
-			p.exitUsgGood()
-		default:
-			claperr("unknown option '%s'\n", p.optName)
-			os.Exit(1)
+
+	f := flag.FlagSet{Usage: func() {}}
+	f.Var(clap.NewString(&c.prefix), "prefix", "")
+	f.Var(clap.NewUint(&c.count), "count", "")
+	if err = f.Parse(args); err != nil {
+		if err == flag.ErrHelp {
+			fmt.Println(c.usage())
+			os.Exit(0)
 		}
+		fmt.Fprintf(os.Stderr, "error: %v.\nRun 'mycli -h' for usage.", err)
+		os.Exit(2)
 	}
-	args = args[p.idx:]
-	if len(args) < 1 {
+
+	rest := f.Args()
+	if len(rest) < 1 {
 		return
 	}
-	c.input = p.nextStr()
+	if err = clap.NewString(&c.input).Set(rest[0]); err != nil {
+		fmt.Fprintf(os.Stderr, "error: parsing arg: %v\n", err)
+	}
 }

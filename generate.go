@@ -125,31 +125,31 @@ func (ts typeSet) HasAny(names ...basicType) bool {
 	return false
 }
 
-var clapIterMethodMap = map[basicType]string{
+var clapValueTypes = map[basicType]string{
 	// int*
-	"int":   "nextInt",
-	"int8":  "nextInt8",
-	"int16": "nextInt16",
-	"int32": "nextInt32",
-	"int64": "nextInt64",
+	"int":   "Int",
+	"int8":  "Int8",
+	"int16": "Int16",
+	"int32": "Int32",
+	"int64": "Int64",
 	// uint*
-	"uint":   "nextUint",
-	"uint8":  "nextUint8",
-	"uint16": "nextUint16",
-	"uint32": "nextUint32",
-	"uint64": "nextUint64",
+	"uint":   "Uint",
+	"uint8":  "Uint8",
+	"uint16": "Uint16",
+	"uint32": "Uint32",
+	"uint64": "Uint64",
 	// float*
-	"float32": "nextFloat32",
-	"float64": "nextFloat64",
+	"float32": "Float32",
+	"float64": "Float64",
 	// misc
-	"bool":   "thisBool",
-	"string": "nextStr",
-	"byte":   "nextUint8",
-	"rune":   "nextInt32",
+	"bool":   "Bool",
+	"string": "String",
+	"byte":   "Uint8",
+	"rune":   "Int32",
 }
 
-func (t basicType) ClapIterMethodName() string {
-	return clapIterMethodMap[t]
+func (t basicType) ClapValueType() string {
+	return clapValueTypes[t]
 }
 
 func (g *generator) genCommandCode(c *command) error {

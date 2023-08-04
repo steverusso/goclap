@@ -3,116 +3,18 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"os"
-	"strings"
+
+	"github.com/steverusso/goclap/clap"
 )
 
-func claperr(format string, a ...any) {
-	format = "\033[1;31merror:\033[0m " + format
-	fmt.Fprintf(os.Stderr, format, a...)
-}
-
-type clapParser struct {
-	usg  func(to *os.File)
-	args []string
-	idx  int
-
-	optName  string
-	optEqVal string
-	optHasEq bool
-}
-
-func (p *clapParser) exitUsgGood() {
-	p.usg(os.Stdout)
-	os.Exit(0)
-}
-
-func (p *clapParser) stageOpt() bool {
-	if p.optName != "" {
-		p.idx++
-	}
-	if p.idx > len(p.args)-1 {
-		p.optName = ""
-		return false
-	}
-	arg := p.args[p.idx]
-	if arg[0] != '-' {
-		p.optName = ""
-		return false
-	}
-	arg = arg[1:]
-	if arg == "" {
-		claperr("emtpy option ('-') found\n")
-		os.Exit(1)
-	}
-	if arg[0] == '-' {
-		arg = arg[1:]
-	}
-	if arg == "" {
-		p.idx++
-		p.optName = ""
-		return false
-	}
-
-	p.optEqVal = ""
-	if eqIdx := strings.IndexByte(arg, '='); eqIdx != -1 {
-		p.optName = arg[:eqIdx]
-		if eqIdx < len(arg) {
-			p.optEqVal = arg[eqIdx+1:]
-		}
-		p.optHasEq = true
-	} else {
-		p.optName = arg
-		p.optHasEq = false
-	}
-	return true
-}
-
-func (p *clapParser) nextStr() string {
-	if p.optName != "" {
-		if p.optHasEq {
-			return p.optEqVal
-		}
-		if p.idx == len(p.args)-1 {
-			claperr("option '%s' needs an argument\n", p.optName)
-			os.Exit(1)
-		}
-		p.idx++
-		return p.args[p.idx]
-	}
-	p.idx++
-	return p.args[p.idx-1]
-}
-
-func (p *clapParser) exitBadInput(typ string, err error) {
-	var forWhat string
-	switch {
-	case p.optName != "":
-		forWhat = "option '" + p.optName + "'"
-	default:
-		forWhat = "argument"
-	}
-	claperr("invalid %s for %s: %v\n", typ, forWhat, err)
-	os.Exit(1)
-}
-
-func (p *clapParser) thisBool() bool {
-	s := p.optEqVal
-	if s == "" || s == "true" || s == "1" {
-		return true
-	}
-	if s != "false" && s != "0" {
-		p.exitBadInput("bool", fmt.Errorf("%q not recognized as a boolean", s))
-	}
-	return false
-}
-
-func (*goclap) printUsage(to *os.File) {
-	fmt.Fprintf(to, `%[1]s - Pre-build tool to generate command line argument parsing code from Go comments
+func (*goclap) usage() string {
+	return `goclap - Pre-build tool to generate command line argument parsing code from Go comments
 
 usage:
-   %[1]s [options]
+   goclap [options]
 
 options:
    -type  <arg>       The root command struct name
@@ -120,32 +22,28 @@ options:
    -include-version   Include goclap's version info in the generated code
    -out  <arg>        Output file path (default "./clap.gen.go")
    -version           Print version info and exit
-   -h                 Show this help message
-`, os.Args[0])
+   -h                 Show this help message`
 }
 
 func (c *goclap) parse(args []string) {
 	if len(args) > 0 && len(args) == len(os.Args) {
 		args = args[1:]
 	}
-	p := clapParser{usg: c.printUsage, args: args}
-	for p.stageOpt() {
-		switch p.optName {
-		case "type":
-			c.rootCmdType = p.nextStr()
-		case "srcdir":
-			c.srcDir = p.nextStr()
-		case "include-version":
-			c.incVersion = p.thisBool()
-		case "out":
-			c.outFilePath = p.nextStr()
-		case "version":
-			c.version = p.thisBool()
-		case "h":
-			p.exitUsgGood()
-		default:
-			claperr("unknown option '%s'\n", p.optName)
-			os.Exit(1)
+
+	var err error
+
+	f := flag.FlagSet{Usage: func() {}}
+	f.Var(clap.NewString(&c.rootCmdType), "type", "")
+	f.Var(clap.NewString(&c.srcDir), "srcdir", "")
+	f.Var(clap.NewBool(&c.incVersion), "include-version", "")
+	f.Var(clap.NewString(&c.outFilePath), "out", "")
+	f.Var(clap.NewBool(&c.version), "version", "")
+	if err = f.Parse(args); err != nil {
+		if err == flag.ErrHelp {
+			fmt.Println(c.usage())
+			os.Exit(0)
 		}
+		fmt.Fprintf(os.Stderr, "error: %v.\nRun 'goclap -h' for usage.", err)
+		os.Exit(2)
 	}
 }
