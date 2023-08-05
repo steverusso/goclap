@@ -8,6 +8,7 @@ func (c *{{ .TypeName }}) parse(args []string) {
 	{{- end }}
 
 	cc := clap.NewCommand("{{ .Parents }}{{ .UsgName }}")
+	cc.CustomUsage = c.usage
 
 	{{- range .Opts }}
 		{{- if ne .Name "h" }}
@@ -22,7 +23,7 @@ func (c *{{ .TypeName }}) parse(args []string) {
 		{{- with .EnvVar }}.Env("{{ . }}"){{ end }}
 		{{- if .IsRequired }}.Require(){{ end }}
 	{{- end }}
-	cc.Parse(args, c.usage)
+	cc.Parse(args)
 
 	{{- /* Subcommands. */ -}}
 	{{- with .Subcmds }}

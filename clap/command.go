@@ -7,8 +7,9 @@ import (
 )
 
 type Command struct {
-	Path  string
-	Flags flag.FlagSet
+	Path string
+
+	CustomUsage func() string
 
 	flags []Input
 	args  []Input
@@ -34,8 +35,7 @@ func (in *Input) Require() *Input {
 
 func NewCommand(path string) Command {
 	return Command{
-		Path:  path,
-		Flags: flag.FlagSet{Usage: func() {}},
+		Path: path,
 	}
 }
 
@@ -60,7 +60,7 @@ func (c *Command) Fatal(err error) {
 	os.Exit(2)
 }
 
-func (c *Command) Parse(args []string, usgFn func() string) {
+func (c *Command) Parse(args []string) {
 	f := flag.FlagSet{Usage: func() {}}
 	for _, opt := range c.flags {
 		if opt.envVarName != "" {
@@ -77,7 +77,7 @@ func (c *Command) Parse(args []string, usgFn func() string) {
 
 	if err := f.Parse(args); err != nil {
 		if err == flag.ErrHelp {
-			fmt.Println(usgFn())
+			fmt.Println(c.CustomUsage())
 			os.Exit(0)
 		}
 		c.Fatal(err)
