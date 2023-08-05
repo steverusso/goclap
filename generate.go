@@ -250,8 +250,8 @@ func (o *option) EnvVar() string {
 	return name
 }
 
-func (o *argument) EnvVar() string {
-	name, _ := o.data.getConfig("env")
+func (a *argument) EnvVar() string {
+	name, _ := a.data.getConfig("env")
 	return name
 }
 

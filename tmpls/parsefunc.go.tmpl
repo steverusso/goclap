@@ -17,12 +17,10 @@ func (c *{{ .TypeName }}) parse(args []string) {
 	{{- end }}
 
 	{{- /* Arguments. */ -}}
-	{{- with .Args }}
-		{{- range $i, $arg := . }}
-	cc.Arg("{{ $arg.UsgName }}", clap.New{{ .FieldType.ClapValueType }}(&c.{{ .FieldName }}))
+	{{- range .Args }}
+	cc.Arg("{{ .UsgName }}", clap.New{{ .FieldType.ClapValueType }}(&c.{{ .FieldName }}))
 		{{- with .EnvVar }}.Env("{{ . }}"){{ end }}
-		{{- if $arg.IsRequired }}.Require(){{ end }}
-		{{- end -}}
+		{{- if .IsRequired }}.Require(){{ end }}
 	{{- end }}
 	cc.Parse(args, c.usage)
 
