@@ -63,11 +63,6 @@ func newGenerator() (generator, error) {
 type headerData struct {
 	PkgName string
 	Version string
-	RootCmd *command
-	Types   typeSet
-
-	NeedsEnvCode     bool
-	NeedsStrconvCode bool
 }
 
 func (g *generator) writeHeader(incVersion bool, pkgName string, root *command) error {
@@ -79,17 +74,7 @@ func (g *generator) writeHeader(incVersion bool, pkgName string, root *command) 
 		return fmt.Errorf("parsing header template: %w", err)
 	}
 
-	data := headerData{
-		PkgName: pkgName,
-		RootCmd: root,
-		Types:   ts,
-
-		NeedsEnvCode: root.HasEnvArgOrOptSomewhere(),
-		NeedsStrconvCode: ts.HasAny("float32", "float64",
-			"int", "int8", "int16", "int32", "int64", "rune",
-			"uint", "uint8", "uint16", "uint32", "uint64", "byte",
-		),
-	}
+	data := headerData{PkgName: pkgName}
 	if incVersion {
 		data.Version = getBuildVersionInfo().String()
 	}
@@ -115,15 +100,6 @@ func (c *command) getTypes(ts typeSet) {
 }
 
 type typeSet map[basicType]struct{}
-
-func (ts typeSet) HasAny(names ...basicType) bool {
-	for i := range names {
-		if _, ok := ts[names[i]]; ok {
-			return true
-		}
-	}
-	return false
-}
 
 var clapValueTypes = map[basicType]string{
 	// int*
@@ -192,7 +168,7 @@ func (c *command) Parents() string {
 }
 
 func (c *command) UsageLines() []string {
-	us := make([]string, 0, 2)
+	var us []string
 	for _, cfg := range c.Data.configs {
 		if cfg.key == "cmd_usage" {
 			us = append(us, c.UsgName()+" "+cfg.val)
@@ -357,43 +333,6 @@ func (o *option) usgArgName() string {
 func (c *command) Usg(nameWidth int) string {
 	paddedName := fmt.Sprintf("   %-*s   ", nameWidth, c.UsgName())
 	return paddedName + wrapBlurb(c.Data.Blurb, len(paddedName), maxUsgLineLen)
-}
-
-// HasReqArgSomewhere returns true if this command or one of its subcommands contains a
-// required positional argument.
-func (c *command) HasReqArgSomewhere() bool {
-	for _, a := range c.Args {
-		if a.IsRequired() {
-			return true
-		}
-	}
-	for _, ch := range c.Subcmds {
-		if ch.HasReqArgSomewhere() {
-			return true
-		}
-	}
-	return false
-}
-
-// HasEnvArgOrOptSomewhere returns true if this command or one of its subcommands contains
-// an option or an argument that uses an environment variable config.
-func (c *command) HasEnvArgOrOptSomewhere() bool {
-	for i := range c.Opts {
-		if _, ok := c.Opts[i].data.getConfig("env"); ok {
-			return true
-		}
-	}
-	for i := range c.Args {
-		if _, ok := c.Args[i].data.getConfig("env"); ok {
-			return true
-		}
-	}
-	for i := range c.Subcmds {
-		if c.Subcmds[i].HasEnvArgOrOptSomewhere() {
-			return true
-		}
-	}
-	return false
 }
 
 func (c *command) HasSubcmds() bool { return len(c.Subcmds) > 0 }
