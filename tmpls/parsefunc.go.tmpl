@@ -7,10 +7,9 @@ func (c *{{ .TypeName }}) parse(args []string) {
 	}
 	{{- end }}
 
-	var err error
-
 	{{- /* Parse environment variables. */}}
 	{{- with .EnvVals }}
+	var err error
 	{{- range . }}
 	_, err = clap.ParseEnv(clap.New{{ .FieldType.ClapValueType }}(&c.{{ .FieldName }}), "{{ .VarName }}")
 	if err != nil {
@@ -20,20 +19,14 @@ func (c *{{ .TypeName }}) parse(args []string) {
 	{{- end }}
 	{{- end }}
 
-	f := flag.FlagSet{Usage: func() {}}
+	cc := clap.NewCommand("{{ .Parents }}{{ .UsgName }}")
+
 	{{- range .Opts }}
 		{{- if ne .Name "h" }}
-	f.Var(clap.New{{ .FieldType.ClapValueType }}(&c.{{ .FieldName }}), "{{ .Name }}", "")
+	cc.Flag("{{ .Name }}", clap.New{{ .FieldType.ClapValueType }}(&c.{{ .FieldName }}))
 		{{- end }}
 	{{- end }}
-	if err = f.Parse(args); err != nil {
-		if err == flag.ErrHelp {
-			fmt.Println(c.usage())
-			os.Exit(0)
-		}
-		fmt.Fprintf(os.Stderr, "error: %v.\nRun '{{ $.Parents }}{{ $.UsgName }} -h' for usage.", err)
-		os.Exit(2)
-	}
+	cc.Parse(args, c.usage)
 
 	{{- /* Arguments. */ -}}
 	{{- with .Args }}
