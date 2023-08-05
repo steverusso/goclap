@@ -245,35 +245,14 @@ func (c *command) SubcmdNameColWidth() int {
 	return w
 }
 
-type clapEnvValue struct {
-	VarName   string
-	FieldName string
-	FieldType basicType
+func (o *option) EnvVar() string {
+	name, _ := o.data.getConfig("env")
+	return name
 }
 
-// EnvVals returns the environment variable name and the field name for any option or
-// arguments that use an `env` config.
-func (c *command) EnvVals() []clapEnvValue {
-	envs := make([]clapEnvValue, 0, len(c.Opts)+len(c.Args))
-	for i := range c.Opts {
-		if name, ok := c.Opts[i].data.getConfig("env"); ok {
-			envs = append(envs, clapEnvValue{
-				VarName:   name,
-				FieldName: c.Opts[i].FieldName,
-				FieldType: c.Opts[i].FieldType,
-			})
-		}
-	}
-	for i := range c.Args {
-		if name, ok := c.Args[i].data.getConfig("env"); ok {
-			envs = append(envs, clapEnvValue{
-				VarName:   name,
-				FieldName: c.Args[i].FieldName,
-				FieldType: c.Args[i].FieldType,
-			})
-		}
-	}
-	return envs
+func (o *argument) EnvVar() string {
+	name, _ := o.data.getConfig("env")
+	return name
 }
 
 func (a *argument) UsgName() string {

@@ -7,46 +7,24 @@ func (c *{{ .TypeName }}) parse(args []string) {
 	}
 	{{- end }}
 
-	{{- /* Parse environment variables. */}}
-	{{- with .EnvVals }}
-	var err error
-	{{- range . }}
-	_, err = clap.ParseEnv(clap.New{{ .FieldType.ClapValueType }}(&c.{{ .FieldName }}), "{{ .VarName }}")
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "%v", err)
-		os.Exit(2)
-	}
-	{{- end }}
-	{{- end }}
-
 	cc := clap.NewCommand("{{ .Parents }}{{ .UsgName }}")
 
 	{{- range .Opts }}
 		{{- if ne .Name "h" }}
 	cc.Flag("{{ .Name }}", clap.New{{ .FieldType.ClapValueType }}(&c.{{ .FieldName }}))
+		{{- with .EnvVar }}.Env("{{ . }}"){{ end }}
 		{{- end }}
 	{{- end }}
-	cc.Parse(args, c.usage)
 
 	{{- /* Arguments. */ -}}
 	{{- with .Args }}
-
-	rest := f.Args()
-
 		{{- range $i, $arg := . }}
-	if len(rest) < {{ add $i 1 }} {
-			{{- if $arg.IsRequired }}
-		fmt.Fprintf(os.Stderr, "error: missing arg {{ $arg.UsgName }}")
-		os.Exit(2)
-			{{- else }}
-		return
-			{{- end }}
-	}
-	if err = clap.New{{ .FieldType.ClapValueType }}(&c.{{ .FieldName }}).Set(rest[{{ $i }}]); err != nil {
-		fmt.Fprintf(os.Stderr, "error: parsing arg: %v\n", err)
-	}
-		{{- end -}}{{- /* range all args */ -}}
-	{{- end }}{{- /* with args */ -}}
+	cc.Arg("{{ $arg.UsgName }}", clap.New{{ .FieldType.ClapValueType }}(&c.{{ .FieldName }}))
+		{{- with .EnvVar }}.Env("{{ . }}"){{ end }}
+		{{- if $arg.IsRequired }}.Require(){{ end }}
+		{{- end -}}
+	{{- end }}
+	cc.Parse(args, c.usage)
 
 	{{- /* Subcommands. */ -}}
 	{{- with .Subcmds }}
