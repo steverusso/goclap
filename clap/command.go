@@ -6,13 +6,81 @@ import (
 	"os"
 )
 
-type Command struct {
-	Path string
-
+type CommandParser struct {
 	CustomUsage func() string
 
+	path  string
 	flags []Input
 	args  []Input
+}
+
+func NewCommandParser(path string) CommandParser {
+	return CommandParser{
+		path: path,
+	}
+}
+
+func (c *CommandParser) Flag(name string, v flag.Value) *Input {
+	c.flags = append(c.flags, Input{
+		name:  name,
+		value: v,
+	})
+	return &c.flags[len(c.flags)-1]
+}
+
+func (c *CommandParser) Arg(name string, v flag.Value) *Input {
+	c.args = append(c.args, Input{
+		name:  name,
+		value: v,
+	})
+	return &c.args[len(c.args)-1]
+}
+
+func (c *CommandParser) Fatal(err error) {
+	fmt.Fprintf(os.Stderr, "error: %v.\nRun '%s -h' for usage.", err, c.path)
+	os.Exit(2)
+}
+
+func (c *CommandParser) Parse(args []string) []string {
+	f := flag.FlagSet{Usage: func() {}}
+	for _, opt := range c.flags {
+		if err := opt.parseEnv(); err != nil {
+			c.Fatal(err)
+		}
+		f.Var(opt.value, opt.name, "")
+	}
+
+	if err := f.Parse(args); err != nil {
+		if err == flag.ErrHelp {
+			fmt.Println(c.CustomUsage())
+			os.Exit(0)
+		}
+		c.Fatal(err)
+	}
+
+	// TODO(steve): check for missing required flags when supported
+
+	rest := f.Args()
+
+	if len(c.args) > 0 {
+		for i, arg := range c.args {
+			if len(rest) < i {
+				if arg.isRequired {
+					c.Fatal(fmt.Errorf("missing required arg '%s'", arg.name))
+				}
+				return nil
+			}
+			if err := arg.parseEnv(); err != nil {
+				c.Fatal(err)
+			}
+			if err := arg.value.Set(rest[0]); err != nil {
+				c.Fatal(fmt.Errorf("parsing positional argument '%s': %w", arg.name, err))
+			}
+		}
+		return nil
+	}
+
+	return f.Args()
 }
 
 type Input struct {
@@ -33,88 +101,17 @@ func (in *Input) Require() *Input {
 	return in
 }
 
-func NewCommand(path string) Command {
-	return Command{
-		Path: path,
+func (in *Input) parseEnv() error {
+	if in.envVarName == "" {
+		return nil
 	}
-}
-
-func (c *Command) Flag(name string, v flag.Value) *Input {
-	c.flags = append(c.flags, Input{
-		name:  name,
-		value: v,
-	})
-	return &c.flags[len(c.flags)-1]
-}
-
-func (c *Command) Arg(name string, v flag.Value) *Input {
-	c.args = append(c.args, Input{
-		name:  name,
-		value: v,
-	})
-	return &c.args[len(c.args)-1]
-}
-
-func (c *Command) Fatal(err error) {
-	fmt.Fprintf(os.Stderr, "error: %v.\nRun '%s -h' for usage.", err, c.Path)
-	os.Exit(2)
-}
-
-func (c *Command) Parse(args []string) {
-	f := flag.FlagSet{Usage: func() {}}
-	for _, opt := range c.flags {
-		if opt.envVarName != "" {
-			ok, err := parseEnv(opt.value, opt.envVarName)
-			if err != nil {
-				c.Fatal(err)
-			}
-			if ok {
-				opt.isPresent = true
-			}
-		}
-		f.Var(opt.value, opt.name, "")
-	}
-
-	if err := f.Parse(args); err != nil {
-		if err == flag.ErrHelp {
-			fmt.Println(c.CustomUsage())
-			os.Exit(0)
-		}
-		c.Fatal(err)
-	}
-
-	// TODO(steve): check for missing required flags
-
-	rest := f.Args()
-	for i, arg := range c.args {
-		if len(rest) < i {
-			if arg.isRequired {
-				c.Fatal(fmt.Errorf("missing required arg '%s'", arg.name))
-			}
-			return
-		}
-		if arg.envVarName != "" {
-			ok, err := parseEnv(arg.value, arg.envVarName)
-			if err != nil {
-				c.Fatal(err)
-			}
-			if ok {
-				arg.isPresent = true
-			}
-		}
-		if err := arg.value.Set(rest[0]); err != nil {
-			c.Fatal(fmt.Errorf("parsing positional argument '%s': %w", arg.name, err))
-		}
-	}
-}
-
-func parseEnv(v flag.Value, name string) (bool, error) {
-	s, ok := os.LookupEnv(name)
+	s, ok := os.LookupEnv(in.envVarName)
 	if !ok {
-		return false, nil
+		return nil
 	}
-	if err := v.Set(s); err != nil {
-		return true, fmt.Errorf("parsing env var '%s': %w", name, err)
+	in.isPresent = true
+	if err := in.value.Set(s); err != nil {
+		return fmt.Errorf("parsing env var '%s': %w", in.envVarName, err)
 	}
-	return true, nil
+	return nil
 }

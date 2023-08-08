@@ -1,5 +1,5 @@
 
-func (c *{{ .TypeName }}) parse(args []string) {
+func (c *{{ .TypeName }}) Parse(args []string) {
 	{{- /* Drop the program name from args if it's there. */ -}}
 	{{ if .IsRoot }}
 	if len(args) > 0 && len(args) == len(os.Args) {
@@ -7,7 +7,7 @@ func (c *{{ .TypeName }}) parse(args []string) {
 	}
 	{{- end }}
 
-	cc := clap.NewCommand("{{ .Parents }}{{ .UsgName }}")
+	cc := clap.NewCommandParser("{{ .Parents }}{{ .UsgName }}")
 	cc.CustomUsage = c.usage
 
 	{{- range .Opts }}
@@ -23,12 +23,11 @@ func (c *{{ .TypeName }}) parse(args []string) {
 		{{- with .EnvVar }}.Env("{{ . }}"){{ end }}
 		{{- if .IsRequired }}.Require(){{ end }}
 	{{- end }}
-	cc.Parse(args)
+	{{ with .Subcmds }}rest := {{ end }}cc.Parse(args)
 
 	{{- /* Subcommands. */ -}}
 	{{- with .Subcmds }}
 
-	rest := f.Args()
 	if len(rest) == 0 {
 		fmt.Fprintf(os.Stderr, "error: no subcommand provided\nRun '{{ $.Parents }}{{ $.UsgName }} -h' for usage.\n")
 		os.Exit(2)
