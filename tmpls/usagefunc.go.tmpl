@@ -1,5 +1,5 @@
 
-func (*{{ .TypeName }}) usage() string {
+func (*{{ .TypeName }}) UsageHelp() string {
 	return `{{ .Parents }}{{ .UsgName }} - {{ .Data.Blurb }}
 {{- with .Overview }}
 

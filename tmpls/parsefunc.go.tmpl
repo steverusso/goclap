@@ -8,7 +8,7 @@ func (c *{{ .TypeName }}) Parse(args []string) {
 	{{- end }}
 
 	cc := clap.NewCommandParser("{{ .Parents }}{{ .UsgName }}")
-	cc.CustomUsage = c.usage
+	cc.CustomUsage = c.UsageHelp
 
 	{{- range .Opts }}
 		{{- if ne .Name "h" }}
@@ -36,7 +36,7 @@ func (c *{{ .TypeName }}) Parse(args []string) {
 	{{- range . }}
 	case {{ .QuotedNames }}:
 		c.{{ .FieldName }} = &{{ .TypeName }}{}
-		c.{{ .FieldName }}.parse(rest[1:])
+		c.{{ .FieldName }}.Parse(rest[1:])
 	{{- end }}
 	default:
 		fmt.Fprintf(os.Stderr, "error: unknown subcommand '%s'\nRun '{{ $.Parents }}{{ $.UsgName }} -h' for usage.\n", rest[0])

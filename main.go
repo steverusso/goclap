@@ -146,7 +146,7 @@ func gen(c *goclap) error {
 	rootCmdTypeName := c.rootCmdType
 	if rootCmdTypeName == "" {
 		fmt.Fprintf(os.Stderr, "no root command type provided\n")
-		fmt.Fprintf(os.Stderr, "%s\n", c.usage())
+		fmt.Fprintf(os.Stderr, "%s\n", c.UsageHelp())
 		os.Exit(1)
 	}
 
