@@ -31,7 +31,7 @@ func generate(incVersion bool, pkgName string, root *command) ([]byte, error) {
 		return nil, err
 	}
 	if err = g.genCommandCode(root); err != nil {
-		return nil, fmt.Errorf("generating %w", err)
+		return nil, err
 	}
 	return g.buf.Bytes(), nil
 }
@@ -135,10 +135,10 @@ func (g *generator) genCommandCode(c *command) error {
 		}
 	}
 	if err := g.genCmdUsageFunc(c); err != nil {
-		return fmt.Errorf("'%s': %w", c.TypeName, err)
+		return fmt.Errorf("generating '%s' usage help: %w", c.TypeName, err)
 	}
 	if err := g.genCmdParseFunc(c); err != nil {
-		return fmt.Errorf("'%s': %w", c.TypeName, err)
+		return fmt.Errorf("generating '%s' parse func: %w", c.TypeName, err)
 	}
 	return nil
 }
