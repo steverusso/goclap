@@ -36,8 +36,9 @@ func (p *CommandParser) Arg(name string, v flag.Value) *Input {
 	return &p.args[len(p.args)-1]
 }
 
-func (p *CommandParser) Fatal(err error) {
-	fmt.Fprintf(os.Stderr, "error: %v.\nRun '%s -h' for usage.", err, p.path)
+func (p *CommandParser) Fatalf(format string, args ...any) {
+	msg := fmt.Sprintf(format, args...)
+	fmt.Fprintf(os.Stderr, "error: %s.\nRun '%s -h' for usage.", msg, p.path)
 	os.Exit(2)
 }
 
@@ -45,7 +46,7 @@ func (p *CommandParser) Parse(args []string) []string {
 	f := flag.FlagSet{Usage: func() {}}
 	for _, opt := range p.flags {
 		if err := opt.parseEnv(); err != nil {
-			p.Fatal(err)
+			p.Fatalf("%v", err)
 		}
 		f.Var(opt.value, opt.name, "")
 	}
@@ -55,7 +56,7 @@ func (p *CommandParser) Parse(args []string) []string {
 			fmt.Println(p.CustomUsage())
 			os.Exit(0)
 		}
-		p.Fatal(err)
+		p.Fatalf("%v", err)
 	}
 
 	// TODO(steve): check for missing required flags when supported
@@ -66,15 +67,15 @@ func (p *CommandParser) Parse(args []string) []string {
 		for i, arg := range p.args {
 			if len(rest) < i {
 				if arg.isRequired {
-					p.Fatal(fmt.Errorf("missing required arg '%s'", arg.name))
+					p.Fatalf("missing required arg '%s'", arg.name)
 				}
 				return nil
 			}
 			if err := arg.parseEnv(); err != nil {
-				p.Fatal(err)
+				p.Fatalf("%v", err)
 			}
 			if err := arg.value.Set(rest[0]); err != nil {
-				p.Fatal(fmt.Errorf("parsing positional argument '%s': %w", arg.name, err))
+				p.Fatalf("parsing positional argument '%s': %v", arg.name, err)
 			}
 		}
 		return nil

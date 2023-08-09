@@ -6,7 +6,6 @@ func (c *{{ .TypeName }}) Parse(args []string) {
 		args = args[1:]
 	}
 	{{- end }}
-
 	p := clap.NewCommandParser("{{ .Parents }}{{ .UsgName }}")
 	p.CustomUsage = c.UsageHelp
 
@@ -29,8 +28,7 @@ func (c *{{ .TypeName }}) Parse(args []string) {
 	{{- with .Subcmds }}
 
 	if len(rest) == 0 {
-		fmt.Fprintf(os.Stderr, "error: no subcommand provided\nRun '{{ $.Parents }}{{ $.UsgName }} -h' for usage.\n")
-		os.Exit(2)
+		p.Fatalf("no subcommand provided")
 	}
 	switch rest[0] {
 	{{- range . }}
@@ -39,8 +37,7 @@ func (c *{{ .TypeName }}) Parse(args []string) {
 		c.{{ .FieldName }}.Parse(rest[1:])
 	{{- end }}
 	default:
-		fmt.Fprintf(os.Stderr, "error: unknown subcommand '%s'\nRun '{{ $.Parents }}{{ $.UsgName }} -h' for usage.\n", rest[0])
-		os.Exit(2)
+		p.Fatalf("unknown subcommand '%s'", rest[0])
 	}
 	{{- end }}
 }

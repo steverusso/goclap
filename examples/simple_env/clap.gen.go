@@ -27,7 +27,6 @@ func (c *mycli) Parse(args []string) {
 	if len(args) > 0 && len(args) == len(os.Args) {
 		args = args[1:]
 	}
-
 	p := clap.NewCommandParser("mycli")
 	p.CustomUsage = c.UsageHelp
 	p.Flag("prefix", clap.NewString(&c.prefix)).Env("MY_PREFIX")
