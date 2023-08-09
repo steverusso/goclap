@@ -30,12 +30,12 @@ func (c *strops) Parse(args []string) {
 		args = args[1:]
 	}
 
-	cc := clap.NewCommandParser("strops")
-	cc.CustomUsage = c.UsageHelp
-	cc.Flag("upper", clap.NewBool(&c.toUpper))
-	cc.Flag("reverse", clap.NewBool(&c.reverse))
-	cc.Flag("repeat", clap.NewInt(&c.repeat))
-	cc.Flag("prefix", clap.NewString(&c.prefix))
-	cc.Arg("<input>", clap.NewString(&c.input)).Require()
-	cc.Parse(args)
+	p := clap.NewCommandParser("strops")
+	p.CustomUsage = c.UsageHelp
+	p.Flag("upper", clap.NewBool(&c.toUpper))
+	p.Flag("reverse", clap.NewBool(&c.reverse))
+	p.Flag("repeat", clap.NewInt(&c.repeat))
+	p.Flag("prefix", clap.NewString(&c.prefix))
+	p.Arg("<input>", clap.NewString(&c.input)).Require()
+	p.Parse(args)
 }

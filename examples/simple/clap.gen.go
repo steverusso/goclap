@@ -27,9 +27,9 @@ func (c *mycli) Parse(args []string) {
 		args = args[1:]
 	}
 
-	cc := clap.NewCommandParser("mycli")
-	cc.CustomUsage = c.UsageHelp
-	cc.Flag("upper", clap.NewBool(&c.toUpper))
-	cc.Arg("<input>", clap.NewString(&c.input)).Require()
-	cc.Parse(args)
+	p := clap.NewCommandParser("mycli")
+	p.CustomUsage = c.UsageHelp
+	p.Flag("upper", clap.NewBool(&c.toUpper))
+	p.Arg("<input>", clap.NewString(&c.input)).Require()
+	p.Parse(args)
 }

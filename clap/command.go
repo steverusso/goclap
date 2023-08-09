@@ -20,61 +20,61 @@ func NewCommandParser(path string) CommandParser {
 	}
 }
 
-func (c *CommandParser) Flag(name string, v flag.Value) *Input {
-	c.flags = append(c.flags, Input{
+func (p *CommandParser) Flag(name string, v flag.Value) *Input {
+	p.flags = append(p.flags, Input{
 		name:  name,
 		value: v,
 	})
-	return &c.flags[len(c.flags)-1]
+	return &p.flags[len(p.flags)-1]
 }
 
-func (c *CommandParser) Arg(name string, v flag.Value) *Input {
-	c.args = append(c.args, Input{
+func (p *CommandParser) Arg(name string, v flag.Value) *Input {
+	p.args = append(p.args, Input{
 		name:  name,
 		value: v,
 	})
-	return &c.args[len(c.args)-1]
+	return &p.args[len(p.args)-1]
 }
 
-func (c *CommandParser) Fatal(err error) {
-	fmt.Fprintf(os.Stderr, "error: %v.\nRun '%s -h' for usage.", err, c.path)
+func (p *CommandParser) Fatal(err error) {
+	fmt.Fprintf(os.Stderr, "error: %v.\nRun '%s -h' for usage.", err, p.path)
 	os.Exit(2)
 }
 
-func (c *CommandParser) Parse(args []string) []string {
+func (p *CommandParser) Parse(args []string) []string {
 	f := flag.FlagSet{Usage: func() {}}
-	for _, opt := range c.flags {
+	for _, opt := range p.flags {
 		if err := opt.parseEnv(); err != nil {
-			c.Fatal(err)
+			p.Fatal(err)
 		}
 		f.Var(opt.value, opt.name, "")
 	}
 
 	if err := f.Parse(args); err != nil {
 		if err == flag.ErrHelp {
-			fmt.Println(c.CustomUsage())
+			fmt.Println(p.CustomUsage())
 			os.Exit(0)
 		}
-		c.Fatal(err)
+		p.Fatal(err)
 	}
 
 	// TODO(steve): check for missing required flags when supported
 
 	rest := f.Args()
 
-	if len(c.args) > 0 {
-		for i, arg := range c.args {
+	if len(p.args) > 0 {
+		for i, arg := range p.args {
 			if len(rest) < i {
 				if arg.isRequired {
-					c.Fatal(fmt.Errorf("missing required arg '%s'", arg.name))
+					p.Fatal(fmt.Errorf("missing required arg '%s'", arg.name))
 				}
 				return nil
 			}
 			if err := arg.parseEnv(); err != nil {
-				c.Fatal(err)
+				p.Fatal(err)
 			}
 			if err := arg.value.Set(rest[0]); err != nil {
-				c.Fatal(fmt.Errorf("parsing positional argument '%s': %w", arg.name, err))
+				p.Fatal(fmt.Errorf("parsing positional argument '%s': %w", arg.name, err))
 			}
 		}
 		return nil

@@ -7,23 +7,23 @@ func (c *{{ .TypeName }}) Parse(args []string) {
 	}
 	{{- end }}
 
-	cc := clap.NewCommandParser("{{ .Parents }}{{ .UsgName }}")
-	cc.CustomUsage = c.UsageHelp
+	p := clap.NewCommandParser("{{ .Parents }}{{ .UsgName }}")
+	p.CustomUsage = c.UsageHelp
 
 	{{- range .Opts }}
 		{{- if ne .Name "h" }}
-	cc.Flag("{{ .Name }}", clap.New{{ .FieldType.ClapValueType }}(&c.{{ .FieldName }}))
+	p.Flag("{{ .Name }}", clap.New{{ .FieldType.ClapValueType }}(&c.{{ .FieldName }}))
 		{{- with .EnvVar }}.Env("{{ . }}"){{ end }}
 		{{- end }}
 	{{- end }}
 
 	{{- /* Arguments. */ -}}
 	{{- range .Args }}
-	cc.Arg("{{ .UsgName }}", clap.New{{ .FieldType.ClapValueType }}(&c.{{ .FieldName }}))
+	p.Arg("{{ .UsgName }}", clap.New{{ .FieldType.ClapValueType }}(&c.{{ .FieldName }}))
 		{{- with .EnvVar }}.Env("{{ . }}"){{ end }}
 		{{- if .IsRequired }}.Require(){{ end }}
 	{{- end }}
-	{{ with .Subcmds }}rest := {{ end }}cc.Parse(args)
+	{{ with .Subcmds }}rest := {{ end }}p.Parse(args)
 
 	{{- /* Subcommands. */ -}}
 	{{- with .Subcmds }}

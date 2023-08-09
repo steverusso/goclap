@@ -28,12 +28,12 @@ func (c *goclap) Parse(args []string) {
 		args = args[1:]
 	}
 
-	cc := clap.NewCommandParser("goclap")
-	cc.CustomUsage = c.UsageHelp
-	cc.Flag("type", clap.NewString(&c.rootCmdType))
-	cc.Flag("srcdir", clap.NewString(&c.srcDir))
-	cc.Flag("include-version", clap.NewBool(&c.incVersion))
-	cc.Flag("out", clap.NewString(&c.outFilePath))
-	cc.Flag("version", clap.NewBool(&c.version))
-	cc.Parse(args)
+	p := clap.NewCommandParser("goclap")
+	p.CustomUsage = c.UsageHelp
+	p.Flag("type", clap.NewString(&c.rootCmdType))
+	p.Flag("srcdir", clap.NewString(&c.srcDir))
+	p.Flag("include-version", clap.NewBool(&c.incVersion))
+	p.Flag("out", clap.NewString(&c.outFilePath))
+	p.Flag("version", clap.NewBool(&c.version))
+	p.Parse(args)
 }

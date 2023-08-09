@@ -28,10 +28,10 @@ func (c *mycli) Parse(args []string) {
 		args = args[1:]
 	}
 
-	cc := clap.NewCommandParser("mycli")
-	cc.CustomUsage = c.UsageHelp
-	cc.Flag("prefix", clap.NewString(&c.prefix)).Env("MY_PREFIX")
-	cc.Flag("count", clap.NewUint(&c.count)).Env("MY_COUNT")
-	cc.Arg("[input]", clap.NewString(&c.input)).Env("MY_INPUT")
-	cc.Parse(args)
+	p := clap.NewCommandParser("mycli")
+	p.CustomUsage = c.UsageHelp
+	p.Flag("prefix", clap.NewString(&c.prefix)).Env("MY_PREFIX")
+	p.Flag("count", clap.NewUint(&c.count)).Env("MY_COUNT")
+	p.Arg("[input]", clap.NewString(&c.input)).Env("MY_INPUT")
+	p.Parse(args)
 }
