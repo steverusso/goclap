@@ -31,7 +31,7 @@ func generate(incVersion bool, pkgName string, root *command) ([]byte, error) {
 		return nil, err
 	}
 	if err = g.genCommandCode(root); err != nil {
-		return nil, fmt.Errorf("generating: %w", err)
+		return nil, fmt.Errorf("generating %w", err)
 	}
 	return g.buf.Bytes(), nil
 }
