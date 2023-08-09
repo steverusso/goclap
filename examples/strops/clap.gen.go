@@ -3,14 +3,12 @@
 package main
 
 import (
-	"flag"
-	"fmt"
 	"os"
 
 	"github.com/steverusso/goclap/clap"
 )
 
-func (*strops) usage() string {
+func (*strops) UsageHelp() string {
 	return `strops - Perform different string operations
 
 usage:
@@ -27,33 +25,17 @@ arguments:
    <input>   The string on which to operate`
 }
 
-func (c *strops) parse(args []string) {
+func (c *strops) Parse(args []string) {
 	if len(args) > 0 && len(args) == len(os.Args) {
 		args = args[1:]
 	}
 
-	var err error
-
-	f := flag.FlagSet{Usage: func() {}}
-	f.Var(clap.NewBool(&c.toUpper), "upper", "")
-	f.Var(clap.NewBool(&c.reverse), "reverse", "")
-	f.Var(clap.NewInt(&c.repeat), "repeat", "")
-	f.Var(clap.NewString(&c.prefix), "prefix", "")
-	if err = f.Parse(args); err != nil {
-		if err == flag.ErrHelp {
-			fmt.Println(c.usage())
-			os.Exit(0)
-		}
-		fmt.Fprintf(os.Stderr, "error: %v.\nRun 'strops -h' for usage.", err)
-		os.Exit(2)
-	}
-
-	rest := f.Args()
-	if len(rest) < 1 {
-		fmt.Fprintf(os.Stderr, "error: missing arg <input>")
-		os.Exit(2)
-	}
-	if err = clap.NewString(&c.input).Set(rest[0]); err != nil {
-		fmt.Fprintf(os.Stderr, "error: parsing arg: %v\n", err)
-	}
+	cc := clap.NewCommandParser("strops")
+	cc.CustomUsage = c.UsageHelp
+	cc.Flag("upper", clap.NewBool(&c.toUpper))
+	cc.Flag("reverse", clap.NewBool(&c.reverse))
+	cc.Flag("repeat", clap.NewInt(&c.repeat))
+	cc.Flag("prefix", clap.NewString(&c.prefix))
+	cc.Arg("<input>", clap.NewString(&c.input)).Require()
+	cc.Parse(args)
 }

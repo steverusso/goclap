@@ -3,14 +3,12 @@
 package main
 
 import (
-	"flag"
-	"fmt"
 	"os"
 
 	"github.com/steverusso/goclap/clap"
 )
 
-func (*mycli) usage() string {
+func (*mycli) UsageHelp() string {
 	return `mycli - Print a string with the option to make it uppercase
 
 usage:
@@ -24,30 +22,14 @@ arguments:
    <input>   The input string`
 }
 
-func (c *mycli) parse(args []string) {
+func (c *mycli) Parse(args []string) {
 	if len(args) > 0 && len(args) == len(os.Args) {
 		args = args[1:]
 	}
 
-	var err error
-
-	f := flag.FlagSet{Usage: func() {}}
-	f.Var(clap.NewBool(&c.toUpper), "upper", "")
-	if err = f.Parse(args); err != nil {
-		if err == flag.ErrHelp {
-			fmt.Println(c.usage())
-			os.Exit(0)
-		}
-		fmt.Fprintf(os.Stderr, "error: %v.\nRun 'mycli -h' for usage.", err)
-		os.Exit(2)
-	}
-
-	rest := f.Args()
-	if len(rest) < 1 {
-		fmt.Fprintf(os.Stderr, "error: missing arg <input>")
-		os.Exit(2)
-	}
-	if err = clap.NewString(&c.input).Set(rest[0]); err != nil {
-		fmt.Fprintf(os.Stderr, "error: parsing arg: %v\n", err)
-	}
+	cc := clap.NewCommandParser("mycli")
+	cc.CustomUsage = c.UsageHelp
+	cc.Flag("upper", clap.NewBool(&c.toUpper))
+	cc.Arg("<input>", clap.NewString(&c.input)).Require()
+	cc.Parse(args)
 }

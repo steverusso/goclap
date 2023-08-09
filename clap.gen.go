@@ -3,14 +3,12 @@
 package main
 
 import (
-	"flag"
-	"fmt"
 	"os"
 
 	"github.com/steverusso/goclap/clap"
 )
 
-func (*goclap) usage() string {
+func (*goclap) UsageHelp() string {
 	return `goclap - Pre-build tool to generate command line argument parsing code from Go comments
 
 usage:
@@ -25,25 +23,17 @@ options:
    -h                 Show this help message`
 }
 
-func (c *goclap) parse(args []string) {
+func (c *goclap) Parse(args []string) {
 	if len(args) > 0 && len(args) == len(os.Args) {
 		args = args[1:]
 	}
 
-	var err error
-
-	f := flag.FlagSet{Usage: func() {}}
-	f.Var(clap.NewString(&c.rootCmdType), "type", "")
-	f.Var(clap.NewString(&c.srcDir), "srcdir", "")
-	f.Var(clap.NewBool(&c.incVersion), "include-version", "")
-	f.Var(clap.NewString(&c.outFilePath), "out", "")
-	f.Var(clap.NewBool(&c.version), "version", "")
-	if err = f.Parse(args); err != nil {
-		if err == flag.ErrHelp {
-			fmt.Println(c.usage())
-			os.Exit(0)
-		}
-		fmt.Fprintf(os.Stderr, "error: %v.\nRun 'goclap -h' for usage.", err)
-		os.Exit(2)
-	}
+	cc := clap.NewCommandParser("goclap")
+	cc.CustomUsage = c.UsageHelp
+	cc.Flag("type", clap.NewString(&c.rootCmdType))
+	cc.Flag("srcdir", clap.NewString(&c.srcDir))
+	cc.Flag("include-version", clap.NewBool(&c.incVersion))
+	cc.Flag("out", clap.NewString(&c.outFilePath))
+	cc.Flag("version", clap.NewBool(&c.version))
+	cc.Parse(args)
 }

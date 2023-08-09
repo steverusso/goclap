@@ -3,14 +3,12 @@
 package main
 
 import (
-	"flag"
-	"fmt"
 	"os"
 
 	"github.com/steverusso/goclap/clap"
 )
 
-func (*mycli) usage() string {
+func (*mycli) UsageHelp() string {
 	return `mycli - Print a string with a prefix
 
 usage:
@@ -25,45 +23,15 @@ arguments:
    [input]   The user provided input [$MY_INPUT]`
 }
 
-func (c *mycli) parse(args []string) {
+func (c *mycli) Parse(args []string) {
 	if len(args) > 0 && len(args) == len(os.Args) {
 		args = args[1:]
 	}
 
-	var err error
-	_, err = clap.ParseEnv(clap.NewString(&c.prefix), "MY_PREFIX")
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "%v", err)
-		os.Exit(2)
-	}
-	_, err = clap.ParseEnv(clap.NewUint(&c.count), "MY_COUNT")
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "%v", err)
-		os.Exit(2)
-	}
-	_, err = clap.ParseEnv(clap.NewString(&c.input), "MY_INPUT")
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "%v", err)
-		os.Exit(2)
-	}
-
-	f := flag.FlagSet{Usage: func() {}}
-	f.Var(clap.NewString(&c.prefix), "prefix", "")
-	f.Var(clap.NewUint(&c.count), "count", "")
-	if err = f.Parse(args); err != nil {
-		if err == flag.ErrHelp {
-			fmt.Println(c.usage())
-			os.Exit(0)
-		}
-		fmt.Fprintf(os.Stderr, "error: %v.\nRun 'mycli -h' for usage.", err)
-		os.Exit(2)
-	}
-
-	rest := f.Args()
-	if len(rest) < 1 {
-		return
-	}
-	if err = clap.NewString(&c.input).Set(rest[0]); err != nil {
-		fmt.Fprintf(os.Stderr, "error: parsing arg: %v\n", err)
-	}
+	cc := clap.NewCommandParser("mycli")
+	cc.CustomUsage = c.UsageHelp
+	cc.Flag("prefix", clap.NewString(&c.prefix)).Env("MY_PREFIX")
+	cc.Flag("count", clap.NewUint(&c.count)).Env("MY_COUNT")
+	cc.Arg("[input]", clap.NewString(&c.input)).Env("MY_INPUT")
+	cc.Parse(args)
 }
