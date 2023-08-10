@@ -31,7 +31,7 @@ func generate(incVersion bool, pkgName string, root *command) ([]byte, error) {
 		return nil, err
 	}
 	if err = g.genCommandCode(root); err != nil {
-		return nil, fmt.Errorf("generating %w", err)
+		return nil, err
 	}
 	return g.buf.Bytes(), nil
 }
@@ -63,11 +63,6 @@ func newGenerator() (generator, error) {
 type headerData struct {
 	PkgName string
 	Version string
-	RootCmd *command
-	Types   typeSet
-
-	NeedsEnvCode     bool
-	NeedsStrconvCode bool
 }
 
 func (g *generator) writeHeader(incVersion bool, pkgName string, root *command) error {
@@ -79,17 +74,7 @@ func (g *generator) writeHeader(incVersion bool, pkgName string, root *command) 
 		return fmt.Errorf("parsing header template: %w", err)
 	}
 
-	data := headerData{
-		PkgName: pkgName,
-		RootCmd: root,
-		Types:   ts,
-
-		NeedsEnvCode: root.HasEnvArgOrOptSomewhere(),
-		NeedsStrconvCode: ts.HasAny("float32", "float64",
-			"int", "int8", "int16", "int32", "int64", "rune",
-			"uint", "uint8", "uint16", "uint32", "uint64", "byte",
-		),
-	}
+	data := headerData{PkgName: pkgName}
 	if incVersion {
 		data.Version = getBuildVersionInfo().String()
 	}
@@ -116,40 +101,31 @@ func (c *command) getTypes(ts typeSet) {
 
 type typeSet map[basicType]struct{}
 
-func (ts typeSet) HasAny(names ...basicType) bool {
-	for i := range names {
-		if _, ok := ts[names[i]]; ok {
-			return true
-		}
-	}
-	return false
-}
-
-var clapIterMethodMap = map[basicType]string{
+var clapValueTypes = map[basicType]string{
 	// int*
-	"int":   "nextInt",
-	"int8":  "nextInt8",
-	"int16": "nextInt16",
-	"int32": "nextInt32",
-	"int64": "nextInt64",
+	"int":   "Int",
+	"int8":  "Int8",
+	"int16": "Int16",
+	"int32": "Int32",
+	"int64": "Int64",
 	// uint*
-	"uint":   "nextUint",
-	"uint8":  "nextUint8",
-	"uint16": "nextUint16",
-	"uint32": "nextUint32",
-	"uint64": "nextUint64",
+	"uint":   "Uint",
+	"uint8":  "Uint8",
+	"uint16": "Uint16",
+	"uint32": "Uint32",
+	"uint64": "Uint64",
 	// float*
-	"float32": "nextFloat32",
-	"float64": "nextFloat64",
+	"float32": "Float32",
+	"float64": "Float64",
 	// misc
-	"bool":   "thisBool",
-	"string": "nextStr",
-	"byte":   "nextUint8",
-	"rune":   "nextInt32",
+	"bool":   "Bool",
+	"string": "String",
+	"byte":   "Uint8",
+	"rune":   "Int32",
 }
 
-func (t basicType) ClapIterMethodName() string {
-	return clapIterMethodMap[t]
+func (t basicType) ClapValueType() string {
+	return clapValueTypes[t]
 }
 
 func (g *generator) genCommandCode(c *command) error {
@@ -159,10 +135,10 @@ func (g *generator) genCommandCode(c *command) error {
 		}
 	}
 	if err := g.genCmdUsageFunc(c); err != nil {
-		return fmt.Errorf("'%s': %w", c.TypeName, err)
+		return fmt.Errorf("generating '%s' usage help: %w", c.TypeName, err)
 	}
 	if err := g.genCmdParseFunc(c); err != nil {
-		return fmt.Errorf("'%s': %w", c.TypeName, err)
+		return fmt.Errorf("generating '%s' parse func: %w", c.TypeName, err)
 	}
 	return nil
 }
@@ -192,7 +168,7 @@ func (c *command) Parents() string {
 }
 
 func (c *command) UsageLines() []string {
-	us := make([]string, 0, 2)
+	var us []string
 	for _, cfg := range c.Data.configs {
 		if cfg.key == "cmd_usage" {
 			us = append(us, c.UsgName()+" "+cfg.val)
@@ -269,35 +245,14 @@ func (c *command) SubcmdNameColWidth() int {
 	return w
 }
 
-type clapEnvValue struct {
-	VarName   string
-	FieldName string
-	FieldType basicType
+func (o *option) EnvVar() string {
+	name, _ := o.data.getConfig("env")
+	return name
 }
 
-// EnvVals returns the environment variable name and the field name for any option or
-// arguments that use an `env` config.
-func (c *command) EnvVals() []clapEnvValue {
-	envs := make([]clapEnvValue, 0, len(c.Opts)+len(c.Args))
-	for i := range c.Opts {
-		if name, ok := c.Opts[i].data.getConfig("env"); ok {
-			envs = append(envs, clapEnvValue{
-				VarName:   name,
-				FieldName: c.Opts[i].FieldName,
-				FieldType: c.Opts[i].FieldType,
-			})
-		}
-	}
-	for i := range c.Args {
-		if name, ok := c.Args[i].data.getConfig("env"); ok {
-			envs = append(envs, clapEnvValue{
-				VarName:   name,
-				FieldName: c.Args[i].FieldName,
-				FieldType: c.Args[i].FieldType,
-			})
-		}
-	}
-	return envs
+func (a *argument) EnvVar() string {
+	name, _ := a.data.getConfig("env")
+	return name
 }
 
 func (a *argument) UsgName() string {
@@ -359,44 +314,6 @@ func (c *command) Usg(nameWidth int) string {
 	return paddedName + wrapBlurb(c.Data.Blurb, len(paddedName), maxUsgLineLen)
 }
 
-// HasReqArgSomewhere returns true if this command or one of its subcommands contains a
-// required positional argument.
-func (c *command) HasReqArgSomewhere() bool {
-	for _, a := range c.Args {
-		if a.IsRequired() {
-			return true
-		}
-	}
-	for _, ch := range c.Subcmds {
-		if ch.HasReqArgSomewhere() {
-			return true
-		}
-	}
-	return false
-}
-
-// HasEnvArgOrOptSomewhere returns true if this command or one of its subcommands contains
-// an option or an argument that uses an environment variable config.
-func (c *command) HasEnvArgOrOptSomewhere() bool {
-	for i := range c.Opts {
-		if _, ok := c.Opts[i].data.getConfig("env"); ok {
-			return true
-		}
-	}
-	for i := range c.Args {
-		if _, ok := c.Args[i].data.getConfig("env"); ok {
-			return true
-		}
-	}
-	for i := range c.Subcmds {
-		if c.Subcmds[i].HasEnvArgOrOptSomewhere() {
-			return true
-		}
-	}
-	return false
-}
-
-func (c *command) IsRoot() bool     { return c.FieldName == "%[1]s" }
 func (c *command) HasSubcmds() bool { return len(c.Subcmds) > 0 }
 
 func wrapBlurb(v string, indentLen, lineLen int) string {

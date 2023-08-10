@@ -3,151 +3,32 @@
 package main
 
 import (
-	"fmt"
 	"os"
-	"strings"
+
+	"github.com/steverusso/goclap/clap"
 )
 
-func claperr(format string, a ...any) {
-	format = "\033[1;31merror:\033[0m " + format
-	fmt.Fprintf(os.Stderr, format, a...)
-}
-
-type clapParser struct {
-	usg  func(to *os.File)
-	args []string
-	idx  int
-
-	optName  string
-	optEqVal string
-	optHasEq bool
-}
-
-func (p *clapParser) exitUsgGood() {
-	p.usg(os.Stdout)
-	os.Exit(0)
-}
-
-func (p *clapParser) exitMissingArg(name string) {
-	claperr("not enough args: no \033[1;33m%s\033[0m provided\n", name)
-	p.usg(os.Stderr)
-	os.Exit(1)
-}
-
-func (p *clapParser) stageOpt() bool {
-	if p.optName != "" {
-		p.idx++
-	}
-	if p.idx > len(p.args)-1 {
-		p.optName = ""
-		return false
-	}
-	arg := p.args[p.idx]
-	if arg[0] != '-' {
-		p.optName = ""
-		return false
-	}
-	arg = arg[1:]
-	if arg == "" {
-		claperr("emtpy option ('-') found\n")
-		os.Exit(1)
-	}
-	if arg[0] == '-' {
-		arg = arg[1:]
-	}
-	if arg == "" {
-		p.idx++
-		p.optName = ""
-		return false
-	}
-
-	p.optEqVal = ""
-	if eqIdx := strings.IndexByte(arg, '='); eqIdx != -1 {
-		p.optName = arg[:eqIdx]
-		if eqIdx < len(arg) {
-			p.optEqVal = arg[eqIdx+1:]
-		}
-		p.optHasEq = true
-	} else {
-		p.optName = arg
-		p.optHasEq = false
-	}
-	return true
-}
-
-func (p *clapParser) nextStr() string {
-	if p.optName != "" {
-		if p.optHasEq {
-			return p.optEqVal
-		}
-		if p.idx == len(p.args)-1 {
-			claperr("option '%s' needs an argument\n", p.optName)
-			os.Exit(1)
-		}
-		p.idx++
-		return p.args[p.idx]
-	}
-	p.idx++
-	return p.args[p.idx-1]
-}
-
-func (p *clapParser) exitBadInput(typ string, err error) {
-	var forWhat string
-	switch {
-	case p.optName != "":
-		forWhat = "option '" + p.optName + "'"
-	default:
-		forWhat = "argument"
-	}
-	claperr("invalid %s for %s: %v\n", typ, forWhat, err)
-	os.Exit(1)
-}
-
-func (p *clapParser) thisBool() bool {
-	s := p.optEqVal
-	if s == "" || s == "true" || s == "1" {
-		return true
-	}
-	if s != "false" && s != "0" {
-		p.exitBadInput("bool", fmt.Errorf("%q not recognized as a boolean", s))
-	}
-	return false
-}
-
-func (*mycli) printUsage(to *os.File) {
-	fmt.Fprintf(to, `%[1]s - Print a string with the option to make it uppercase
+func (*mycli) UsageHelp() string {
+	return `mycli - Print a string with the option to make it uppercase
 
 usage:
-   %[1]s [options] <input>
+   mycli [options] <input>
 
 options:
    -upper   Make the input string all uppercase
    -h       Show this help message
 
 arguments:
-   <input>   The input string
-`, os.Args[0])
+   <input>   The input string`
 }
 
-func (c *mycli) parse(args []string) {
+func (c *mycli) Parse(args []string) {
 	if len(args) > 0 && len(args) == len(os.Args) {
 		args = args[1:]
 	}
-	p := clapParser{usg: c.printUsage, args: args}
-	for p.stageOpt() {
-		switch p.optName {
-		case "upper":
-			c.toUpper = p.thisBool()
-		case "h":
-			p.exitUsgGood()
-		default:
-			claperr("unknown option '%s'\n", p.optName)
-			os.Exit(1)
-		}
-	}
-	args = args[p.idx:]
-	if len(args) < 1 {
-		p.exitMissingArg("<input>")
-	}
-	c.input = p.nextStr()
+	p := clap.NewCommandParser("mycli")
+	p.CustomUsage = c.UsageHelp
+	p.Flag("upper", clap.NewBool(&c.toUpper))
+	p.Arg("<input>", clap.NewString(&c.input)).Require()
+	p.Parse(args)
 }

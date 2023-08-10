@@ -111,6 +111,7 @@ func (d *clapData) getConfig(k string) (string, bool) {
 }
 
 type command struct {
+	IsRoot      bool
 	parentNames []string
 	FieldName   string
 	TypeName    string
@@ -144,8 +145,8 @@ func (c *command) UsgName() string {
 func gen(c *goclap) error {
 	rootCmdTypeName := c.rootCmdType
 	if rootCmdTypeName == "" {
-		claperr("no root command type provided\n")
-		c.printUsage(os.Stderr)
+		fmt.Fprintf(os.Stderr, "no root command type provided\n")
+		fmt.Fprintf(os.Stderr, "%s\n", c.UsageHelp())
 		os.Exit(1)
 	}
 
@@ -181,7 +182,7 @@ func warn(format string, a ...any) {
 
 func main() {
 	c := goclap{}
-	c.parse(os.Args)
+	c.Parse(os.Args)
 
 	if c.version {
 		fmt.Println(getBuildVersionInfo())
@@ -189,7 +190,7 @@ func main() {
 	}
 
 	if err := gen(&c); err != nil {
-		claperr("%v\n", err)
+		fmt.Fprintf(os.Stderr, "%v\n", err)
 		os.Exit(1)
 	}
 }

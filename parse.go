@@ -15,7 +15,7 @@ import (
 // code, so backticks would be syntactically broken delimiters of different raw strings.
 // Therefore, groups of backticks are placed into their own double-quoted strings and
 // concatenated to the rest of the usage message string.
-const backtickRepl = "`+\"$0\"+`"
+const backtickRepl = "` + \"$0\" + `"
 
 // One or more backticks.
 var backtickRE = regexp.MustCompile("`+")
@@ -57,13 +57,9 @@ func parse(srcDir, rootCmdTypeName string) (command, string, error) {
 		warn("no root command description provided")
 	}
 	root := command{
-		TypeName: rootCmdTypeName,
-		// This is a bit of a hack due to the following: the "name" of the root command is
-		// actually the name of the program, which is the first argument in `os.Args`.
-		// That gets passed as a fmt arg within the generated code when printing a
-		// command's usage. Therefore, we need a `%s` to show up wherever the root command
-		// name will appear in a usage message.
-		FieldName: "%[1]s",
+		IsRoot:    true,
+		TypeName:  rootCmdTypeName,
+		FieldName: rootCmdTypeName,
 		Data:      data,
 	}
 

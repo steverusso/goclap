@@ -1,69 +1,43 @@
 
-func (c *{{ .TypeName }}) parse(args []string) {
+func (c *{{ .TypeName }}) Parse(args []string) {
 	{{- /* Drop the program name from args if it's there. */ -}}
 	{{ if .IsRoot }}
 	if len(args) > 0 && len(args) == len(os.Args) {
 		args = args[1:]
 	}
 	{{- end }}
-	p := clapParser{usg: c.printUsage, args: args}
-	{{- /* Parse environment variables. */}}
-	{{- with .EnvVals }}
-	{{- range . }}
-	if p.stageEnv("{{ .VarName }}") {
-		c.{{ .FieldName }} = p.{{ .FieldType.ClapIterMethodName }}()
-	}
-	{{- end }}
-	p.envName, p.envVal = "", ""
-	{{- end }}
+	p := clap.NewCommandParser("{{ .Parents }}{{ .UsgName }}")
+	p.CustomUsage = c.UsageHelp
 
-	{{- /* Parse options. */}}
-	for p.stageOpt() {
-		switch p.optName {
 	{{- range .Opts }}
-		case "{{ .Name }}":
-		{{- if eq .Name "h" }}
-			p.exitUsgGood()
-			{{- continue }}
+		{{- if ne .Name "h" }}
+	p.Flag("{{ .Name }}", clap.New{{ .FieldType.ClapValueType }}(&c.{{ .FieldName }}))
+		{{- with .EnvVar }}.Env("{{ . }}"){{ end }}
 		{{- end }}
-			c.{{ .FieldName }} = p.{{ .FieldType.ClapIterMethodName }}()
 	{{- end }}
-		default:
-			claperr("unknown option '%s'\n", p.optName)
-			os.Exit(1)
-		}
-	}
 
 	{{- /* Arguments. */ -}}
-	{{- with .Args }}
-	args = args[p.idx:]
-
-		{{- range $i, $arg := . }}
-	if len(args) < {{ add $i 1 }} {
-			{{- if $arg.IsRequired }}
-		p.exitMissingArg("{{ $arg.UsgName }}")
-			{{- else }}
-		return
-			{{- end }}
-	}
-	c.{{ .FieldName }} = p.{{ .FieldType.ClapIterMethodName }}()
-		{{- end -}}{{- /* range all args */ -}}
-	{{- end }}{{- /* with args */ -}}
+	{{- range .Args }}
+	p.Arg("{{ .UsgName }}", clap.New{{ .FieldType.ClapValueType }}(&c.{{ .FieldName }}))
+		{{- with .EnvVar }}.Env("{{ . }}"){{ end }}
+		{{- if .IsRequired }}.Require(){{ end }}
+	{{- end }}
+	{{ with .Subcmds }}rest := {{ end }}p.Parse(args)
 
 	{{- /* Subcommands. */ -}}
 	{{- with .Subcmds }}
-	if p.idx >= len(args) {
-		c.printUsage(os.Stderr)
-		os.Exit(1)
+
+	if len(rest) == 0 {
+		p.Fatalf("no subcommand provided")
 	}
-	switch args[p.idx] {
+	switch rest[0] {
 	{{- range . }}
 	case {{ .QuotedNames }}:
 		c.{{ .FieldName }} = &{{ .TypeName }}{}
-		c.{{ .FieldName }}.parse(args[p.idx+1:])
+		c.{{ .FieldName }}.Parse(rest[1:])
 	{{- end }}
 	default:
-		p.exitUnknownCmd(args[p.idx])
+		p.Fatalf("unknown subcommand '%s'", rest[0])
 	}
 	{{- end }}
 }
