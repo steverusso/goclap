@@ -36,7 +36,7 @@ type mycli struct {
 
 func main() {
 	c := mycli{}
-	c.parse(os.Args)
+	c.Parse(os.Args[1:])
 
 	s := c.input
 	if c.toUpper {
@@ -57,10 +57,10 @@ Running `./simple -u hello` will output "HELLO", and running `./simple -h` will 
 following help message:
 
 ```
-./simple - Print a string with the option to make it uppercase
+simple - Print a string with the option to make it uppercase
 
 usage:
-   ./simple [options] <input>
+   simple [options] <input>
 
 options:
    -upper   Make the input string all uppercase
