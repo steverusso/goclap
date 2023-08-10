@@ -28,7 +28,7 @@ type mycli struct {
 
 func main() {
 	c := mycli{}
-	c.Parse(os.Args)
+	c.Parse(os.Args[1:])
 
 	for i := uint(0); i < c.count+1; i++ {
 		fmt.Printf("'%s%s'\n", c.prefix, c.input)

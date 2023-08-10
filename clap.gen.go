@@ -2,11 +2,7 @@
 
 package main
 
-import (
-	"os"
-
-	"github.com/steverusso/goclap/clap"
-)
+import "github.com/steverusso/goclap/clap"
 
 func (*goclap) UsageHelp() string {
 	return `goclap - Pre-build tool to generate command line argument parsing code from Go comments
@@ -24,9 +20,6 @@ options:
 }
 
 func (c *goclap) Parse(args []string) {
-	if len(args) > 0 && len(args) == len(os.Args) {
-		args = args[1:]
-	}
 	p := clap.NewCommandParser("goclap")
 	p.CustomUsage = c.UsageHelp
 	p.Flag("type", clap.NewString(&c.rootCmdType))

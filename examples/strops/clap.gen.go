@@ -2,11 +2,7 @@
 
 package main
 
-import (
-	"os"
-
-	"github.com/steverusso/goclap/clap"
-)
+import "github.com/steverusso/goclap/clap"
 
 func (*strops) UsageHelp() string {
 	return `strops - Perform different string operations
@@ -26,9 +22,6 @@ arguments:
 }
 
 func (c *strops) Parse(args []string) {
-	if len(args) > 0 && len(args) == len(os.Args) {
-		args = args[1:]
-	}
 	p := clap.NewCommandParser("strops")
 	p.CustomUsage = c.UsageHelp
 	p.Flag("upper", clap.NewBool(&c.toUpper))

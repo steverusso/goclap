@@ -1,11 +1,5 @@
 
 func (c *{{ .TypeName }}) Parse(args []string) {
-	{{- /* Drop the program name from args if it's there. */ -}}
-	{{ if .IsRoot }}
-	if len(args) > 0 && len(args) == len(os.Args) {
-		args = args[1:]
-	}
-	{{- end }}
 	p := clap.NewCommandParser("{{ .Parents }}{{ .UsgName }}")
 	p.CustomUsage = c.UsageHelp
 
