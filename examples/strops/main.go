@@ -37,7 +37,7 @@ type strops struct {
 
 func main() {
 	c := strops{}
-	c.Parse(os.Args)
+	c.Parse(os.Args[1:])
 
 	b := []byte(c.input)
 	if c.prefix != "" {

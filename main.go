@@ -182,7 +182,7 @@ func warn(format string, a ...any) {
 
 func main() {
 	c := goclap{}
-	c.Parse(os.Args)
+	c.Parse(os.Args[1:])
 
 	if c.version {
 		fmt.Println(getBuildVersionInfo())

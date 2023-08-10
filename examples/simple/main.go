@@ -23,7 +23,7 @@ type mycli struct {
 
 func main() {
 	c := mycli{}
-	c.Parse(os.Args)
+	c.Parse(os.Args[1:])
 
 	s := c.input
 	if c.toUpper {
