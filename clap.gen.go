@@ -11,12 +11,12 @@ usage:
    goclap [options]
 
 options:
-   -type  <arg>       The root command struct name
-   -srcdir  <arg>     Directory of source files to parse (default ".")
-   -include-version   Include goclap's version info in the generated code
-   -out  <arg>        Output file path (default "./clap.gen.go")
-   -version           Print version info and exit
-   -h                 Show this help message`
+   -type  <arg>     The root command struct name
+   -srcdir  <arg>   Directory of source files to parse (default ".")
+   -with-version    Include goclap's version info in the generated code
+   -out  <arg>      Output file path (default "./clap.gen.go")
+   -version         Print version info and exit
+   -h               Show this help message`
 }
 
 func (c *goclap) Parse(args []string) {
@@ -24,7 +24,7 @@ func (c *goclap) Parse(args []string) {
 	p.CustomUsage = c.UsageHelp
 	p.Flag("type", clap.NewString(&c.rootCmdType))
 	p.Flag("srcdir", clap.NewString(&c.srcDir))
-	p.Flag("include-version", clap.NewBool(&c.incVersion))
+	p.Flag("with-version", clap.NewBool(&c.withVersion))
 	p.Flag("out", clap.NewString(&c.outFilePath))
 	p.Flag("version", clap.NewBool(&c.version))
 	p.Parse(args)

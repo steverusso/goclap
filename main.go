@@ -22,8 +22,8 @@ type goclap struct {
 	srcDir string
 	// Include goclap's version info in the generated code.
 	//
-	// clap:opt include-version
-	incVersion bool
+	// clap:opt with-version
+	withVersion bool
 	// Output file path (default "./clap.gen.go").
 	//
 	// clap:opt out
@@ -155,7 +155,7 @@ func gen(c *goclap) error {
 		return err
 	}
 
-	code, err := generate(c.incVersion, pkgName, &rootCmd)
+	code, err := generate(c.withVersion, pkgName, &rootCmd)
 	if err != nil {
 		return err
 	}
