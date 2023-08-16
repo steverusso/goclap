@@ -72,6 +72,14 @@ func parse(srcDir, rootCmdTypeName string) (command, string, error) {
 func addChildren(pkg *ast.Package, c *command, strct *ast.StructType) error {
 	// Read in the struct fields.
 	for _, field := range strct.Fields.List {
+		if len(field.Names) == 0 {
+			if selExpr, ok := field.Type.(*ast.SelectorExpr); ok {
+				warn("skipping embedded field `%s.%s`", c.TypeName, selExpr.Sel.Name)
+			} else {
+				warn("skipping embedded field in `%s`", c.TypeName)
+			}
+			continue
+		}
 		if len(field.Names) > 1 {
 			warn("skipping multi named field %s", field.Names)
 			continue
