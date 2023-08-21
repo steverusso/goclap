@@ -38,7 +38,7 @@ func (p *CommandParser) Arg(name string, v flag.Value) *Input {
 
 func (p *CommandParser) Fatalf(format string, args ...any) {
 	msg := fmt.Sprintf(format, args...)
-	fmt.Fprintf(os.Stderr, "error: %s.\nRun '%s -h' for usage.", msg, p.path)
+	fmt.Fprintf(os.Stderr, "error: %s.\nRun '%s -h' for usage.\n", msg, p.path)
 	os.Exit(2)
 }
 
