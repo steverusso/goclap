@@ -1,7 +1,8 @@
 package main
 
-// Any changes to this file likely necessitate changes to the project's README.
 //go:generate goclap -type mycli
+
+// Any changes to this file likely necessitate changes to the project's README.
 
 import (
 	"fmt"

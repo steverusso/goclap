@@ -1,5 +1,6 @@
-//go:generate goclap -type mycli
 package main
+
+//go:generate goclap -type mycli
 
 // Any changes to this file likely necessitate changes to the project's README.
 
