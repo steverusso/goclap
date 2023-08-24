@@ -8,22 +8,22 @@ func (*mycli) UsageHelp() string {
 	return `mycli - Print a few positional args
 
 usage:
-   mycli [options] <f32> <str> <u16>
+   mycli [options] <f32> <text> <u16>
 
 options:
    -h   Show this help message
 
 arguments:
-   <f32>   A float32 positional arg
-   <str>   A string positional arg
-   <u16>   An uint16 positional arg`
+   <f32>    A float32 positional arg
+   <text>   A string positional arg
+   <u16>    A uint16 positional arg`
 }
 
 func (c *mycli) Parse(args []string) {
 	p := clap.NewCommandParser("mycli")
 	p.CustomUsage = c.UsageHelp
 	p.Arg("<f32>", clap.NewFloat32(&c.f32)).Require()
-	p.Arg("<str>", clap.NewString(&c.str)).Require()
+	p.Arg("<text>", clap.NewString(&c.str)).Require()
 	p.Arg("<u16>", clap.NewUint16(&c.u16)).Require()
 	p.Parse(args)
 }

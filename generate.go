@@ -260,10 +260,14 @@ func (a *argument) EnvVar() string {
 }
 
 func (a *argument) UsgName() string {
-	if a.IsRequired() {
-		return "<" + a.name + ">"
+	name := a.name
+	if v, ok := a.data.getConfig("arg_name"); ok {
+		name = v
 	}
-	return "[" + a.name + "]"
+	if a.IsRequired() {
+		return "<" + name + ">"
+	}
+	return "[" + name + "]"
 }
 
 func (a *argument) IsRequired() bool {
