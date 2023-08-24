@@ -22,7 +22,9 @@ jobs:
       run: go build -v ./...
 
     - name: Install goimports
-      run: go install golang.org/x/tools/cmd/goimports@latest
+      run: |
+        go install \
+        golang.org/x/tools/cmd/goimports@latest
 
     - name: Install gofumpt
       run: go install mvdan.cc/gofumpt@latest
