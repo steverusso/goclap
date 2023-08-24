@@ -15,9 +15,10 @@ type mycli struct {
 	f32 float32
 	// A string positional arg.
 	//
+	// clap:arg_name text
 	// clap:arg_required
 	str string
-	// An uint16 positional arg.
+	// A uint16 positional arg.
 	//
 	// clap:arg_required
 	u16 uint16
