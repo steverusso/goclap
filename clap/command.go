@@ -74,7 +74,7 @@ func (p *CommandParser) Parse(args []string) []string {
 			if err := arg.parseEnv(); err != nil {
 				p.Fatalf("%v", err)
 			}
-			if err := arg.value.Set(rest[0]); err != nil {
+			if err := arg.value.Set(rest[i]); err != nil {
 				p.Fatalf("parsing positional argument '%s': %v", arg.name, err)
 			}
 		}
