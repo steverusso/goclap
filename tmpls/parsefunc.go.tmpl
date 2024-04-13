@@ -1,37 +1,53 @@
 
 func (c *{{ .TypeName }}) Parse(args []string) {
-	p := clap.NewCommandParser("{{ .Parents }}{{ .UsgName }}")
-	p.CustomUsage = c.UsageHelp
+	p := clapCommand{
+		usage: c.UsageHelp,
 
-	{{- range .Opts }}
+	{{- /* Options. */ -}}
+	{{- if .HasNonHelpOpts }}
+		opts: []clapInput{
+		{{- range .Opts }}
 		{{- if ne .Name "h" }}
-	p.Flag("{{ .Name }}", clap.New{{ .FieldType.ClapValueType }}(&c.{{ .FieldName }}))
-		{{- with .EnvVar }}.Env("{{ . }}"){{ end }}
+			{name: "{{ .Name }}", value: clapNew{{ .FieldType.ClapValueType }}(&c.{{ .FieldName }})
+			{{- with .EnvVar }}, envName: "{{ . }}"{{ end }}},
 		{{- end }}
+		{{- end }}
+		},
 	{{- end }}
 
 	{{- /* Arguments. */ -}}
-	{{- range .Args }}
-	p.Arg("{{ .UsgName }}", clap.New{{ .FieldType.ClapValueType }}(&c.{{ .FieldName }}))
-		{{- with .EnvVar }}.Env("{{ . }}"){{ end }}
-		{{- if .IsRequired }}.Require(){{ end }}
+	{{- with .Args }}
+		args: []clapInput{
+		{{- range . }}
+			{name: "{{ .UsgName }}", value: clapNew{{ .FieldType.ClapValueType }}(&c.{{ .FieldName }})
+			{{- if .IsRequired }}, required: true{{ end }}
+			{{- with .EnvVar }}, envName: "{{ . }}"{{ end }}},
+		{{- end }}
+		},
 	{{- end }}
-	{{ with .Subcmds }}rest := {{ end }}p.Parse(args)
 
 	{{- /* Subcommands. */ -}}
 	{{- with .Subcmds }}
-
-	if len(rest) == 0 {
-		p.Fatalf("no subcommand provided")
+		cmds: []string{
+		{{- range . }}
+			{{ .QuotedNames }},
+		{{- end }}
+		},
+	{{- end }}
 	}
+	{{ with .Subcmds }}rest{{ else }}_{{ end }}, err := p.parse(args)
+	if err != nil {
+		clapFatalf("{{ .Parents }}{{ .UsgName }}", err.Error())
+	}
+
+	{{- /* Subcommands. */ -}}
+	{{- with .Subcmds }}
 	switch rest[0] {
 	{{- range . }}
 	case {{ .QuotedNames }}:
 		c.{{ .FieldName }} = &{{ .TypeName }}{}
 		c.{{ .FieldName }}.Parse(rest[1:])
 	{{- end }}
-	default:
-		p.Fatalf("unknown subcommand '%s'", rest[0])
 	}
 	{{- end }}
 }
