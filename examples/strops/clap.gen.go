@@ -2,7 +2,121 @@
 
 package main
 
-import "github.com/steverusso/goclap/clap"
+import (
+	"flag"
+	"fmt"
+	"io"
+	"os"
+	"reflect"
+	"strconv"
+)
+
+type clapCommand struct {
+	usage func() string
+	opts  []clapInput
+	args  []clapInput
+}
+
+type clapInput struct {
+	name     string
+	value    flag.Value
+	required bool
+}
+
+func clapFatalf(cmdName, format string, args ...any) {
+	msg := fmt.Sprintf(format, args...)
+	fmt.Fprintf(os.Stderr, "error: %s.\nRun '%s -h' for usage.\n", msg, cmdName)
+	os.Exit(2)
+}
+
+func (cc *clapCommand) parse(args []string) ([]string, error) {
+	f := flag.FlagSet{Usage: func() {}}
+	f.SetOutput(io.Discard)
+	for i := range cc.opts {
+		o := &cc.opts[i]
+		f.Var(o.value, o.name, "")
+	}
+
+	if err := f.Parse(args); err != nil {
+		if err == flag.ErrHelp {
+			fmt.Println(cc.usage())
+			os.Exit(0)
+		}
+		return nil, err
+	}
+
+	// TODO(steve): check for missing required flags when supported
+
+	rest := f.Args()
+
+	if len(cc.args) > 0 {
+		for i := range cc.args {
+			arg := &cc.args[i]
+			if len(rest) <= i {
+				if arg.required {
+					return nil, fmt.Errorf("missing required arg '%s'", arg.name)
+				}
+				return nil, nil
+			}
+			if err := arg.value.Set(rest[i]); err != nil {
+				return nil, fmt.Errorf("parsing positional argument '%s': %v", arg.name, err)
+			}
+		}
+		return nil, nil
+	}
+
+	return rest, nil
+}
+
+type clapBool bool
+
+func clapNewBool(p *bool) *clapBool { return (*clapBool)(p) }
+
+func (v *clapBool) String() string { return strconv.FormatBool(bool(*v)) }
+
+func (v *clapBool) Set(s string) error {
+	b, err := strconv.ParseBool(s)
+	if err != nil {
+		return fmt.Errorf(`invalid boolean value "%s"`, s)
+	}
+	*v = clapBool(b)
+	return err
+}
+
+func (*clapBool) IsBoolFlag() bool { return true }
+
+type clapString string
+
+func clapNewString(p *string) *clapString { return (*clapString)(p) }
+
+func (v *clapString) String() string { return string(*v) }
+
+func (v *clapString) Set(s string) error {
+	*v = clapString(s)
+	return nil
+}
+
+type clapInt[T int | int8 | int16 | int32 | int64] struct{ v *T }
+
+func clapNewInt[T int | int8 | int16 | int32 | int64](p *T) clapInt[T] { return clapInt[T]{p} }
+
+func (v clapInt[T]) String() string { return strconv.FormatInt(int64(*v.v), 10) }
+
+func (v clapInt[T]) Set(s string) error {
+	u64, err := strconv.ParseInt(s, 0, reflect.TypeFor[T]().Bits())
+	if err != nil {
+		return numError(err)
+	}
+	*v.v = T(u64)
+	return nil
+}
+
+func numError(err error) error {
+	if ne, ok := err.(*strconv.NumError); ok {
+		return ne.Err
+	}
+	return err
+}
 
 func (*strops) UsageHelp() string {
 	return `strops - Perform different string operations
@@ -22,12 +136,20 @@ arguments:
 }
 
 func (c *strops) Parse(args []string) {
-	p := clap.NewCommandParser("strops")
-	p.CustomUsage = c.UsageHelp
-	p.Flag("upper", clap.NewBool(&c.toUpper))
-	p.Flag("reverse", clap.NewBool(&c.reverse))
-	p.Flag("repeat", clap.NewInt(&c.repeat))
-	p.Flag("prefix", clap.NewString(&c.prefix))
-	p.Arg("<input>", clap.NewString(&c.input)).Require()
-	p.Parse(args)
+	p := clapCommand{
+		usage: c.UsageHelp,
+		opts: []clapInput{
+			{name: "upper", value: clapNewBool(&c.toUpper)},
+			{name: "reverse", value: clapNewBool(&c.reverse)},
+			{name: "repeat", value: clapNewInt(&c.repeat)},
+			{name: "prefix", value: clapNewString(&c.prefix)},
+		},
+		args: []clapInput{
+			{name: "<input>", value: clapNewString(&c.input), required: true},
+		},
+	}
+	_, err := p.parse(args)
+	if err != nil {
+		clapFatalf("strops", err.Error())
+	}
 }
