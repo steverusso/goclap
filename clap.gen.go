@@ -2,7 +2,98 @@
 
 package main
 
-import "github.com/steverusso/goclap/clap"
+import (
+	"flag"
+	"fmt"
+	"io"
+	"os"
+	"strconv"
+)
+
+type clapCommand struct {
+	usage func() string
+	opts  []clapInput
+	args  []clapInput
+}
+
+type clapInput struct {
+	name     string
+	value    flag.Value
+	required bool
+}
+
+func clapFatalf(cmdName, format string, args ...any) {
+	msg := fmt.Sprintf(format, args...)
+	fmt.Fprintf(os.Stderr, "error: %s.\nRun '%s -h' for usage.\n", msg, cmdName)
+	os.Exit(2)
+}
+
+func (cc *clapCommand) parse(args []string) ([]string, error) {
+	f := flag.FlagSet{Usage: func() {}}
+	f.SetOutput(io.Discard)
+	for i := range cc.opts {
+		o := &cc.opts[i]
+		f.Var(o.value, o.name, "")
+	}
+
+	if err := f.Parse(args); err != nil {
+		if err == flag.ErrHelp {
+			fmt.Println(cc.usage())
+			os.Exit(0)
+		}
+		return nil, err
+	}
+
+	// TODO(steve): check for missing required flags when supported
+
+	rest := f.Args()
+
+	if len(cc.args) > 0 {
+		for i := range cc.args {
+			arg := &cc.args[i]
+			if len(rest) <= i {
+				if arg.required {
+					return nil, fmt.Errorf("missing required arg '%s'", arg.name)
+				}
+				return nil, nil
+			}
+			if err := arg.value.Set(rest[i]); err != nil {
+				return nil, fmt.Errorf("parsing positional argument '%s': %v", arg.name, err)
+			}
+		}
+		return nil, nil
+	}
+
+	return rest, nil
+}
+
+type clapBool bool
+
+func clapNewBool(p *bool) *clapBool { return (*clapBool)(p) }
+
+func (v *clapBool) String() string { return strconv.FormatBool(bool(*v)) }
+
+func (v *clapBool) Set(s string) error {
+	b, err := strconv.ParseBool(s)
+	if err != nil {
+		return fmt.Errorf(`invalid boolean value "%s"`, s)
+	}
+	*v = clapBool(b)
+	return err
+}
+
+func (*clapBool) IsBoolFlag() bool { return true }
+
+type clapString string
+
+func clapNewString(p *string) *clapString { return (*clapString)(p) }
+
+func (v *clapString) String() string { return string(*v) }
+
+func (v *clapString) Set(s string) error {
+	*v = clapString(s)
+	return nil
+}
 
 func (*goclap) UsageHelp() string {
 	return `goclap - Pre-build tool to generate command line argument parsing code from Go comments
@@ -20,12 +111,18 @@ options:
 }
 
 func (c *goclap) Parse(args []string) {
-	p := clap.NewCommandParser("goclap")
-	p.CustomUsage = c.UsageHelp
-	p.Flag("type", clap.NewString(&c.rootCmdType))
-	p.Flag("srcdir", clap.NewString(&c.srcDir))
-	p.Flag("with-version", clap.NewBool(&c.withVersion))
-	p.Flag("out", clap.NewString(&c.outFilePath))
-	p.Flag("version", clap.NewBool(&c.version))
-	p.Parse(args)
+	p := clapCommand{
+		usage: c.UsageHelp,
+		opts: []clapInput{
+			{name: "type", value: clapNewString(&c.rootCmdType)},
+			{name: "srcdir", value: clapNewString(&c.srcDir)},
+			{name: "with-version", value: clapNewBool(&c.withVersion)},
+			{name: "out", value: clapNewString(&c.outFilePath)},
+			{name: "version", value: clapNewBool(&c.version)},
+		},
+	}
+	_, err := p.parse(args)
+	if err != nil {
+		clapFatalf("goclap", err.Error())
+	}
 }
