@@ -117,10 +117,10 @@ func numError(err error) error {
 }
 
 func (*mycli) UsageHelp() string {
-	return `mycli - Print a few positional args
+	return `posargs - Print a few positional args
 
 usage:
-   mycli [options] <f32> <text> <u16>
+   posargs [options] <f32> <text> <u16>
 
 options:
    -h   Show this help message
@@ -142,6 +142,6 @@ func (c *mycli) Parse(args []string) {
 	}
 	_, err := p.parse(args)
 	if err != nil {
-		clapFatalf("mycli", err.Error())
+		clapFatalf("posargs", err.Error())
 	}
 }

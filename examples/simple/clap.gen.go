@@ -94,10 +94,10 @@ func (v *clapString) Set(s string) error {
 }
 
 func (*mycli) UsageHelp() string {
-	return `mycli - Print a string with the option to make it uppercase
+	return `simple - Print a string with the option to make it uppercase
 
 usage:
-   mycli [options] <input>
+   simple [options] <input>
 
 options:
    -upper   Make the input string all uppercase
@@ -119,6 +119,6 @@ func (c *mycli) Parse(args []string) {
 	}
 	_, err := p.parse(args)
 	if err != nil {
-		clapFatalf("mycli", err.Error())
+		clapFatalf("simple", err.Error())
 	}
 }

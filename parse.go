@@ -6,6 +6,7 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
+	"path/filepath"
 	"regexp"
 	"strings"
 )
@@ -33,6 +34,12 @@ func parse(srcDir, rootCmdTypeName string) (command, string, error) {
 		srcDir = "."
 	}
 
+	absSrcDir, err := filepath.Abs(srcDir)
+	if err != nil {
+		return command{}, "", fmt.Errorf("getting absolute source directory path: %w", err)
+	}
+	rootCmdName := filepath.Base(absSrcDir)
+
 	fset := token.NewFileSet() // positions are relative to fset
 	parsedPkgs, err := parser.ParseDir(fset, srcDir, nil, parser.ParseComments)
 	if err != nil {
@@ -59,7 +66,7 @@ func parse(srcDir, rootCmdTypeName string) (command, string, error) {
 	root := command{
 		IsRoot:    true,
 		TypeName:  rootCmdTypeName,
-		FieldName: rootCmdTypeName,
+		FieldName: rootCmdName,
 		Data:      data,
 	}
 

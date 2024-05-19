@@ -124,10 +124,10 @@ func numError(err error) error {
 }
 
 func (*mycli) UsageHelp() string {
-	return `mycli - Print a string with a prefix
+	return `simple_env - Print a string with a prefix
 
 usage:
-   mycli [options] [input]
+   simple_env [options] [input]
 
 options:
    -prefix  <arg>   The value to prepend to the input string [$MY_PREFIX]
@@ -151,6 +151,6 @@ func (c *mycli) Parse(args []string) {
 	}
 	_, err := p.parse(args)
 	if err != nil {
-		clapFatalf("mycli", err.Error())
+		clapFatalf("simple_env", err.Error())
 	}
 }
