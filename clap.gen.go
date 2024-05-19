@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"reflect"
 	"strconv"
 )
 
@@ -93,6 +94,28 @@ func (v *clapString) Set(s string) error {
 	return nil
 }
 
+type clapInt[T int | int8 | int16 | int32 | int64] struct{ v *T }
+
+func clapNewInt[T int | int8 | int16 | int32 | int64](p *T) clapInt[T] { return clapInt[T]{p} }
+
+func (v clapInt[T]) String() string { return strconv.FormatInt(int64(*v.v), 10) }
+
+func (v clapInt[T]) Set(s string) error {
+	u64, err := strconv.ParseInt(s, 0, reflect.TypeFor[T]().Bits())
+	if err != nil {
+		return numError(err)
+	}
+	*v.v = T(u64)
+	return nil
+}
+
+func numError(err error) error {
+	if ne, ok := err.(*strconv.NumError); ok {
+		return ne.Err
+	}
+	return err
+}
+
 func (*goclap) UsageHelp() string {
 	return `goclap - Pre-build tool to generate command line argument parsing code from Go comments
 
@@ -100,12 +123,13 @@ usage:
    goclap [options]
 
 options:
-   -type  <arg>     The root command struct name
-   -srcdir  <arg>   Directory of source files to parse (default ".")
-   -with-version    Include goclap's version info in the generated code
-   -out  <arg>      Output file path (default "./clap.gen.go")
-   -version         Print version info and exit
-   -h               Show this help message`
+   -type  <arg>             The root command struct name
+   -srcdir  <arg>           Directory of source files to parse (default ".")
+   -with-version            Include goclap's version info in the generated code
+   -out  <arg>              Output file path (default "./clap.gen.go")
+   -usg-text-width  <arg>   Max width for lines of text in the usage message
+   -version                 Print version info and exit
+   -h                       Show this help message`
 }
 
 func (c *goclap) Parse(args []string) {
@@ -116,6 +140,7 @@ func (c *goclap) Parse(args []string) {
 			{name: "srcdir", value: clapNewString(&c.srcDir)},
 			{name: "with-version", value: clapNewBool(&c.withVersion)},
 			{name: "out", value: clapNewString(&c.outFilePath)},
+			{name: "usg-text-width", value: clapNewInt(&c.usgTextWidth)},
 			{name: "version", value: clapNewBool(&c.version)},
 		},
 	}

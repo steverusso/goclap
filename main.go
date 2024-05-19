@@ -28,6 +28,10 @@ type goclap struct {
 	//
 	// clap:opt out
 	outFilePath string
+	// Max width for lines of text in the usage message.
+	//
+	// clap:opt usg-text-width
+	usgTextWidth int
 	// Print version info and exit.
 	//
 	// clap:opt version
@@ -143,6 +147,10 @@ func (c *command) UsgName() string {
 }
 
 func gen(c *goclap) error {
+	if c.usgTextWidth == 0 {
+		c.usgTextWidth = 90
+	}
+
 	rootCmdTypeName := c.rootCmdType
 	if rootCmdTypeName == "" {
 		fmt.Fprintf(os.Stderr, "no root command type provided\n")
@@ -155,7 +163,7 @@ func gen(c *goclap) error {
 		return err
 	}
 
-	code, err := generate(c.withVersion, pkgName, &rootCmd)
+	code, err := generate(c.withVersion, pkgName, c.usgTextWidth, &rootCmd)
 	if err != nil {
 		return err
 	}

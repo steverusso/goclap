@@ -9,8 +9,6 @@ import (
 	"unicode"
 )
 
-const maxUsgLineLen = 90
-
 var (
 	//go:embed tmpls/base-unexported.go.tmpl
 	baseUnexportedTmplText string
@@ -22,8 +20,8 @@ var (
 	parseFnTmplText string
 )
 
-func generate(incVersion bool, pkgName string, root *command) ([]byte, error) {
-	g, err := newGenerator()
+func generate(incVersion bool, pkgName string, usgTextWidth int, root *command) ([]byte, error) {
+	g, err := newGenerator(usgTextWidth)
 	if err != nil {
 		return nil, fmt.Errorf("initializing generator: %w", err)
 	}
@@ -37,16 +35,15 @@ func generate(incVersion bool, pkgName string, root *command) ([]byte, error) {
 }
 
 type generator struct {
-	buf         bytes.Buffer
-	usgFnTmpl   *template.Template
-	parseFnTmpl *template.Template
+	buf          bytes.Buffer
+	usgTextWidth int
+	usgFnTmpl    *template.Template
+	parseFnTmpl  *template.Template
 }
 
-func newGenerator() (generator, error) {
-	usgFnTmpl, err := template.New("usagefunc").Parse(usgFnTmplText)
-	if err != nil {
-		return generator{}, fmt.Errorf("parsing template: %w", err)
-	}
+func newGenerator(usgTextWidth int) (generator, error) {
+	usgFnTmpl := template.Must(template.New("usagefunc").Parse(usgFnTmplText))
+
 	parseFuncs := template.FuncMap{
 		"add": func(a, b int) int { return a + b },
 	}
@@ -55,8 +52,9 @@ func newGenerator() (generator, error) {
 		return generator{}, fmt.Errorf("parsing template: %w", err)
 	}
 	return generator{
-		usgFnTmpl:   usgFnTmpl,
-		parseFnTmpl: parseFnTmpl,
+		usgTextWidth: usgTextWidth,
+		usgFnTmpl:    usgFnTmpl,
+		parseFnTmpl:  parseFnTmpl,
 	}, nil
 }
 
@@ -183,7 +181,7 @@ func (g *generator) genCmdUsageFunc(c *command) error {
 			if v, ok := o.data.getConfig("env"); ok {
 				desc += " [$" + v + "]"
 			}
-			optUsgs[i] = paddedNameAndArg + wrapBlurb(desc, len(paddedNameAndArg), maxUsgLineLen)
+			optUsgs[i] = paddedNameAndArg + wrapBlurb(desc, len(paddedNameAndArg), g.usgTextWidth)
 		}
 	}
 
@@ -201,7 +199,7 @@ func (g *generator) genCmdUsageFunc(c *command) error {
 			if v, ok := a.data.getConfig("env"); ok {
 				desc += " [$" + v + "]"
 			}
-			argUsgs[i] = paddedName + wrapBlurb(desc, len(paddedName), maxUsgLineLen)
+			argUsgs[i] = paddedName + wrapBlurb(desc, len(paddedName), g.usgTextWidth)
 		}
 	}
 
@@ -215,7 +213,7 @@ func (g *generator) genCmdUsageFunc(c *command) error {
 		}
 		for i, sc := range c.Subcmds {
 			paddedName := fmt.Sprintf("   %-*s   ", subcmdNameColWidth, sc.UsgName())
-			subcmdUsgs[i] = paddedName + wrapBlurb(sc.Data.Blurb, len(paddedName), maxUsgLineLen)
+			subcmdUsgs[i] = paddedName + wrapBlurb(sc.Data.Blurb, len(paddedName), g.usgTextWidth)
 		}
 	}
 
@@ -287,7 +285,8 @@ func (c *command) Overview() string {
 	paras := c.Data.overview
 	var s strings.Builder
 	for i := range paras {
-		s.WriteString(wrapText(paras[i], 3, maxUsgLineLen))
+		s.WriteString("   ")
+		s.WriteString(paras[i])
 		if i != len(paras)-1 {
 			s.WriteString("\n\n")
 		}
