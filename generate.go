@@ -160,8 +160,71 @@ func (g *generator) genCommandCode(c *command) error {
 	return nil
 }
 
+type usgTmplData struct {
+	OptUsgs    []string
+	ArgUsgs    []string
+	SubcmdUsgs []string
+
+	*command
+}
+
 func (g *generator) genCmdUsageFunc(c *command) error {
-	err := g.usgFnTmpl.Execute(&g.buf, c)
+	optUsgs := make([]string, len(c.Opts))
+	{
+		var optNameColWidth int
+		for _, o := range c.Opts {
+			if l := len(o.usgNameAndArg()); l > optNameColWidth {
+				optNameColWidth = l
+			}
+		}
+		for i, o := range c.Opts {
+			paddedNameAndArg := fmt.Sprintf("   %-*s   ", optNameColWidth, o.usgNameAndArg())
+			desc := o.data.Blurb
+			if v, ok := o.data.getConfig("env"); ok {
+				desc += " [$" + v + "]"
+			}
+			optUsgs[i] = paddedNameAndArg + wrapBlurb(desc, len(paddedNameAndArg), maxUsgLineLen)
+		}
+	}
+
+	argUsgs := make([]string, len(c.Args))
+	{
+		var argNameColWidth int
+		for _, a := range c.Args {
+			if l := len(a.UsgName()); l > argNameColWidth {
+				argNameColWidth = l
+			}
+		}
+		for i, a := range c.Args {
+			paddedName := fmt.Sprintf("   %-*s   ", argNameColWidth, a.UsgName())
+			desc := a.data.Blurb
+			if v, ok := a.data.getConfig("env"); ok {
+				desc += " [$" + v + "]"
+			}
+			argUsgs[i] = paddedName + wrapBlurb(desc, len(paddedName), maxUsgLineLen)
+		}
+	}
+
+	subcmdUsgs := make([]string, len(c.Subcmds))
+	{
+		var subcmdNameColWidth int
+		for _, sc := range c.Subcmds {
+			if l := len(sc.UsgName()); l > subcmdNameColWidth {
+				subcmdNameColWidth = l
+			}
+		}
+		for i, sc := range c.Subcmds {
+			paddedName := fmt.Sprintf("   %-*s   ", subcmdNameColWidth, sc.UsgName())
+			subcmdUsgs[i] = paddedName + wrapBlurb(sc.Data.Blurb, len(paddedName), maxUsgLineLen)
+		}
+	}
+
+	err := g.usgFnTmpl.Execute(&g.buf, usgTmplData{
+		OptUsgs:    optUsgs,
+		ArgUsgs:    argUsgs,
+		SubcmdUsgs: subcmdUsgs,
+		command:    c,
+	})
 	if err != nil {
 		return err
 	}
@@ -232,36 +295,6 @@ func (c *command) Overview() string {
 	return s.String()
 }
 
-func (c *command) OptNameColWidth() int {
-	w := 0
-	for _, o := range c.Opts {
-		if l := len(o.usgNameAndArg()); l > w {
-			w = l
-		}
-	}
-	return w
-}
-
-func (c *command) ArgNameColWidth() int {
-	w := 0
-	for _, a := range c.Args {
-		if l := len(a.UsgName()); l > w {
-			w = l
-		}
-	}
-	return w
-}
-
-func (c *command) SubcmdNameColWidth() int {
-	w := 0
-	for _, sc := range c.Subcmds {
-		if l := len(sc.UsgName()); l > w {
-			w = l
-		}
-	}
-	return w
-}
-
 func (o *option) EnvVar() string {
 	name, _ := o.data.getConfig("env")
 	return name
@@ -288,26 +321,6 @@ func (a *argument) IsRequired() bool {
 	return ok
 }
 
-// Usg returns an argument's usage message text given how wide the name column should be.
-func (a *argument) Usg(nameWidth int) string {
-	paddedName := fmt.Sprintf("   %-*s   ", nameWidth, a.UsgName())
-	desc := a.data.Blurb
-	if v, ok := a.data.getConfig("env"); ok {
-		desc += " [$" + v + "]"
-	}
-	return paddedName + wrapBlurb(desc, len(paddedName), maxUsgLineLen)
-}
-
-// Usg returns an option's usage message text given how wide the name column should be.
-func (o *option) Usg(nameWidth int) string {
-	paddedNameAndArg := fmt.Sprintf("   %-*s   ", nameWidth, o.usgNameAndArg())
-	desc := o.data.Blurb
-	if v, ok := o.data.getConfig("env"); ok {
-		desc += " [$" + v + "]"
-	}
-	return paddedNameAndArg + wrapBlurb(desc, len(paddedNameAndArg), maxUsgLineLen)
-}
-
 func (o *option) usgNameAndArg() string {
 	s := "-" + o.Name
 	if an := o.usgArgName(); an != "" {
@@ -327,12 +340,6 @@ func (o *option) usgArgName() string {
 		return "<" + name + ">"
 	}
 	return "<arg>"
-}
-
-// Usg returns a command's usage message text given how wide the name column should be.
-func (c *command) Usg(nameWidth int) string {
-	paddedName := fmt.Sprintf("   %-*s   ", nameWidth, c.UsgName())
-	return paddedName + wrapBlurb(c.Data.Blurb, len(paddedName), maxUsgLineLen)
 }
 
 // HasEnvArgOrOptSomewhere returns true if this command or one of its subcommands contains

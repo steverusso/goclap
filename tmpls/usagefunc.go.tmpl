@@ -9,26 +9,23 @@ overview:
 usage:{{ range .UsageLines }}
    {{ . }}{{ end }}
 
-{{- with .Opts }}
-	{{- $nameWidth := $.OptNameColWidth }}
+{{- with .OptUsgs }}
 
 options:{{ range . }}
-{{ .Usg $nameWidth }}{{ end -}}
+{{ . }}{{ end -}}
 {{ end -}}
 
-{{- with .Args }}
-	{{- $nameWidth := $.ArgNameColWidth }}
+{{- with .ArgUsgs }}
 
 arguments:{{ range . }}
-{{ .Usg $nameWidth -}}
+{{ . -}}
 {{ end -}}
 {{ end -}}
 
-{{ with .Subcmds }}
-{{- $w := $.SubcmdNameColWidth }}
+{{ with .SubcmdUsgs }}
 
 subcommands:{{ range . }}
-{{ .Usg $w -}}
+{{ . -}}
 {{ end -}}
 {{- if $.IsRoot }}
 
