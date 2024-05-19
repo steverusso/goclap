@@ -63,8 +63,6 @@ func (cc *clapCommand) parse(args []string) ([]string, error) {
 		return nil, err
 	}
 
-	// TODO(steve): check for missing required flags when supported
-
 	rest := f.Args()
 
 	if len(cc.args) > 0 {
