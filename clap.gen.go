@@ -123,13 +123,15 @@ usage:
    goclap [options]
 
 options:
-   -type  <arg>             The root command struct name
-   -srcdir  <arg>           Directory of source files to parse (default ".")
-   -with-version            Include goclap's version info in the generated code
-   -out  <arg>              Output file path (default "./clap.gen.go")
-   -usg-text-width  <arg>   Max width for lines of text in the usage message
-   -version                 Print version info and exit
-   -h                       Show this help message`
+   -type  <arg>              The root command struct name
+   -srcdir  <arg>            Directory of source files to parse (default ".")
+   -with-version             Include goclap's version info in the generated code
+   -out  <arg>               Output file path (default "./clap.gen.go")
+   -usg-layout-kind  <arg>   How the usage message for each command will be structured
+                             (possible values: packed or roomy)
+   -usg-text-width  <arg>    Max width for lines of text in the usage message
+   -version                  Print version info and exit
+   -h                        Show this help message`
 }
 
 func (c *goclap) Parse(args []string) {
@@ -140,6 +142,7 @@ func (c *goclap) Parse(args []string) {
 			{name: "srcdir", value: clapNewString(&c.srcDir)},
 			{name: "with-version", value: clapNewBool(&c.withVersion)},
 			{name: "out", value: clapNewString(&c.outFilePath)},
+			{name: "usg-layout-kind", value: clapNewString(&c.usgLayoutKind)},
 			{name: "usg-text-width", value: clapNewInt(&c.usgTextWidth)},
 			{name: "version", value: clapNewBool(&c.version)},
 		},

@@ -28,6 +28,11 @@ type goclap struct {
 	//
 	// clap:opt out
 	outFilePath string
+	// How the usage message for each command will be structured (possible values: packed
+	// or roomy).
+	//
+	// clap:opt usg-layout-kind
+	usgLayoutKind string
 	// Max width for lines of text in the usage message.
 	//
 	// clap:opt usg-text-width
@@ -163,7 +168,7 @@ func gen(c *goclap) error {
 		return err
 	}
 
-	code, err := generate(c.withVersion, pkgName, c.usgTextWidth, &rootCmd)
+	code, err := generate(c.withVersion, pkgName, c.usgTextWidth, c.usgLayoutKind, &rootCmd)
 	if err != nil {
 		return err
 	}

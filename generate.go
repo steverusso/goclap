@@ -20,8 +20,8 @@ var (
 	parseFnTmplText string
 )
 
-func generate(incVersion bool, pkgName string, usgTextWidth int, root *command) ([]byte, error) {
-	g, err := newGenerator(usgTextWidth)
+func generate(incVersion bool, pkgName string, usgTextWidth int, usgLayoutKind string, root *command) ([]byte, error) {
+	g, err := newGenerator(usgTextWidth, usgLayoutKind)
 	if err != nil {
 		return nil, fmt.Errorf("initializing generator: %w", err)
 	}
@@ -35,13 +35,14 @@ func generate(incVersion bool, pkgName string, usgTextWidth int, root *command) 
 }
 
 type generator struct {
-	buf          bytes.Buffer
-	usgTextWidth int
-	usgFnTmpl    *template.Template
-	parseFnTmpl  *template.Template
+	buf           bytes.Buffer
+	usgTextWidth  int
+	usgLayoutKind string
+	usgFnTmpl     *template.Template
+	parseFnTmpl   *template.Template
 }
 
-func newGenerator(usgTextWidth int) (generator, error) {
+func newGenerator(usgTextWidth int, usgLayoutKind string) (generator, error) {
 	usgFnTmpl := template.Must(template.New("usagefunc").Parse(usgFnTmplText))
 
 	parseFuncs := template.FuncMap{
@@ -51,10 +52,12 @@ func newGenerator(usgTextWidth int) (generator, error) {
 	if err != nil {
 		return generator{}, fmt.Errorf("parsing template: %w", err)
 	}
+
 	return generator{
-		usgTextWidth: usgTextWidth,
-		usgFnTmpl:    usgFnTmpl,
-		parseFnTmpl:  parseFnTmpl,
+		usgTextWidth:  usgTextWidth,
+		usgLayoutKind: usgLayoutKind,
+		usgFnTmpl:     usgFnTmpl,
+		parseFnTmpl:   parseFnTmpl,
 	}, nil
 }
 
@@ -176,12 +179,25 @@ func (g *generator) genCmdUsageFunc(c *command) error {
 			}
 		}
 		for i, o := range c.Opts {
-			paddedNameAndArg := fmt.Sprintf("   %-*s   ", optNameColWidth, o.usgNameAndArg())
-			desc := o.data.Blurb
-			if v, ok := o.data.getConfig("env"); ok {
-				desc += " [$" + v + "]"
+			switch g.usgLayoutKind {
+			case "roomy":
+				content := "   " + o.usgNameAndArg() + "\n"
+				content += "      " + wrapBlurb(o.data.Blurb, 6, g.usgTextWidth)
+				if v, ok := o.data.getConfig("env"); ok {
+					content += "\n\n      [env: " + v + "]"
+				}
+				if i < len(c.Opts)-1 {
+					content += "\n"
+				}
+				optUsgs[i] = content
+			default:
+				paddedNameAndArg := fmt.Sprintf("   %-*s   ", optNameColWidth, o.usgNameAndArg())
+				desc := o.data.Blurb
+				if v, ok := o.data.getConfig("env"); ok {
+					desc += " [$" + v + "]"
+				}
+				optUsgs[i] = paddedNameAndArg + wrapBlurb(desc, len(paddedNameAndArg), g.usgTextWidth)
 			}
-			optUsgs[i] = paddedNameAndArg + wrapBlurb(desc, len(paddedNameAndArg), g.usgTextWidth)
 		}
 	}
 
@@ -194,12 +210,25 @@ func (g *generator) genCmdUsageFunc(c *command) error {
 			}
 		}
 		for i, a := range c.Args {
-			paddedName := fmt.Sprintf("   %-*s   ", argNameColWidth, a.UsgName())
-			desc := a.data.Blurb
-			if v, ok := a.data.getConfig("env"); ok {
-				desc += " [$" + v + "]"
+			switch g.usgLayoutKind {
+			case "roomy":
+				content := "   " + a.UsgName() + "\n"
+				content += "      " + wrapBlurb(a.data.Blurb, 6, g.usgTextWidth)
+				if v, ok := a.data.getConfig("env"); ok {
+					content += "\n\n      [env: " + v + "]"
+				}
+				if i < len(c.Args)-1 {
+					content += "\n"
+				}
+				argUsgs[i] = content
+			default:
+				paddedName := fmt.Sprintf("   %-*s   ", argNameColWidth, a.UsgName())
+				desc := a.data.Blurb
+				if v, ok := a.data.getConfig("env"); ok {
+					desc += " [$" + v + "]"
+				}
+				argUsgs[i] = paddedName + wrapBlurb(desc, len(paddedName), g.usgTextWidth)
 			}
-			argUsgs[i] = paddedName + wrapBlurb(desc, len(paddedName), g.usgTextWidth)
 		}
 	}
 
@@ -212,8 +241,18 @@ func (g *generator) genCmdUsageFunc(c *command) error {
 			}
 		}
 		for i, sc := range c.Subcmds {
-			paddedName := fmt.Sprintf("   %-*s   ", subcmdNameColWidth, sc.UsgName())
-			subcmdUsgs[i] = paddedName + wrapBlurb(sc.Data.Blurb, len(paddedName), g.usgTextWidth)
+			switch g.usgLayoutKind {
+			case "roomy":
+				content := "   " + sc.UsgName() + "\n"
+				content += "      " + wrapBlurb(sc.Data.Blurb, 6, g.usgTextWidth)
+				if i < len(c.Subcmds)-1 {
+					content += "\n"
+				}
+				subcmdUsgs[i] = content
+			default:
+				paddedName := fmt.Sprintf("   %-*s   ", subcmdNameColWidth, sc.UsgName())
+				subcmdUsgs[i] = paddedName + wrapBlurb(sc.Data.Blurb, len(paddedName), g.usgTextWidth)
+			}
 		}
 	}
 
@@ -286,9 +325,17 @@ func (c *command) Overview() string {
 	var s strings.Builder
 	for i := range paras {
 		s.WriteString("   ")
-		s.WriteString(paras[i])
-		if i != len(paras)-1 {
-			s.WriteString("\n\n")
+		// Drop any trailing new lines from the last paragraph so that there won't be any
+		// extra space separating it from the options section that follows.
+		if i == len(paras)-1 {
+			s.WriteString(strings.TrimRight(paras[i], "\n"))
+		} else {
+			s.WriteString(paras[i])
+		}
+		// Separate the over paragraphs with a blank line by ensuring each paragraph
+		// except the last one ends with two new lines.
+		if i != len(paras)-1 && !strings.HasSuffix(paras[i], "\n\n") {
+			s.WriteString("\n")
 		}
 	}
 	return s.String()
