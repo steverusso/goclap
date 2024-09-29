@@ -6,6 +6,7 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
+	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -40,26 +41,32 @@ func parse(srcDir, rootCmdTypeName string) (command, string, error) {
 	}
 	rootCmdName := filepath.Base(absSrcDir)
 
-	fset := token.NewFileSet() // positions are relative to fset
-	parsedPkgs, err := parser.ParseDir(fset, srcDir, nil, parser.ParseComments)
+	entries, err := os.ReadDir(srcDir)
 	if err != nil {
-		return command{}, "", err
+		return command{}, "", fmt.Errorf("reading src dir: %w", err)
 	}
 
-	var targetPkg *ast.Package
-	var rootStrct *ast.StructType
-	for _, pkg := range parsedPkgs {
-		if s := findStruct(pkg, rootCmdTypeName); s != nil {
-			targetPkg = pkg
-			rootStrct = s
-			break
+	fset := token.NewFileSet() // positions are relative to fset
+	astFiles := make([]*ast.File, 0, len(entries))
+	for _, de := range entries {
+		if de.IsDir() || !strings.HasSuffix(de.Name(), ".go") || strings.HasPrefix(de.Name(), ".") {
+			continue
 		}
+		fpath := filepath.Join(srcDir, de.Name())
+		fileNode, err := parser.ParseFile(fset, fpath, nil, parser.ParseComments)
+		if err != nil {
+			return command{}, "", fmt.Errorf("parsing source file '%s': %w", fpath, err)
+		}
+		astFiles = append(astFiles, fileNode)
 	}
-	if targetPkg == nil {
+
+	targetPkg := parsedPackage{files: astFiles}
+	rootStrct := findStruct(&targetPkg, rootCmdTypeName)
+	if rootStrct == nil {
 		return command{}, "", fmt.Errorf("could not find a struct type named '%s'", rootCmdTypeName)
 	}
 
-	data := getCmdClapData(targetPkg, rootCmdTypeName)
+	data := getCmdClapData(&targetPkg, rootCmdTypeName)
 	if data.Blurb == "" {
 		warn("no root command description provided")
 	}
@@ -70,13 +77,17 @@ func parse(srcDir, rootCmdTypeName string) (command, string, error) {
 		Data:      data,
 	}
 
-	if err = addChildren(targetPkg, &root, rootStrct); err != nil {
+	if err = addChildren(&targetPkg, &root, rootStrct); err != nil {
 		return command{}, "", err
 	}
-	return root, targetPkg.Name, nil
+	return root, targetPkg.files[0].Name.Name, nil
 }
 
-func addChildren(pkg *ast.Package, c *command, strct *ast.StructType) error {
+type parsedPackage struct {
+	files []*ast.File
+}
+
+func addChildren(pkg *parsedPackage, c *command, strct *ast.StructType) error {
 	// Read in the struct fields.
 	for _, field := range strct.Fields.List {
 		if len(field.Names) == 0 {
@@ -194,49 +205,59 @@ func basicTypeFromName(name string) basicType {
 	return ""
 }
 
-func findStruct(pkg *ast.Package, name string) *ast.StructType {
+func findStruct(pkg *parsedPackage, name string) *ast.StructType {
 	var strct *ast.StructType
-	ast.Inspect(pkg, func(n ast.Node) bool {
-		switch n := n.(type) {
-		case *ast.GenDecl:
-			for i := range n.Specs {
-				if s, ok := n.Specs[i].(*ast.TypeSpec); ok && s.Name.Name == name {
-					strct = s.Type.(*ast.StructType)
-					return false
-				}
-			}
-		case *ast.TypeSpec:
-			if n.Name.Name == name && n.Doc != nil {
-				strct = n.Type.(*ast.StructType)
-				return false
-			}
-		}
-		return true
-	})
-	return strct
-}
-
-func getCmdClapData(pkg *ast.Package, typ string) clapData {
-	var commentGrp *ast.CommentGroup
-	ast.Inspect(pkg, func(n ast.Node) bool {
-		switch n := n.(type) {
-		case *ast.GenDecl:
-			if n.Doc != nil {
+	for _, f := range pkg.files {
+		ast.Inspect(f, func(n ast.Node) bool {
+			switch n := n.(type) {
+			case *ast.GenDecl:
 				for i := range n.Specs {
-					if s, ok := n.Specs[i].(*ast.TypeSpec); ok && s.Name.Name == typ {
-						commentGrp = n.Doc
+					if s, ok := n.Specs[i].(*ast.TypeSpec); ok && s.Name.Name == name {
+						strct = s.Type.(*ast.StructType)
 						return false
 					}
 				}
+			case *ast.TypeSpec:
+				if n.Name.Name == name && n.Doc != nil {
+					strct = n.Type.(*ast.StructType)
+					return false
+				}
 			}
-		case *ast.TypeSpec:
-			if n.Name.Name == typ && n.Doc != nil {
-				commentGrp = n.Doc
-				return false
-			}
+			return true
+		})
+		if strct != nil {
+			break
 		}
-		return true
-	})
+	}
+	return strct
+}
+
+func getCmdClapData(pkg *parsedPackage, typ string) clapData {
+	var commentGrp *ast.CommentGroup
+	for _, f := range pkg.files {
+		ast.Inspect(f, func(n ast.Node) bool {
+			switch n := n.(type) {
+			case *ast.GenDecl:
+				if n.Doc != nil {
+					for i := range n.Specs {
+						if s, ok := n.Specs[i].(*ast.TypeSpec); ok && s.Name.Name == typ {
+							commentGrp = n.Doc
+							return false
+						}
+					}
+				}
+			case *ast.TypeSpec:
+				if n.Name.Name == typ && n.Doc != nil {
+					commentGrp = n.Doc
+					return false
+				}
+			}
+			return true
+		})
+		if commentGrp != nil {
+			break
+		}
+	}
 	return parseComments(commentGrp)
 }
 
