@@ -181,10 +181,19 @@ func (g *generator) genCmdUsageFunc(c *command) error {
 		for i, o := range c.Opts {
 			switch g.usgLayoutKind {
 			case "roomy":
+				var extra string
+				{
+					if v, ok := o.data.getConfig("default"); ok {
+						extra += "\n      [default: " + v + "]"
+					}
+					if v, ok := o.data.getConfig("env"); ok {
+						extra += "\n      [env: " + v + "]"
+					}
+				}
 				content := "   " + o.usgNameAndArg() + "\n"
 				content += "      " + wrapBlurb(o.data.Blurb, 6, g.usgTextWidth)
-				if v, ok := o.data.getConfig("env"); ok {
-					content += "\n\n      [env: " + v + "]"
+				if extra != "" {
+					content += "\n" + extra
 				}
 				if i < len(c.Opts)-1 {
 					content += "\n"
@@ -193,6 +202,9 @@ func (g *generator) genCmdUsageFunc(c *command) error {
 			default:
 				paddedNameAndArg := fmt.Sprintf("   %-*s   ", optNameColWidth, o.usgNameAndArg())
 				desc := o.data.Blurb
+				if v, ok := o.data.getConfig("default"); ok {
+					desc += " (default: " + v + ")"
+				}
 				if v, ok := o.data.getConfig("env"); ok {
 					desc += " [$" + v + "]"
 				}
@@ -212,10 +224,19 @@ func (g *generator) genCmdUsageFunc(c *command) error {
 		for i, a := range c.Args {
 			switch g.usgLayoutKind {
 			case "roomy":
+				var extra string
+				{
+					if v, ok := a.data.getConfig("default"); ok {
+						extra += "\n      [default: " + v + "]"
+					}
+					if v, ok := a.data.getConfig("env"); ok {
+						extra += "\n      [env: " + v + "]"
+					}
+				}
 				content := "   " + a.UsgName() + "\n"
 				content += "      " + wrapBlurb(a.data.Blurb, 6, g.usgTextWidth)
-				if v, ok := a.data.getConfig("env"); ok {
-					content += "\n\n      [env: " + v + "]"
+				if extra != "" {
+					content += "\n" + extra
 				}
 				if i < len(c.Args)-1 {
 					content += "\n"
@@ -224,6 +245,9 @@ func (g *generator) genCmdUsageFunc(c *command) error {
 			default:
 				paddedName := fmt.Sprintf("   %-*s   ", argNameColWidth, a.UsgName())
 				desc := a.data.Blurb
+				if v, ok := a.data.getConfig("default"); ok {
+					desc += " (default: " + v + ")"
+				}
 				if v, ok := a.data.getConfig("env"); ok {
 					desc += " [$" + v + "]"
 				}
@@ -274,6 +298,21 @@ func (g *generator) genCmdParseFunc(c *command) error {
 		return err
 	}
 	return nil
+}
+
+func (c *command) Defaults() string {
+	var s string
+	for _, o := range c.Opts {
+		if defVal, ok := o.data.getConfig("default"); ok {
+			s += fmt.Sprintf("\tc.%s = %s\n", o.FieldName, defVal)
+		}
+	}
+	for _, a := range c.Args {
+		if defVal, ok := a.data.getConfig("default"); ok {
+			s += fmt.Sprintf("\tc.%s = %s\n", a.FieldName, defVal)
+		}
+	}
+	return s
 }
 
 func (c *command) Parents() string {

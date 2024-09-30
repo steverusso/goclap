@@ -1,5 +1,7 @@
 
 func (c *{{ .TypeName }}) Parse(args []string) {
+	{{- with .Defaults }}
+{{ . }}{{ end }}
 	p := clapCommand{
 		usage: c.UsageHelp,
 
